@@ -99,7 +99,7 @@
 	onMount(fetchDevices);
 </script>
 
-<div class="space-y-(--spacing-section)">
+<div class="max-w-2xl mx-auto space-y-(--spacing-section)">
 	<!-- Header -->
 	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:devices" width={22} class="text-teal-400" />
