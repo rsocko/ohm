@@ -13,8 +13,8 @@
 @theme {
 	/* ── Surfaces ── */
 	--color-surface-base: #0f0f1a;                          /* app background — near-black */
-	--color-surface-raised: #1e1b4b;                        /* cards, sections — deep indigo */
-	--color-surface-overlay: rgba(30, 27, 75, 0.85);        /* popovers, sheets */
+	--color-surface-raised: #1a1926;                        /* cards, sections — dark charcoal, subtle indigo cast */
+	--color-surface-overlay: rgba(26, 25, 38, 0.9);         /* popovers, sheets */
 	--color-surface-hover: rgba(99, 102, 241, 0.08);        /* interactive hover */
 	--color-surface-active: rgba(99, 102, 241, 0.16);       /* pressed/selected */
 
