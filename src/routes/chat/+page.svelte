@@ -57,7 +57,7 @@
 </svelte:head>
 
 {#if data.aiEnabled}
-	<div class="flex flex-col h-[calc(100dvh-4rem)] max-w-3xl mx-auto px-4">
+	<div class="flex flex-col h-[calc(100dvh-4rem)] max-w-2xl mx-auto">
 		<!-- Header -->
 		<div class="flex items-center justify-between py-4 shrink-0">
 			<div class="flex items-center gap-2.5">
@@ -150,7 +150,7 @@
 		</div>
 	</div>
 {:else}
-	<div class="max-w-xl mx-auto px-4 py-10">
+	<div class="max-w-2xl mx-auto py-10">
 		<div class="rounded-2xl border border-slate-700/60 bg-slate-800/50 p-6 text-center shadow-[0_16px_48px_rgba(15,23,42,0.28)]">
 			<div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-700/50 bg-slate-900/70">
 				<Icon icon="mdi:chat-off-outline" width={28} class="text-slate-300" />

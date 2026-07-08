@@ -514,7 +514,7 @@
 	});
 </script>
 
-<div class="space-y-4">
+<div class="max-w-2xl mx-auto space-y-4">
 	<header class="px-1">
 		<div class="mb-4">
 			<div class="flex items-center gap-2.5">
