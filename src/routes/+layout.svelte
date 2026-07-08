@@ -71,13 +71,13 @@
 	}
 
 	const navItems = $derived.by(() => [
-		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-blue-400' },
-		{ href: '/rooms', label: 'Rooms', icon: 'mdi:floor-plan', activeColor: 'text-purple-400' },
-		{ href: '/panels', label: 'Panels', icon: 'mdi:transmission-tower', activeColor: 'text-amber-400' },
-		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-fuchsia-400' },
-		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-green-400' },
+		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-accent-fg' },
+		{ href: '/rooms', label: 'Rooms', icon: 'mdi:floor-plan', activeColor: 'text-[#A78BFA]' },
+		{ href: '/panels', label: 'Panels', icon: 'mdi:transmission-tower', activeColor: 'text-[#F5A623]' },
+		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-[#E879F9]' },
+		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-[#22D3EE]' },
 		...(data.aiEnabled
-			? [{ href: '/chat', label: 'Ask AI', icon: 'mdi:chat-processing-outline', activeColor: 'text-emerald-400' }]
+			? [{ href: '/chat', label: 'Ask AI', icon: 'mdi:chat-processing-outline', activeColor: 'text-accent-fg' }]
 			: [])
 	]);
 </script>
@@ -85,7 +85,7 @@
 <svelte:head>
 	<title>Ohm</title>
 	<meta name="description" content="Ohm — AI-powered home electrical intelligence" />
-	<meta name="theme-color" content="#1e293b" />
+	<meta name="theme-color" content="#6366F1" />
 </svelte:head>
 
 <!-- Close home dropdown on outside click -->
@@ -96,7 +96,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex flex-col min-h-screen bg-slate-900 text-slate-100"
+	class="flex flex-col min-h-screen bg-surface-base text-fg"
 	style="-webkit-font-smoothing: antialiased"
 	ontouchstart={onTouchStart}
 	ontouchmove={onTouchMove}
@@ -112,7 +112,7 @@
 				<Icon
 					icon={refreshing.value ? 'mdi:loading' : 'mdi:arrow-down'}
 					width={18}
-					class="{refreshing.value ? 'animate-spin' : ''} text-blue-400 transition-transform duration-150"
+					class="{refreshing.value ? 'animate-spin' : ''} text-accent-fg transition-transform duration-150"
 					style="transform: rotate({!refreshing.value && pullY >= THRESHOLD ? '180deg' : '0deg'})"
 				/>
 			</div>
@@ -122,7 +122,7 @@
 	<main class="flex-1 pb-20 px-4 pt-4 relative">
 		<!-- Offline banner -->
 		{#if dataStore.offline}
-			<div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px]">
+			<div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-energy-subtle border border-[#F5A623]/30 text-[#F5A623] text-[11px]">
 				<Icon icon="mdi:wifi-off" width={14} />
 				<span>Offline — showing data from {relativeTime(dataStore.lastFetchedAt)}</span>
 			</div>

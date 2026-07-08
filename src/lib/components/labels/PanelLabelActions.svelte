@@ -197,7 +197,7 @@
 					type="button"
 					onclick={connectPrinter}
 					disabled={connecting}
-					class="text-[11px] px-2 py-1 rounded-md bg-blue-600/80 text-white font-medium hover:bg-blue-500 active:scale-[0.96] transition-colors disabled:opacity-50"
+					class="text-[11px] px-2 py-1 rounded-md bg-indigo-600/80 text-white font-medium hover:bg-indigo-500 active:scale-[0.96] transition-colors disabled:opacity-50"
 				>
 					{connecting ? 'Connecting…' : 'Connect'}
 				</button>
@@ -218,7 +218,7 @@
 		class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800
 			hover:bg-slate-700 active:scale-[0.97] transition-transform duration-100"
 	>
-		<Icon icon="mdi:format-list-numbered" class="w-5 h-5 text-blue-400" />
+		<Icon icon="mdi:format-list-numbered" class="w-5 h-5 text-indigo-400" />
 		<div class="text-left">
 			<p class="text-sm font-medium text-white">Print Panel Directory</p>
 			<p class="text-xs text-slate-400">Letter-size schedule for panel door</p>
@@ -239,7 +239,7 @@
 			<p class="text-xs text-slate-400">{circuits.length} stickers via Phomemo</p>
 		</div>
 		{#if batchPrinting}
-			<span class="text-xs text-blue-400 font-mono" style="font-variant-numeric: tabular-nums">{batchProgress}/{batchTotal}</span>
+			<span class="text-xs text-indigo-400 font-mono" style="font-variant-numeric: tabular-nums">{batchProgress}/{batchTotal}</span>
 		{/if}
 	</button>
 
@@ -251,13 +251,13 @@
 			hover:bg-slate-700 active:scale-[0.97] transition-transform duration-100
 			disabled:opacity-50"
 	>
-		<Icon icon="mdi:qrcode" class="w-5 h-5 text-purple-400" />
+		<Icon icon="mdi:qrcode" class="w-5 h-5 text-indigo-400" />
 		<div class="text-left flex-1">
 			<p class="text-sm font-medium text-white">Print All QR Labels</p>
 			<p class="text-xs text-slate-400">{circuits.length} QR stickers with deep-links</p>
 		</div>
 		{#if batchPrinting}
-			<span class="text-xs text-purple-400 font-mono" style="font-variant-numeric: tabular-nums">{batchProgress}/{batchTotal}</span>
+			<span class="text-xs text-indigo-400 font-mono" style="font-variant-numeric: tabular-nums">{batchProgress}/{batchTotal}</span>
 		{/if}
 	</button>
 
@@ -265,7 +265,7 @@
 	{#if batchPrinting}
 		<div class="px-1">
 			<div class="h-1.5 rounded-full bg-slate-700 overflow-hidden">
-				<div class="h-full bg-blue-500 transition-[width] duration-200" style="width: {batchTotal ? (batchProgress / batchTotal) * 100 : 0}%"></div>
+				<div class="h-full bg-indigo-500 transition-[width] duration-200" style="width: {batchTotal ? (batchProgress / batchTotal) * 100 : 0}%"></div>
 			</div>
 		</div>
 	{/if}

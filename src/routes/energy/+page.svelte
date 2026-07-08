@@ -341,8 +341,8 @@
 		if (liveStatus === 'connecting') {
 			return {
 				label: 'Connecting…',
-				dot: 'bg-blue-400 animate-pulse',
-				className: 'bg-blue-500/10 text-blue-200'
+				dot: 'bg-indigo-400 animate-pulse',
+				className: 'bg-indigo-500/10 text-indigo-200'
 			};
 		}
 
@@ -481,7 +481,7 @@
 				label: 'Consumed',
 				value: consumedKwh == null ? '—' : formatKwh(consumedKwh),
 				icon: 'mdi:home-lightning-bolt',
-				className: 'bg-blue-500/15 text-blue-300'
+				className: 'bg-indigo-500/15 text-indigo-300'
 			},
 			{
 				label: netLabel,
@@ -554,11 +554,11 @@
 			</a>
 		</div>
 	{:else if mappingCount === 0}
-		<div class="card border-blue-500/20 bg-blue-500/10 p-4 text-center">
-			<Icon icon="mdi:link-variant" width={32} class="mx-auto mb-2 text-blue-400" />
-			<p class="text-sm font-medium text-blue-200">No circuits mapped</p>
-			<p class="mt-1 text-xs text-blue-300/70">Map your Emporia Vue entities to your electrical circuits</p>
-			<a href="/settings/energy" class="mt-3 inline-block rounded-md bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-200 transition-transform active:scale-[0.96]">
+		<div class="card border-indigo-500/20 bg-indigo-500/10 p-4 text-center">
+			<Icon icon="mdi:link-variant" width={32} class="mx-auto mb-2 text-indigo-400" />
+			<p class="text-sm font-medium text-indigo-200">No circuits mapped</p>
+			<p class="mt-1 text-xs text-indigo-300/70">Map your Emporia Vue entities to your electrical circuits</p>
+			<a href="/settings/energy" class="mt-3 inline-block rounded-md bg-indigo-500/20 px-4 py-2 text-sm font-semibold text-indigo-200 transition-transform active:scale-[0.96]">
 				Map Circuits →
 			</a>
 		</div>
@@ -591,15 +591,15 @@
 					</p>
 				</div>
 
-				<div class="rounded-card bg-blue-500/15 p-4 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.12)]">
-					<div class="flex items-center gap-2 text-blue-300">
+				<div class="rounded-card bg-indigo-500/15 p-4 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.12)]">
+					<div class="flex items-center gap-2 text-indigo-300">
 						<Icon icon="mdi:home-lightning-bolt" width={18} />
 						<p class="text-[11px] font-bold uppercase tracking-[0.08em]">Home consumption</p>
 					</div>
-					<p class="mt-3 text-3xl font-bold text-blue-200" style="font-variant-numeric: tabular-nums;">
+					<p class="mt-3 text-3xl font-bold text-indigo-200" style="font-variant-numeric: tabular-nums;">
 						{formatKw(summaryMetrics.consumptionWatts)}
 					</p>
-					<p class="mt-1 text-sm text-blue-100/80">
+					<p class="mt-1 text-sm text-indigo-100/80">
 						{selectedRange === 'live' ? 'Live home load' : 'Average over selected range'}
 					</p>
 				</div>
@@ -776,7 +776,7 @@
 								</div>
 								<div class="mt-3 h-2 overflow-hidden rounded-pill bg-slate-950/60">
 									<div
-										class="h-full rounded-pill bg-gradient-to-r from-blue-400 to-cyan-400"
+										class="h-full rounded-pill bg-gradient-to-r from-indigo-400 to-cyan-400"
 										style={`width: ${(circuit.totalKwh / maxKwh) * 100}%`}
 									></div>
 								</div>

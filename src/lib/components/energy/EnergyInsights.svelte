@@ -19,14 +19,14 @@
 			iconBg: 'bg-amber-500/15'
 		},
 		consumption: {
-			border: 'border-blue-400',
-			icon: 'text-blue-300',
-			iconBg: 'bg-blue-500/15'
+			border: 'border-indigo-400',
+			icon: 'text-indigo-300',
+			iconBg: 'bg-indigo-500/15'
 		},
 		comparison: {
-			border: 'border-purple-400',
-			icon: 'text-purple-300',
-			iconBg: 'bg-purple-500/15'
+			border: 'border-indigo-400',
+			icon: 'text-indigo-300',
+			iconBg: 'bg-indigo-500/15'
 		},
 		efficiency: {
 			border: 'border-emerald-400',

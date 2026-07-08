@@ -23,9 +23,9 @@
 	// Category config
 	const categoryConfig: Record<string, { icon: string; color: string; label: string }> = {
 		'Circuit': { icon: 'lucide:plug-zap', color: 'text-emerald-400', label: 'Circuits' },
-		'Area': { icon: 'mdi:floor-plan', color: 'text-purple-400', label: 'Rooms' },
+		'Area': { icon: 'mdi:floor-plan', color: 'text-indigo-400', label: 'Rooms' },
 		'Load': { icon: 'mdi:lightbulb-outline', color: 'text-amber-400', label: 'Loads' },
-		'Receptacle': { icon: 'mdi:power-socket-us', color: 'text-blue-400', label: 'Receptacles' },
+		'Receptacle': { icon: 'mdi:power-socket-us', color: 'text-indigo-400', label: 'Receptacles' },
 		'Panel': { icon: 'mdi:view-grid-outline', color: 'text-cyan-400', label: 'Panels' },
 	};
 
@@ -195,7 +195,7 @@
 				bind:value={query}
 				oninput={onInput}
 				placeholder="Search circuits, rooms, devices…"
-				class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+				class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
 			/>
 			{#if query}
 				<button
@@ -212,7 +212,7 @@
 			<div class="flex gap-1.5 overflow-x-auto pb-0.5 -mb-0.5">
 				<button
 					onclick={() => { typeFilter = null; }}
-					class="shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors {!typeFilter ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+					class="shrink-0 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors {!typeFilter ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
 				>
 					All ({totalResults})
 				</button>
@@ -220,7 +220,7 @@
 					{@const cat = getCategoryInfo(tableName)}
 					<button
 						onclick={() => { typeFilter = typeFilter === tableName ? null : tableName; }}
-						class="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors {typeFilter === tableName ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+						class="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors {typeFilter === tableName ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
 					>
 						<Icon icon={cat.icon} width={12} class={typeFilter === tableName ? 'text-white' : cat.color} />
 						{cat.label} ({records.length})
@@ -234,7 +234,7 @@
 	<div class="flex-1 overflow-y-auto space-y-4 mt-1">
 		{#if loading}
 			<div class="flex justify-center py-12">
-				<div class="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+				<div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
 			</div>
 		{:else if !searched}
 			<!-- Empty state: recent + suggestions -->
@@ -273,7 +273,7 @@
 			<div class="text-center py-12 space-y-2">
 				<Icon icon="mdi:magnify-close" width={32} class="text-slate-700 mx-auto" />
 				<p class="text-sm text-slate-400">No results for "<span class="text-white">{query}</span>"</p>
-				<a href="/chat?q={encodeURIComponent(query)}" class="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 text-sm hover:bg-blue-600/20 transition-colors">
+				<a href="/chat?q={encodeURIComponent(query)}" class="inline-flex items-center gap-1.5 mt-4 px-4 py-2 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 text-sm hover:bg-indigo-600/20 transition-colors">
 					<Icon icon="mdi:chat-processing-outline" width={16} />
 					Ask AI instead
 				</a>

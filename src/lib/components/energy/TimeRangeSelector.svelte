@@ -23,7 +23,7 @@
 			onclick={() => select(range.value)}
 			class="shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold transition-transform,background-color,color duration-150 active:scale-96
 				{selected === range.value
-					? 'bg-blue-500/18 text-blue-200 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.28),0_10px_18px_rgba(37,99,235,0.18)]'
+					? 'bg-indigo-500/18 text-indigo-200 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.28),0_10px_18px_rgba(37,99,235,0.18)]'
 					: 'bg-slate-700/78 text-slate-300 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.08)]'}"
 		>
 			{range.label}

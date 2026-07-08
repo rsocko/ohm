@@ -175,7 +175,7 @@
 		<a href="/devices" class="text-fg-faint hover:text-fg-secondary transition-colors">
 			<Icon icon="mdi:arrow-left" width={20} />
 		</a>
-		<Icon icon="mdi:radar" width={22} class="text-purple-400" />
+		<Icon icon="mdi:radar" width={22} class="text-indigo-400" />
 		<h1 class="text-xl font-bold text-white">Device Discovery</h1>
 		{#if data && !loading}
 			<button
@@ -189,7 +189,7 @@
 	{#if data}
 		<div class="flex gap-3 text-caption text-fg-faint">
 			<span class="flex items-center gap-1.5">
-				<span class="w-1.5 h-1.5 rounded-full {data.sources.unifi ? 'bg-blue-400' : 'bg-slate-600'}"></span>
+				<span class="w-1.5 h-1.5 rounded-full {data.sources.unifi ? 'bg-indigo-400' : 'bg-slate-600'}"></span>
 				UniFi {data.sources.unifi ? '✓' : '✗'}
 			</span>
 			<span class="flex items-center gap-1.5">
@@ -254,14 +254,14 @@
 							<Icon
 								icon={item.source === 'unifi' ? 'mdi:lan' : 'mdi:home-assistant'}
 								width={18}
-								class={item.source === 'unifi' ? 'text-blue-400' : 'text-sky-400'}
+								class={item.source === 'unifi' ? 'text-indigo-400' : 'text-sky-400'}
 							/>
 						</div>
 						<div class="flex-1 min-w-0">
 							<div class="flex items-center gap-2 flex-wrap">
 								<span class="text-body font-medium text-fg truncate">{item.name}</span>
 								<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium
-									{item.source === 'unifi' ? 'bg-blue-500/15 text-blue-300' : 'bg-sky-500/15 text-sky-300'}">
+									{item.source === 'unifi' ? 'bg-indigo-500/15 text-indigo-300' : 'bg-sky-500/15 text-sky-300'}">
 									{item.source === 'unifi' ? 'UniFi' : 'HA'}
 								</span>
 							</div>
@@ -304,7 +304,7 @@
 						<div class="flex gap-2">
 							<button
 								onclick={() => openCreateForm(item)}
-								class="text-caption font-medium bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 px-3 py-1.5 rounded-md transition-colors"
+								class="text-caption font-medium bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 px-3 py-1.5 rounded-md transition-colors"
 							>
 								<Icon icon="mdi:plus" width={12} class="inline -mt-0.5 mr-0.5" />Create Load
 							</button>
@@ -356,7 +356,7 @@
 							<div class="border-t border-slate-600/30 pt-2 mt-1">
 								<button
 									onclick={() => openCreateForm(item)}
-									class="w-full text-left flex items-center gap-1.5 px-2 py-1.5 rounded text-caption font-medium text-purple-300 hover:bg-purple-500/10 transition-colors"
+									class="w-full text-left flex items-center gap-1.5 px-2 py-1.5 rounded text-caption font-medium text-indigo-300 hover:bg-indigo-500/10 transition-colors"
 								>
 									<Icon icon="mdi:plus" width={14} />
 									Create new load instead
@@ -380,7 +380,7 @@
 								<Icon
 									icon={item.source === 'unifi' ? 'mdi:lan' : 'mdi:home-assistant'}
 									width={16}
-									class={item.source === 'unifi' ? 'text-blue-400' : 'text-sky-400'}
+									class={item.source === 'unifi' ? 'text-indigo-400' : 'text-sky-400'}
 								/>
 								<span class="text-caption text-fg-faint">
 									From {item.source === 'unifi' ? 'UniFi' : 'Home Assistant'}
@@ -429,8 +429,8 @@
 							</div>
 
 							<!-- Auto-link info -->
-							<div class="rounded-md bg-blue-500/10 border border-blue-500/20 p-2">
-								<p class="text-[10px] text-blue-300">
+							<div class="rounded-md bg-indigo-500/10 border border-indigo-500/20 p-2">
+								<p class="text-[10px] text-indigo-300">
 									<Icon icon="mdi:information" width={11} class="inline -mt-0.5 mr-0.5" />
 									Will automatically link {item.source === 'unifi' ? `MAC ${item.externalId}` : `HA device ${item.externalId.slice(0, 12)}…`} to the new Load.
 								</p>
@@ -440,7 +440,7 @@
 								<button
 									onclick={handleCreate}
 									disabled={createSaving || !createName.trim()}
-									class="flex-1 text-caption font-medium bg-purple-500 text-white hover:bg-purple-600 rounded-md py-2 transition-colors disabled:opacity-50"
+									class="flex-1 text-caption font-medium bg-indigo-500 text-white hover:bg-indigo-600 rounded-md py-2 transition-colors disabled:opacity-50"
 								>
 									{createSaving ? 'Creating…' : 'Create Load'}
 								</button>

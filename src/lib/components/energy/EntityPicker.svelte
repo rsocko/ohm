@@ -194,7 +194,7 @@
 						<button
 							type="button"
 							onclick={() => handleSelect(entity)}
-							class="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-slate-700/40 {entity.entityId === value ? 'bg-blue-500/10' : ''}"
+							class="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-slate-700/40 {entity.entityId === value ? 'bg-indigo-500/10' : ''}"
 						>
 							<div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700/60">
 								<Icon
@@ -214,7 +214,7 @@
 									{formatState(entity.state)} {entity.unitOfMeasurement}
 							</span>
 							{#if entity.entityId === value}
-								<Icon icon="mdi:check-circle" width={16} class="shrink-0 text-blue-400" />
+								<Icon icon="mdi:check-circle" width={16} class="shrink-0 text-indigo-400" />
 							{/if}
 						</button>
 					{/each}

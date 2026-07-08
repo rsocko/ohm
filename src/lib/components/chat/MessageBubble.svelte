@@ -45,7 +45,7 @@
 <div class="flex {isUser ? 'justify-end' : 'justify-start'}">
 	<div
 		class="max-w-[85%] px-3.5 py-2.5 text-[13px] leading-relaxed
-			{isUser ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm' : ''}
+			{isUser ? 'bg-indigo-600 text-white rounded-2xl rounded-br-sm' : ''}
 			{!isUser && !isError ? 'bg-slate-700 text-slate-200 rounded-2xl rounded-bl-sm' : ''}
 			{isError ? 'bg-red-500/10 border border-red-500/30 text-red-300 rounded-2xl rounded-bl-sm' : ''}"
 	>
@@ -81,7 +81,7 @@
 					<a
 						href={link.route}
 						onclick={handleDeepLinkClick}
-						class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-600/50 text-[10px] text-blue-300 hover:text-blue-200 transition-colors"
+						class="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-slate-600/50 text-[10px] text-indigo-300 hover:text-indigo-200 transition-colors"
 					>
 						<Icon icon="mdi:open-in-new" width={10} />
 						{link.label}

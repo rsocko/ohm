@@ -851,7 +851,7 @@
 				onclick={() => { activeTab = tab.id; if (tab.id === 'mapping') void loadMappingStats(); }}
 				class="shrink-0 flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-colors whitespace-nowrap
 					{activeTab === tab.id
-						? 'border-purple-500 text-purple-300'
+						? 'border-indigo-500 text-indigo-300'
 						: 'border-transparent text-slate-500 hover:text-slate-300'}"
 			>
 				<Icon icon={tab.icon} width={14} />
@@ -879,7 +879,7 @@
 			<button
 				type="button"
 				onclick={() => { enabled = !enabled; }}
-				class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors {enabled ? 'bg-blue-600' : 'bg-slate-700'}"
+				class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors {enabled ? 'bg-indigo-600' : 'bg-slate-700'}"
 				role="switch"
 				aria-checked={enabled}
 				aria-label="Toggle AI Assistant"
@@ -897,7 +897,7 @@
 				type="url"
 				bind:value={openWebUiUrl}
 				placeholder="http://open-webui.example.com"
-				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
 			/>
 		</div>
 
@@ -911,7 +911,7 @@
 					type={showOpenWebUiKey ? 'text' : 'password'}
 					bind:value={openWebUiApiKey}
 					placeholder="sk-..."
-					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
 				/>
 				<button
 					type="button"
@@ -933,7 +933,7 @@
 				type="text"
 				bind:value={openWebUiModel}
 				placeholder="gpt-4o"
-				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
 			/>
 		</div>
 
@@ -948,7 +948,7 @@
 				<button
 					type="button"
 					onclick={() => { askAuthRequired = !askAuthRequired; }}
-					class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors {askAuthRequired ? 'bg-blue-600' : 'bg-slate-700'}"
+					class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors {askAuthRequired ? 'bg-indigo-600' : 'bg-slate-700'}"
 					role="switch"
 					aria-checked={askAuthRequired}
 				>
@@ -976,7 +976,7 @@
 					id="ask-api-key"
 					type={showShortcutKey ? 'text' : 'password'}
 					bind:value={askApiKey}
-					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none transition-colors"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
 				/>
 				<button
 					type="button"
@@ -997,7 +997,7 @@
 				type="button"
 				onclick={() => void saveConfig(false)}
 				disabled={saving}
-				class="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.28)] transition-colors hover:bg-blue-500 active:scale-[0.96] disabled:opacity-60"
+				class="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.28)] transition-colors hover:bg-indigo-500 active:scale-[0.96] disabled:opacity-60"
 			>
 				{saving ? 'Saving…' : 'Save configuration'}
 			</button>
@@ -1120,7 +1120,7 @@
 	{#if activeTab === 'labels'}
 	<header class="space-y-2 pt-4">
 		<div class="flex items-center gap-3">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 text-blue-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 text-indigo-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
 				<Icon icon="mdi:printer-wireless" width={20} />
 			</div>
 			<div class="space-y-1">
@@ -1134,7 +1134,7 @@
 
 	<section class="rounded-2xl border border-slate-700/60 bg-slate-800/50 p-4 shadow-[0_16px_48px_rgba(15,23,42,0.28)] space-y-4">
 		<div class="flex items-center gap-3 rounded-xl border border-slate-700/50 bg-slate-900/45 p-3">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-blue-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 text-indigo-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
 				<Icon icon="mdi:printer-outline" width={20} />
 			</div>
 			<div>
@@ -1153,7 +1153,7 @@
 				<select
 					id="printer-tape-width"
 					bind:value={printerTapeWidth}
-					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 				>
 					<option value={12}>12mm</option>
 					<option value={15}>15mm</option>
@@ -1168,7 +1168,7 @@
 				<select
 					id="printer-label-length"
 					bind:value={printerLabelLength}
-					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 				>
 					<option value="30">30mm (pre-cut)</option>
 					<option value="40">40mm (pre-cut)</option>
@@ -1208,7 +1208,7 @@
 				<button
 					type="button"
 					onclick={() => { printerCircuitFormat = 'compact'; }}
-					class="rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.96] {printerCircuitFormat === 'compact' ? 'border-blue-500/70 bg-blue-500/12 text-white' : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800'}"
+					class="rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.96] {printerCircuitFormat === 'compact' ? 'border-indigo-500/70 bg-indigo-500/12 text-white' : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800'}"
 				>
 					<span class="block text-sm font-semibold">Compact</span>
 					<span class="mt-1 block text-xs text-slate-400">40 × 12mm for quick circuit IDs.</span>
@@ -1216,7 +1216,7 @@
 				<button
 					type="button"
 					onclick={() => { printerCircuitFormat = 'detailed'; }}
-					class="rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.96] {printerCircuitFormat === 'detailed' ? 'border-blue-500/70 bg-blue-500/12 text-white' : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800'}"
+					class="rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.96] {printerCircuitFormat === 'detailed' ? 'border-indigo-500/70 bg-indigo-500/12 text-white' : 'border-slate-700 bg-slate-900/60 text-slate-300 hover:border-slate-500 hover:bg-slate-800'}"
 				>
 					<span class="block text-sm font-semibold">Detailed</span>
 					<span class="mt-1 block text-xs text-slate-400">40 × 20mm with extra circuit details.</span>
@@ -1241,14 +1241,14 @@
 					max="8"
 					step="1"
 					bind:value={printerDensity}
-					class="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-slate-700 accent-blue-500"
+					class="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-slate-700 accent-indigo-500"
 				/>
 				<input
 					type="number"
 					min="1"
 					max="8"
 					bind:value={printerDensity}
-					class="w-20 rounded-xl border border-slate-700 bg-slate-900/85 px-3 py-2 text-center text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+					class="w-20 rounded-xl border border-slate-700 bg-slate-900/85 px-3 py-2 text-center text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 				/>
 			</div>
 			<p class="text-xs text-slate-500">Higher values print darker. Standard range is 1–8.</p>
@@ -1258,7 +1258,7 @@
 			<button
 				type="button"
 				onclick={() => { showPrinterAdvanced = !showPrinterAdvanced; }}
-				class="flex min-h-[40px] w-full items-center justify-between gap-3 rounded-xl text-left text-sm font-semibold text-white transition-colors hover:text-blue-200 active:scale-[0.99]"
+				class="flex min-h-[40px] w-full items-center justify-between gap-3 rounded-xl text-left text-sm font-semibold text-white transition-colors hover:text-indigo-200 active:scale-[0.99]"
 				aria-expanded={showPrinterAdvanced}
 				aria-controls="printer-advanced-settings"
 			>
@@ -1279,7 +1279,7 @@
 							id="printer-service-uuid"
 							type="text"
 							bind:value={printerServiceUuid}
-							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 						/>
 					</div>
 
@@ -1291,7 +1291,7 @@
 							id="printer-write-char-uuid"
 							type="text"
 							bind:value={printerWriteCharUuid}
-							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 						/>
 					</div>
 
@@ -1304,7 +1304,7 @@
 							type="number"
 							min="1"
 							bind:value={printerChunkSize}
-							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 						/>
 					</div>
 
@@ -1317,7 +1317,7 @@
 							type="number"
 							min="1"
 							bind:value={printerChunkDelayMs}
-							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition-colors"
+							class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
 						/>
 					</div>
 				</div>
@@ -1329,7 +1329,7 @@
 				type="button"
 				onclick={() => void savePrinterSettings()}
 				disabled={printerSaving}
-				class="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.28)] transition-colors hover:bg-blue-500 active:scale-[0.96] disabled:opacity-60"
+				class="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.28)] transition-colors hover:bg-indigo-500 active:scale-[0.96] disabled:opacity-60"
 			>
 				{printerSaving ? 'Saving…' : 'Save'}
 			</button>
@@ -1360,7 +1360,7 @@
 				<button
 					type="button"
 					onclick={() => { autoLinkMac = !autoLinkMac; }}
-					class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {autoLinkMac ? 'bg-purple-500' : 'bg-slate-600'}"
+					class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {autoLinkMac ? 'bg-indigo-500' : 'bg-slate-600'}"
 					role="switch"
 					aria-checked={autoLinkMac}
 				>
@@ -1372,7 +1372,7 @@
 				<button
 					type="button"
 					onclick={() => { suggestFuzzy = !suggestFuzzy; }}
-					class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {suggestFuzzy ? 'bg-purple-500' : 'bg-slate-600'}"
+					class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {suggestFuzzy ? 'bg-indigo-500' : 'bg-slate-600'}"
 					role="switch"
 					aria-checked={suggestFuzzy}
 				>
@@ -1384,7 +1384,7 @@
 				<button
 					type="button"
 					onclick={() => { autoIgnoreInfra = !autoIgnoreInfra; }}
-					class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {autoIgnoreInfra ? 'bg-purple-500' : 'bg-slate-600'}"
+					class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {autoIgnoreInfra ? 'bg-indigo-500' : 'bg-slate-600'}"
 					role="switch"
 					aria-checked={autoIgnoreInfra}
 				>
@@ -1427,7 +1427,7 @@
 			type="button"
 			onclick={() => void loadMappingStats()}
 			disabled={mappingLoading}
-			class="flex-1 inline-flex min-h-[40px] items-center justify-center rounded-xl bg-blue-600/20 text-blue-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-blue-600/30 active:scale-[0.96] disabled:opacity-60"
+			class="flex-1 inline-flex min-h-[40px] items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-indigo-600/30 active:scale-[0.96] disabled:opacity-60"
 		>
 			<Icon icon={mappingLoading ? 'mdi:loading' : 'mdi:sync'} width={16} class="mr-1.5 {mappingLoading ? 'animate-spin' : ''}" />
 			Sync Now
@@ -1456,7 +1456,7 @@
 				type="button"
 				onclick={() => void runDiscovery()}
 				disabled={discoveryLoading || !hasUnifiConfig}
-				class="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.28)] transition-colors hover:bg-blue-500 active:scale-[0.96] disabled:opacity-60"
+				class="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(37,99,235,0.28)] transition-colors hover:bg-indigo-500 active:scale-[0.96] disabled:opacity-60"
 			>
 				<Icon icon={discoveryLoading ? 'mdi:loading' : 'mdi:radar'} width={16} class="mr-1.5 {discoveryLoading ? 'animate-spin' : ''}" />
 				{discoveryLoading ? 'Discovering…' : 'Discover Devices'}
@@ -1516,7 +1516,7 @@
 									<div class="flex items-center gap-2">
 										<span class="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">Room:</span>
 										<select
-											class="flex-1 rounded-lg border border-slate-700/50 bg-slate-900/70 px-2 py-1 text-xs text-slate-200 outline-none focus:border-blue-500/50"
+											class="flex-1 rounded-lg border border-slate-700/50 bg-slate-900/70 px-2 py-1 text-xs text-slate-200 outline-none focus:border-indigo-500/50"
 											value={areaOverrides[item.mac] ?? ''}
 											onchange={(e) => { areaOverrides[item.mac] = e.currentTarget.value ? Number(e.currentTarget.value) : undefined; }}
 										>
@@ -1572,7 +1572,7 @@
 								<div class="flex items-center gap-2">
 									<span class="text-[10px] uppercase tracking-wider text-slate-500 shrink-0">Room:</span>
 									<select
-										class="flex-1 rounded-lg border border-slate-700/50 bg-slate-900/70 px-2 py-1 text-xs text-slate-200 outline-none focus:border-blue-500/50"
+										class="flex-1 rounded-lg border border-slate-700/50 bg-slate-900/70 px-2 py-1 text-xs text-slate-200 outline-none focus:border-indigo-500/50"
 										value={areaOverrides[item.mac] ?? ''}
 										onchange={(e) => { areaOverrides[item.mac] = e.currentTarget.value ? Number(e.currentTarget.value) : undefined; }}
 									>
@@ -1599,7 +1599,7 @@
 								<button
 									onclick={() => void createFromDiscovery(item)}
 									disabled={discoveryActionLoading === item.mac}
-									class="rounded-lg bg-blue-500/15 px-2.5 py-1.5 text-xs font-semibold text-blue-300 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.2)] transition-transform active:scale-[0.96] disabled:opacity-50"
+									class="rounded-lg bg-indigo-500/15 px-2.5 py-1.5 text-xs font-semibold text-indigo-300 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.2)] transition-transform active:scale-[0.96] disabled:opacity-50"
 								>
 									{discoveryActionLoading === item.mac ? '…' : 'Create Load'}
 								</button>
@@ -1668,25 +1668,25 @@
 					<div class="p-4 space-y-3">
 						<div>
 							<label class="text-xs text-slate-400 block mb-1">Name</label>
-							<input type="text" bind:value={editHomeName} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+							<input type="text" bind:value={editHomeName} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 						</div>
 						<div class="grid grid-cols-3 gap-2">
 							<div class="col-span-3 sm:col-span-1">
 								<label class="text-xs text-slate-400 block mb-1">Address</label>
-								<input type="text" bind:value={editHomeAddress} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+								<input type="text" bind:value={editHomeAddress} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 							</div>
 							<div>
 								<label class="text-xs text-slate-400 block mb-1">City</label>
-								<input type="text" bind:value={editHomeCity} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+								<input type="text" bind:value={editHomeCity} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 							</div>
 							<div>
 								<label class="text-xs text-slate-400 block mb-1">State</label>
-								<input type="text" bind:value={editHomeState} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+								<input type="text" bind:value={editHomeState} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 							</div>
 						</div>
 						<div class="flex gap-2">
 							<button onclick={() => { editingHomeId = null; }} class="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
-							<button onclick={() => saveHome()} disabled={!editHomeName.trim() || savingHome} class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-background-color">{savingHome ? 'Saving…' : 'Save'}</button>
+							<button onclick={() => saveHome()} disabled={!editHomeName.trim() || savingHome} class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-background-color">{savingHome ? 'Saving…' : 'Save'}</button>
 						</div>
 					</div>
 				{:else}
@@ -1705,14 +1705,14 @@
 						</div>
 						<div class="flex items-center gap-1">
 							{#if homeContext.selectedHomeId === home.id}
-								<span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-600/20 text-blue-400 font-medium">Active</span>
+								<span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400 font-medium">Active</span>
 							{/if}
 							<button
 								onclick={() => { expandedHomeId = expandedHomeId === home.id ? null : home.id; }}
 								class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors"
 								title="Configure integrations"
 							>
-								<Icon icon="mdi:tune-variant" width={16} class="{expandedHomeId === home.id ? 'text-blue-400' : ''}" />
+								<Icon icon="mdi:tune-variant" width={16} class="{expandedHomeId === home.id ? 'text-indigo-400' : ''}" />
 							</button>
 							<button onclick={() => startEditHome(home)} class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors">
 								<Icon icon="mdi:pencil" width={16} />
@@ -1798,7 +1798,7 @@
 						<!-- UniFi config -->
 						<div class="space-y-3">
 							<div class="flex items-center gap-2">
-								<Icon icon="mdi:router-wireless" width={18} class="text-blue-400" />
+								<Icon icon="mdi:router-wireless" width={18} class="text-indigo-400" />
 								<h3 class="text-sm font-semibold text-white">UniFi Network</h3>
 								{#if unifiTestResult?.success}
 									<span class="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/12 text-emerald-300">Connected</span>
@@ -1809,21 +1809,21 @@
 									type="url"
 									bind:value={unifiUrl}
 									placeholder="https://unifi.local"
-									class="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-blue-500/50"
+									class="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-indigo-500/50"
 								/>
 								<div class="grid grid-cols-2 gap-2">
 									<input
 										type="text"
 										bind:value={unifiUsername}
 										placeholder="Username"
-										class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-blue-500/50"
+										class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-indigo-500/50"
 									/>
 									<div class="relative">
 										<input
 											type={showUnifiPassword ? 'text' : 'password'}
 											bind:value={unifiPassword}
 											placeholder={unifiHasPassword ? '••••••••' : 'Password'}
-											class="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 pr-9 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-blue-500/50"
+											class="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 pr-9 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-indigo-500/50"
 										/>
 										<button
 											type="button"
@@ -1838,7 +1838,7 @@
 									{#if unifiSites.length > 0}
 										<select
 											bind:value={unifiSite}
-											class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-blue-500/50 focus:outline-none transition-colors"
+											class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white focus:border-indigo-500/50 focus:outline-none transition-colors"
 										>
 											{#each unifiSites as site}
 												<option value={site.name}>{site.desc} ({site.name})</option>
@@ -1849,7 +1849,7 @@
 											type="text"
 											bind:value={unifiSite}
 											placeholder="Site (default)"
-											class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-blue-500/50"
+											class="rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none transition-colors focus:border-indigo-500/50"
 										/>
 									{/if}
 									<div class="flex items-center gap-2 px-2">
@@ -1857,7 +1857,7 @@
 										<button
 											type="button"
 											onclick={() => { unifiVerifySsl = !unifiVerifySsl; }}
-											class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {unifiVerifySsl ? 'bg-blue-600' : 'bg-slate-700'}"
+											class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors {unifiVerifySsl ? 'bg-indigo-600' : 'bg-slate-700'}"
 											role="switch"
 											aria-checked={unifiVerifySsl}
 										>
@@ -1870,7 +1870,7 @@
 								<button
 									onclick={() => void saveUnifiConfig()}
 									disabled={unifiSaving}
-									class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-blue-500 disabled:opacity-50 active:scale-[0.96]"
+									class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-indigo-500 disabled:opacity-50 active:scale-[0.96]"
 								>
 									{unifiSaving ? 'Saving…' : 'Save'}
 								</button>
@@ -1981,28 +1981,28 @@
 		{/each}
 
 		{#if showCreateHome}
-			<div class="rounded-xl border border-blue-600/40 bg-slate-800/50 p-4 space-y-3">
+			<div class="rounded-xl border border-indigo-600/40 bg-slate-800/50 p-4 space-y-3">
 				<div>
 					<label class="text-xs text-slate-400 block mb-1">Name</label>
-					<input type="text" bind:value={newHomeName} placeholder="e.g. Beach House" class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color" onkeydown={(e) => { if (e.key === 'Enter' && newHomeName.trim()) createHome(); }} />
+					<input type="text" bind:value={newHomeName} placeholder="e.g. Beach House" class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color" onkeydown={(e) => { if (e.key === 'Enter' && newHomeName.trim()) createHome(); }} />
 				</div>
 				<div class="grid grid-cols-3 gap-2">
 					<div class="col-span-3 sm:col-span-1">
 						<label class="text-xs text-slate-400 block mb-1">Address (optional)</label>
-						<input type="text" bind:value={newHomeAddress} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+						<input type="text" bind:value={newHomeAddress} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 					</div>
 					<div>
 						<label class="text-xs text-slate-400 block mb-1">City</label>
-						<input type="text" bind:value={newHomeCity} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+						<input type="text" bind:value={newHomeCity} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 					</div>
 					<div>
 						<label class="text-xs text-slate-400 block mb-1">State</label>
-						<input type="text" bind:value={newHomeState} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+						<input type="text" bind:value={newHomeState} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 					</div>
 				</div>
 				<div class="flex gap-2">
 					<button onclick={() => { showCreateHome = false; }} class="px-3 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
-					<button onclick={() => createHome()} disabled={!newHomeName.trim() || creatingHome} class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-background-color">{creatingHome ? 'Creating…' : 'Create Home'}</button>
+					<button onclick={() => createHome()} disabled={!newHomeName.trim() || creatingHome} class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 disabled:opacity-50 transition-background-color">{creatingHome ? 'Creating…' : 'Create Home'}</button>
 				</div>
 			</div>
 		{:else}

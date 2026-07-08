@@ -314,7 +314,7 @@
 						{@const active = homeContext.selectedHomeId === home.id}
 						<button
 							onclick={() => { homeContext.selectedHomeId = home.id; }}
-							class="inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium leading-none transition-background-color,color active:scale-[0.96] {active ? 'bg-blue-600 text-white' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-600'}"
+							class="inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium leading-none transition-background-color,color active:scale-[0.96] {active ? 'bg-indigo-600 text-white' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-600'}"
 							style="height: 28px"
 						>
 							{#if active && geo.state.nearestHomeId === home.id && geo.state.permission === 'granted'}
@@ -334,8 +334,8 @@
 	{#if geo.state.permission === 'prompt' && homes.length > 1}
 		<div class="bg-slate-800/80 border border-slate-700/60 rounded-xl p-4 space-y-3">
 			<div class="flex items-start gap-3">
-				<div class="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:map-marker-radius" width={20} class="text-blue-400" />
+				<div class="w-9 h-9 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+					<Icon icon="mdi:map-marker-radius" width={20} class="text-indigo-400" />
 				</div>
 				<div>
 					<p class="text-sm font-semibold text-white">Auto-select your home?</p>
@@ -364,7 +364,7 @@
 						}
 					}}
 					disabled={geo.state.loading}
-					class="flex-1 bg-blue-600 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-blue-500 transition-background-color active:scale-[0.96] disabled:opacity-50"
+					class="flex-1 bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50"
 				>
 					{geo.state.loading ? 'Checking…' : 'Allow location'}
 				</button>
@@ -468,8 +468,8 @@
 				</div>
 			</a>
 			<a href="/rooms" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:floor-plan" width={16} class="text-purple-400" />
+				<span class="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+					<Icon icon="mdi:floor-plan" width={16} class="text-indigo-400" />
 				</span>
 				<div>
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.areas}</p>
@@ -486,8 +486,8 @@
 				</div>
 			</a>
 			<a href="/search?type=receptacle" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:power-socket-us" width={16} class="text-blue-400" />
+				<span class="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center shrink-0">
+					<Icon icon="mdi:power-socket-us" width={16} class="text-indigo-400" />
 				</span>
 				<div>
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.receptacles}</p>
@@ -538,8 +538,8 @@
 		<a href="/chat" class="block bg-slate-800/30 rounded-xl border border-slate-700/30 divide-y divide-slate-700/30 hover:border-slate-600/50 transition-colors">
 			{#each recentQueries as query}
 				<div class="flex items-center gap-3 px-4 py-3">
-					<span class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-						<Icon icon="mdi:chat-outline" width={16} class="text-blue-400" />
+					<span class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+						<Icon icon="mdi:chat-outline" width={16} class="text-indigo-400" />
 					</span>
 					<div class="min-w-0 flex-1">
 						<p class="text-sm text-white truncate">"{query.question}"</p>
@@ -552,9 +552,9 @@
 	{:else if !loading}
 	<section class="space-y-2.5">
 		<h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Assistant</h2>
-		<a href="/chat" class="flex items-center gap-3 px-4 py-4 bg-slate-800/30 rounded-xl border border-slate-700/30 hover:border-blue-500/30 transition-colors">
-			<span class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-				<Icon icon="mdi:chat-processing-outline" width={20} class="text-blue-400" />
+		<a href="/chat" class="flex items-center gap-3 px-4 py-4 bg-slate-800/30 rounded-xl border border-slate-700/30 hover:border-indigo-500/30 transition-colors">
+			<span class="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+				<Icon icon="mdi:chat-processing-outline" width={20} class="text-indigo-400" />
 			</span>
 			<div class="min-w-0 flex-1">
 				<p class="text-sm font-medium text-white">Ask about your electrical system</p>
