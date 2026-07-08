@@ -297,7 +297,7 @@
 	<header class="space-y-3">
 		<div>
 			<p class="text-sm text-slate-400">{getGreeting()}</p>
-			<h1 class="text-2xl font-bold text-white" style="text-wrap: balance">Ohm</h1>
+			<h1 class="text-2xl font-bold text-white" style="text-wrap: balance"><span class="text-accent">&Omega;</span>hm</h1>
 		</div>
 
 		<!-- Home toggle -->
