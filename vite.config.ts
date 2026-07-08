@@ -10,9 +10,9 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			manifest: {
-				name: 'Ohm',
-				short_name: 'Ohm',
-				description: 'Ohm — AI-powered home electrical intelligence',
+				name: 'Ωhm',
+				short_name: 'Ωhm',
+				description: 'Ωhm — AI-powered home electrical intelligence',
 				theme_color: '#6366F1',
 				background_color: '#0F0F1A',
 				display: 'standalone',

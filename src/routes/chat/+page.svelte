@@ -5,6 +5,8 @@
 	import MessageBubble from '$lib/components/chat/MessageBubble.svelte';
 	import SuggestionChips from '$lib/components/chat/SuggestionChips.svelte';
 	import TypingIndicator from '$lib/components/chat/TypingIndicator.svelte';
+	import AskOhmIcon from '$lib/components/icons/AskOhmIcon.svelte';
+	import OhmLoader from '$lib/components/ui/OhmLoader.svelte';
 
 	let { data } = $props<{ data: { aiEnabled: boolean } }>();
 	let input = $state('');
@@ -53,17 +55,17 @@
 </script>
 
 <svelte:head>
-	<title>AI Assistant — Electrical Config</title>
+	<title>Ask Ωhm — Ωhm</title>
 </svelte:head>
 
 {#if data.aiEnabled}
 	<div class="flex flex-col h-[calc(100dvh-4rem)] max-w-2xl mx-auto">
 		<!-- Header -->
-		<div class="flex items-center justify-between py-4 shrink-0">
+		<div class="flex items-center justify-between pb-4 shrink-0">
 			<div class="flex items-center gap-2.5">
-				<Icon icon="mdi:chat-processing-outline" width={22} class="text-accent" />
+				<AskOhmIcon size={22} />
 				<div>
-					<h1 class="text-xl font-bold text-fg">Ask AI</h1>
+					<h1 class="text-xl font-bold text-fg">Ask Ωhm</h1>
 					<p class="text-xs text-fg-muted">Ask about circuits, panels, rooms, or request changes</p>
 				</div>
 			</div>
@@ -85,9 +87,7 @@
 			<div bind:this={chatContainer} class="h-full overflow-y-auto py-4 space-y-4 -mx-2 px-2">
 			{#if chatState.messages.length === 0}
 				<div class="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
-					<div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center">
-						<Icon icon="mdi:chat-processing-outline" width={32} class="text-indigo-400" />
-					</div>
+					<OhmLoader size={112} />
 					<div class="space-y-2">
 						<p class="text-base font-medium text-slate-200">What would you like to know?</p>
 						<p class="text-sm text-slate-500 max-w-sm" style="text-wrap: pretty">
@@ -119,12 +119,6 @@
 
 		<!-- Input -->
 		<div class="pb-4 pt-3 border-t border-slate-700/50 shrink-0">
-			{#if chatState.messages.length === 0}
-				<div class="mb-3">
-					<SuggestionChips onselect={handleSuggestion} count={5} />
-				</div>
-			{/if}
-
 			<div class="flex gap-2">
 				<input
 					type="text"

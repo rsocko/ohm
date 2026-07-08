@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
 	import IosPwaNudge from '$lib/components/ui/IosPwaNudge.svelte';
+	import AskOhmIcon from '$lib/components/icons/AskOhmIcon.svelte';
 
 	let { children, data } = $props();
 
@@ -93,14 +94,14 @@
 		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-[#E879F9]' },
 		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-[#22D3EE]' },
 		...(data.aiEnabled
-			? [{ href: '/chat', label: 'Ask AI', icon: 'mdi:chat-processing-outline', activeColor: 'text-accent' }]
+			? [{ href: '/chat', label: 'Ask Ωhm', icon: 'mdi:chat-processing-outline', activeColor: 'text-accent' }]
 			: [])
 	]);
 </script>
 
 <svelte:head>
-	<title>Ohm</title>
-	<meta name="description" content="Ohm — AI-powered home electrical intelligence" />
+	<title>Ωhm</title>
+	<meta name="description" content="Ωhm — AI-powered home electrical intelligence" />
 	<meta name="theme-color" content="#6366F1" />
 </svelte:head>
 
@@ -205,7 +206,11 @@
 				href={item.href}
 				class="flex flex-col items-center gap-0.5 text-xs min-w-[44px] min-h-[44px] justify-center rounded-lg transition-color,opacity {active ? item.activeColor : 'text-slate-400 hover:text-white'}"
 			>
-				<Icon icon={item.icon} width={22} />
+				{#if item.href === '/chat'}
+					<AskOhmIcon size={22} />
+				{:else}
+					<Icon icon={item.icon} width={22} />
+				{/if}
 				<span class="font-medium">{item.label}</span>
 			</a>
 		{/each}
