@@ -29,6 +29,25 @@ cp .env.example .env   # Configure your endpoints
 npm run dev
 ```
 
+## Deployment (CI/CD)
+
+Pushes to `main` automatically build and push a Docker image to the private
+homelab registry (`registry.example.com/ohm`), tagged `sha-<short-sha>` and
+`latest`. See `.github/workflows/build-and-push.yml`.
+
+- **CI validation** (`.github/workflows/ci.yml`): type-checks (`svelte-check`)
+  and builds on every push/PR.
+- **Build + push** (`.github/workflows/build-and-push.yml`): runs on a
+  self-hosted runner in the homelab (registered to this repo, labels
+  `[self-hosted, linux, docker, build, homelab, dockhand]` — see
+  `homelab-config/stacks/server-mini/ohm-github-runner/`). Auto-triggers on
+  push to `main`; can also be run manually (`workflow_dispatch`) to cut a
+  semver release (`v1.2.0`) via `.github/scripts/resolve_registry_version.py`.
+- **Deploy**: manual — pull the new image and recreate the container via
+  Dockhand's UI. The running stack is defined in
+  `homelab-config/stacks/server-mini/ohm/compose.yaml` (not this repo's
+  `docker-compose.yml`, which is a local dev-parity copy).
+
 ## Brand
 
 **Name:** Ohm (Ω) — the SI unit of resistance. Also sounds like "home."

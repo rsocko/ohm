@@ -1,0 +1,135 @@
+name: Build and Push Image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version_mode:
+        description: How to determine the image tag (manual releases only)
+        required: true
+        type: choice
+        default: next_patch
+        options:
+          - explicit
+          - next_major
+          - next_minor
+          - next_patch
+      image_tag:
+        description: Explicit Docker image tag to build when version_mode=explicit
+        required: false
+        default: ""
+      push_latest:
+        description: Also tag and push this image as latest
+        required: true
+        type: choice
+        default: "true"
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-and-push-ohm
+  cancel-in-progress: false
+
+env:
+  REGISTRY_REPOSITORY: registry.example.com/ohm
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, docker, build, homelab, dockhand]
+    steps:
+      - name: Pre-clean workspace (self-hosted)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          clean: false
+
+      - name: Resolve image tag (push to main)
+        if: github.event_name == 'push'
+        id: version_push
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="$(echo "${{ github.sha }}" | cut -c1-7)"
+          echo "resolved_tag=sha-$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image tag (manual release)
+        if: github.event_name == 'workflow_dispatch'
+        id: version_dispatch
+        shell: bash
+        env:
+          REGISTRY_REPOSITORY: ${{ env.REGISTRY_REPOSITORY }}
+          VERSION_MODE: ${{ github.event.inputs.version_mode }}
+          EXPLICIT_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/resolve_registry_version.py
+
+      - name: Combine resolved tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.version_push.outputs.resolved_tag }}${{ steps.version_dispatch.outputs.resolved_tag }}"
+          if [ -z "$TAG" ]; then
+            echo "Could not resolve an image tag" >&2
+            exit 1
+          fi
+          echo "resolved_tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Show resolved image target
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Resolved image: ${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
+          echo "Push latest: ${{ github.event.inputs.push_latest || 'true' }}"
+
+      - name: Publish version summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '## Ohm Image Build'
+            echo
+            echo "Resolved image: \`${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}\`"
+            echo
+            echo "Trigger: \`${{ github.event_name }}\`"
+            if [ "${{ github.event.inputs.push_latest || 'true' }}" = 'true' ]; then
+              echo
+              echo "Mutable tag update: \`${{ env.REGISTRY_REPOSITORY }}:latest\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Resolved ohm image::${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
+
+      - name: Build image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
+          docker build -t "$IMAGE" .
+          if [ "${{ github.event.inputs.push_latest || 'true' }}" = 'true' ]; then
+            docker tag "$IMAGE" "${{ env.REGISTRY_REPOSITORY }}:latest"
+          fi
+          echo "Built $IMAGE"
+
+      - name: Push image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
+          docker push "$IMAGE"
+          if [ "${{ github.event.inputs.push_latest || 'true' }}" = 'true' ]; then
+            docker push "${{ env.REGISTRY_REPOSITORY }}:latest"
+          fi
