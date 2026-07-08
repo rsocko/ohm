@@ -2,6 +2,7 @@
 	import '../app.css';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { refresh, dataStore, refreshing, doRefresh } from '$lib/stores/data.svelte';
 	import { homeContext, initHomeContext } from '$lib/stores/home-context.svelte';
 	import { onMount } from 'svelte';
@@ -9,6 +10,21 @@
 	import IosPwaNudge from '$lib/components/ui/IosPwaNudge.svelte';
 
 	let { children, data } = $props();
+
+	const onSettingsPage = $derived(page.url.pathname.startsWith('/settings'));
+
+	function toggleSettings() {
+		if (onSettingsPage) {
+			// Leaving settings: return to prior page if there's local history, else home
+			if (window.history.length > 1) {
+				window.history.back();
+			} else {
+				goto('/');
+			}
+		} else {
+			goto('/settings');
+		}
+	}
 
 	let homeDropdownOpen = $state(false);
 
@@ -169,13 +185,14 @@
 					<Icon icon="mdi:refresh" width={12} class="{refreshing.value ? 'animate-spin' : ''}" />
 					<span>{refreshing.value ? 'Refreshing…' : relativeTime(dataStore.lastFetchedAt)}</span>
 				</button>
-				<a
-					href="/settings"
-					class="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
-					title="Settings"
+				<button
+					onclick={toggleSettings}
+					class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors {onSettingsPage ? 'text-accent-fg bg-accent-subtle hover:bg-accent-subtle' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}"
+					title={onSettingsPage ? 'Close settings' : 'Settings'}
+					aria-label={onSettingsPage ? 'Close settings' : 'Settings'}
 				>
-					<Icon icon="mdi:cog-outline" width={18} />
-				</a>
+					<Icon icon={onSettingsPage ? 'mdi:close' : 'mdi:cog-outline'} width={18} />
+				</button>
 			</div>
 		{/if}
 		{@render children()}
