@@ -128,13 +128,6 @@
 	let energyTodayPoints: HistoryPoint[] = $state([]);
 	let energySolarHistory: HistoryPoint[] = $state([]);
 
-	function getGreeting(): string {
-		const hour = new Date().getHours();
-		if (hour < 12) return 'Good morning';
-		if (hour < 17) return 'Good afternoon';
-		return 'Good evening';
-	}
-
 	// Recent chat queries
 	const recentQueries = $derived.by(() => {
 		const msgs = chatState.messages;
@@ -296,7 +289,6 @@
 	<!-- Header -->
 	<header class="space-y-3">
 		<div>
-			<p class="text-sm text-slate-400">{getGreeting()}</p>
 			<h1 class="text-2xl font-bold text-white" style="text-wrap: balance"><span class="text-accent">&Omega;</span>hm</h1>
 		</div>
 
