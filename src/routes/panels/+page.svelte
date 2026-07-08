@@ -968,7 +968,7 @@
 		<h1 class="text-xl font-bold text-fg">Panels</h1>
 		<button
 			onclick={() => { showCreatePanel = true; }}
-			class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+			class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
 			aria-label="Add panel"
 		>
 			<Icon icon="mdi:plus" width={18} />

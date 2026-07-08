@@ -2597,8 +2597,11 @@
 		<div class="flex items-center gap-2.5">
 			<Icon icon="lucide:layout-panel-left" width={22} class="text-violet-400" />
 			<h1 class="text-xl font-bold text-fg">Rooms & Areas</h1>
+		</div>
+
+		<div class="flex items-center gap-2">
 			<!-- View toggle -->
-			<div class="flex gap-0.5 bg-slate-800/50 rounded-lg p-0.5 ml-auto">
+			<div class="flex gap-0.5 bg-slate-800/50 rounded-lg p-0.5">
 				<button
 					onclick={() => { viewMode = 'list'; }}
 					class="px-2 py-1 rounded-md text-xs font-medium transition-colors {viewMode === 'list' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'}"
@@ -2623,7 +2626,7 @@
 			</div>
 			<button
 				onclick={() => { showCreateRoom = true; }}
-				class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+				class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
 				aria-label="Add room"
 			>
 				<Icon icon="mdi:plus" width={18} />
