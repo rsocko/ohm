@@ -62,8 +62,8 @@
 	<div class="flex flex-col h-[calc(100dvh-4rem)] max-w-2xl mx-auto">
 		<!-- Header -->
 		<div class="flex items-center justify-between pb-4 shrink-0">
-			<div class="flex items-center gap-2.5">
-				<AskOhmIcon size={22} />
+			<div class="flex items-start gap-2.5">
+				<AskOhmIcon size={22} class="mt-0.5" />
 				<div>
 					<h1 class="text-xl font-bold text-fg">Ask Ωhm</h1>
 					<p class="text-xs text-fg-muted">Ask about circuits, panels, rooms, or request changes</p>
