@@ -461,7 +461,7 @@
 			</a>
 			<a href="/rooms" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
 				<span class="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:floor-plan" width={16} class="text-violet-400" />
+					<Icon icon="lucide:layout-panel-left" width={16} class="text-violet-400" />
 				</span>
 				<div>
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.areas}</p>
