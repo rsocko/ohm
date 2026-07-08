@@ -176,7 +176,7 @@
 			<Icon icon="mdi:arrow-left" width={20} />
 		</a>
 		<Icon icon="mdi:radar" width={22} class="text-indigo-400" />
-		<h1 class="text-xl font-bold text-white">Device Discovery</h1>
+		<h1 class="text-xl font-bold text-fg">Device Discovery</h1>
 		{#if data && !loading}
 			<button
 				onclick={handleIgnoreAll}

@@ -82,13 +82,14 @@
 </script>
 
 <div class="space-y-4">
-	<header class="flex items-center gap-3">
-		<a href="/settings" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 transition-transform active:scale-96">
-			<Icon icon="mdi:arrow-left" width={20} class="text-slate-300" />
+	<header class="flex items-center gap-2.5">
+		<a href="/settings" class="text-fg-faint hover:text-fg-secondary transition-colors shrink-0" aria-label="Back to Settings">
+			<Icon icon="mdi:arrow-left" width={20} />
 		</a>
-		<div>
-			<h1 class="text-xl font-bold text-white">Energy Mapping</h1>
-			<p class="text-sm text-slate-400">Link circuits to HA power sensors</p>
+		<Icon icon="mdi:swap-horizontal-bold" width={22} class="text-[#22D3EE]" />
+		<div class="min-w-0">
+			<h1 class="text-xl font-bold text-fg leading-tight">Energy Mapping</h1>
+			<p class="text-sm text-fg-muted">Link circuits to HA power sensors</p>
 		</div>
 	</header>
 

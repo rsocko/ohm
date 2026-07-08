@@ -965,7 +965,7 @@
 	<!-- Header -->
 	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:transmission-tower" width={22} class="text-amber-400" />
-		<h1 class="text-xl font-bold text-white">Panels</h1>
+		<h1 class="text-xl font-bold text-fg">Panels</h1>
 		<button
 			onclick={() => { showCreatePanel = true; }}
 			class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"

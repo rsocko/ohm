@@ -840,8 +840,9 @@
 
 <div class="max-w-2xl mx-auto space-y-5">
 	<!-- Settings header -->
-	<header class="space-y-1">
-		<h1 class="text-xl font-bold text-white">Settings</h1>
+	<header class="flex items-center gap-2.5">
+		<Icon icon="mdi:cog-outline" width={22} class="text-fg-muted" />
+		<h1 class="text-xl font-bold text-fg">Settings</h1>
 	</header>
 
 	<!-- Tab navigation -->
@@ -1118,17 +1119,13 @@
 
 	<!-- Label Printing Section -->
 	{#if activeTab === 'labels'}
-	<header class="space-y-2 pt-4">
-		<div class="flex items-center gap-3">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 text-indigo-300 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-				<Icon icon="mdi:printer-wireless" width={20} />
-			</div>
-			<div class="space-y-1">
-				<h1 class="text-2xl font-bold text-white" style="text-wrap: balance">Label Printing</h1>
-				<p class="text-sm text-slate-400" style="text-wrap: pretty">
-					Set default Phomemo label sizes, circuit formats, and Bluetooth transport settings.
-				</p>
-			</div>
+	<header class="flex items-center gap-2.5 pt-4">
+		<Icon icon="mdi:printer-wireless" width={22} class="text-indigo-300" />
+		<div class="min-w-0">
+			<h1 class="text-xl font-bold text-fg leading-tight" style="text-wrap: balance">Label Printing</h1>
+			<p class="text-sm text-fg-muted" style="text-wrap: pretty">
+				Set default Phomemo label sizes, circuit formats, and Bluetooth transport settings.
+			</p>
 		</div>
 	</header>
 
@@ -1443,11 +1440,14 @@
 
 	<!-- Legacy discovery inline (kept for backward compatibility) -->
 	<!-- UniFi Discovery Section -->
-	<header class="space-y-2 pt-4">
-		<h1 class="text-2xl font-bold text-white" style="text-wrap: balance">Device Discovery</h1>
-		<p class="text-sm text-slate-400" style="text-wrap: pretty">
-			Discover UniFi devices and clients, match them to existing loads, or create new load records.
-		</p>
+	<header class="flex items-center gap-2.5 pt-4">
+		<Icon icon="mdi:radar" width={22} class="text-indigo-400" />
+		<div class="min-w-0">
+			<h1 class="text-xl font-bold text-fg leading-tight" style="text-wrap: balance">Device Discovery</h1>
+			<p class="text-sm text-fg-muted" style="text-wrap: pretty">
+				Discover UniFi devices and clients, match them to existing loads, or create new load records.
+			</p>
+		</div>
 	</header>
 
 	<section class="rounded-2xl border border-slate-700/60 bg-slate-800/50 p-4 shadow-[0_16px_48px_rgba(15,23,42,0.28)] space-y-4">

@@ -60,13 +60,11 @@
 	<div class="flex flex-col h-[calc(100dvh-4rem)] max-w-3xl mx-auto px-4">
 		<!-- Header -->
 		<div class="flex items-center justify-between py-4 shrink-0">
-			<div class="flex items-center gap-3">
-				<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-900/30">
-					<Icon icon="mdi:flash" width={22} class="text-white" />
-				</div>
+			<div class="flex items-center gap-2.5">
+				<Icon icon="mdi:chat-processing-outline" width={22} class="text-accent" />
 				<div>
-					<h1 class="text-lg font-semibold text-white">AI Assistant</h1>
-					<p class="text-xs text-slate-400">Ask about circuits, panels, rooms, or request changes</p>
+					<h1 class="text-xl font-bold text-fg">Ask AI</h1>
+					<p class="text-xs text-fg-muted">Ask about circuits, panels, rooms, or request changes</p>
 				</div>
 			</div>
 			{#if chatState.messages.length > 0}

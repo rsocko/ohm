@@ -517,18 +517,15 @@
 <div class="space-y-4">
 	<header class="px-1">
 		<div class="mb-4">
-			<div>
-				<p class="text-sm text-fg-muted">Emporia Vue · Home energy overview</p>
-				<div class="flex items-center gap-2.5">
-					<h1 class="text-[30px] font-bold leading-none tracking-tight text-fg" style="text-wrap: balance;">
-						Energy Monitor
-					</h1>
-					<div class={`inline-flex items-center gap-[6px] rounded-pill px-2.5 py-[5px] text-[11px] font-bold shadow-card ${headerStatus.className}`}>
-						<span class={`h-2 w-2 rounded-full ${headerStatus.dot}`}></span>
-						{headerStatus.label}
-					</div>
+			<div class="flex items-center gap-2.5">
+				<Icon icon="mdi:lightning-bolt" width={22} class="text-[#22D3EE]" />
+				<h1 class="text-xl font-bold text-fg">Energy Monitor</h1>
+				<div class={`ml-auto inline-flex items-center gap-[6px] rounded-pill px-2.5 py-[5px] text-[11px] font-bold shadow-card ${headerStatus.className}`}>
+					<span class={`h-2 w-2 rounded-full ${headerStatus.dot}`}></span>
+					{headerStatus.label}
 				</div>
 			</div>
+			<p class="mt-1 text-sm text-fg-muted">Emporia Vue · Home energy overview</p>
 		</div>
 
 		<TimeRangeSelector bind:selected={selectedRange} onchange={onRangeChange} />
