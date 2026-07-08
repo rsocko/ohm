@@ -195,7 +195,7 @@
 				type="text"
 				bind:value={editName}
 				placeholder="Display name"
-				class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-border-color"
+				class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-border-color"
 				onkeydown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onClose(); }}
 			/>
 		</div>
@@ -205,7 +205,7 @@
 			<label class="text-[10px] text-slate-500 w-12 shrink-0">Type</label>
 			<select
 				bind:value={editType}
-				class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 appearance-none"
+				class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 appearance-none"
 			>
 				<option value="">— None —</option>
 				{#each Object.entries(typeConfig) as [key, cfg]}
@@ -245,7 +245,7 @@
 					min="1"
 					max="50"
 					bind:value={editQty}
-					class="w-16 bg-slate-800 border border-slate-600/50 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-border-color"
+					class="w-16 bg-slate-800 border border-slate-600/50 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-border-color"
 				/>
 				<label class="text-[10px] text-slate-500 ml-2 shrink-0">Show</label>
 				<button
@@ -324,7 +324,7 @@
 
 		<!-- Actions -->
 		<div class="flex gap-2 items-center pt-1">
-			<button onclick={save} disabled={saving || !editName.trim()} class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
+			<button onclick={save} disabled={saving || !editName.trim()} class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
 				{saving ? 'Saving…' : 'Save'}
 			</button>
 			<button onclick={onClose} class="px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>

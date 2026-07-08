@@ -2321,7 +2321,7 @@
 		if (selectedFloorplan) {
 			for (const area of getAreasForFloor(selectedFloorplan)) {
 				const pos = getAreaPosition(area);
-				if (pos) items.push({ id: `room-${area.id}`, type: 'room', x: pos.x, y: pos.y, record: area, marker: { icon: 'mdi:home-outline', bg: 'bg-purple-500/80' }, label: (area.fields.Name as string) || 'Room', areaId: area.id, hidden: !visibleLayers.rooms });
+				if (pos) items.push({ id: `room-${area.id}`, type: 'room', x: pos.x, y: pos.y, record: area, marker: { icon: 'mdi:home-outline', bg: 'bg-indigo-500/80' }, label: (area.fields.Name as string) || 'Room', areaId: area.id, hidden: !visibleLayers.rooms });
 			}
 		}
 		for (const load of getLoadsForFloor()) {
@@ -2565,7 +2565,7 @@
 			}
 			const rt = record.fields['Receptacle Type'] as string || '';
 			const cfg = receptacleTypeConfig[rt];
-			return { icon: override, bg: cfg?.markerBg || 'bg-blue-500/80' };
+			return { icon: override, bg: cfg?.markerBg || 'bg-indigo-500/80' };
 		}
 
 		if (type === 'load') {
@@ -2582,23 +2582,26 @@
 		const rt = record.fields['Receptacle Type'] as string || '';
 		const cfg = receptacleTypeConfig[rt];
 		if (cfg) return { icon: cfg.icon, bg: cfg.markerBg };
-		if (rt.includes('Outlet') || rt.includes('GFCI')) return { icon: 'mdi:power-socket-us', bg: 'bg-blue-500/80' };
+		if (rt.includes('Outlet') || rt.includes('GFCI')) return { icon: 'mdi:power-socket-us', bg: 'bg-indigo-500/80' };
 		if (rt.includes('Switch') || rt.includes('Dimmer')) return { icon: 'mdi:light-switch', bg: 'bg-slate-500/80' };
 		if (rt.includes('Network')) return { icon: 'mdi:ethernet', bg: 'bg-fuchsia-500/80' };
-		return { icon: 'mdi:power-plug-outline', bg: 'bg-blue-500/80' };
+		return { icon: 'mdi:power-plug-outline', bg: 'bg-indigo-500/80' };
 	}
 </script>
 
 <svelte:window onpaste={handlePaste} onclick={() => { showFloorMenu = null; expandedGroup = null; selectedLoadId = null; expandedFixtureLoadId = null; selectedPanelMarkerId = null; tracingCircuitId = null; }} onkeydown={(e) => { if (e.key === 'Escape') { if (placingFixture) { placingFixture = null; toast.info('Fixture placement cancelled'); } else if (placingItem) { placingItem = null; previewPos = null; snapGuides = []; mergeTargetKey = null; } } }} />
 
-<div class="max-w-2xl mx-auto">
-	<!-- Header + Search + Filter row (sticky) -->
-	<div class="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm pb-3 pt-1 space-y-3 -mx-1 px-1">
+<div class="max-w-2xl mx-auto space-y-4">
+	<!-- Header + Search + Filter row -->
+	<div class="space-y-3">
 		<div class="flex items-center gap-2.5">
-			<Icon icon="mdi:floor-plan" width={22} class="text-purple-400" />
-			<h1 class="text-xl font-bold text-white">Rooms & Areas</h1>
+			<Icon icon="lucide:layout-panel-left" width={22} class="text-violet-400" />
+			<h1 class="text-xl font-bold text-fg">Rooms & Areas</h1>
+		</div>
+
+		<div class="flex items-center gap-2">
 			<!-- View toggle -->
-			<div class="flex gap-0.5 bg-slate-800/50 rounded-lg p-0.5 ml-auto">
+			<div class="flex gap-0.5 bg-slate-800/50 rounded-lg p-0.5">
 				<button
 					onclick={() => { viewMode = 'list'; }}
 					class="px-2 py-1 rounded-md text-xs font-medium transition-colors {viewMode === 'list' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-300'}"
@@ -2623,7 +2626,7 @@
 			</div>
 			<button
 				onclick={() => { showCreateRoom = true; }}
-				class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+				class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
 				aria-label="Add room"
 			>
 				<Icon icon="mdi:plus" width={18} />
@@ -2639,7 +2642,7 @@
 					type="text"
 					bind:value={searchQuery}
 					placeholder="Find rooms, receptacles, loads…"
-					class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-8 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+					class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-8 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 				/>
 				{#if searchQuery.trim()}
 					<button
@@ -2666,7 +2669,7 @@
 		{/if}
 	</div>
 
-	<div class="space-y-4 mt-2">
+	<div class="space-y-4">
 
 	{#if viewMode === 'floorplan'}
 		<!-- FLOORPLAN VIEW -->
@@ -2682,7 +2685,7 @@
 								<input
 									type="text"
 									bind:value={renameFloorValue}
-									class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-white border border-purple-500 outline-none w-28"
+									class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-white border border-indigo-500 outline-none w-28"
 									onkeydown={(e) => { if (e.key === 'Enter') renameFloor(fp.id, renameFloorValue); if (e.key === 'Escape') { renamingFloorId = null; } }}
 									onblur={() => { renameFloor(fp.id, renameFloorValue); }}
 									autofocus
@@ -2692,13 +2695,13 @@
 									<button
 										onclick={() => { selectFloor(fp.id); }}
 										ondblclick={() => { renamingFloorId = fp.id; renameFloorValue = (fp.fields.Floor as string) || ''; }}
-										class="px-3 py-1.5 rounded-l-lg text-xs font-medium transition-colors {active ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
+										class="px-3 py-1.5 rounded-l-lg text-xs font-medium transition-colors {active ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}"
 									>
 										{fp.fields.Floor || 'Floor'}
 									</button>
 									<button
 										onclick={(e) => { e.stopPropagation(); selectFloor(fp.id); showFloorMenu = showFloorMenu === fp.id ? null : fp.id; }}
-										class="py-1.5 px-1.5 rounded-r-lg text-xs transition-colors {active ? 'bg-purple-700 text-purple-200 hover:text-white border-l border-purple-500/40' : 'bg-slate-800 text-slate-500 hover:text-white border-l border-slate-700/50'}"
+										class="py-1.5 px-1.5 rounded-r-lg text-xs transition-colors {active ? 'bg-indigo-700 text-indigo-200 hover:text-white border-l border-indigo-500/40' : 'bg-slate-800 text-slate-500 hover:text-white border-l border-slate-700/50'}"
 									>
 										<Icon icon="mdi:chevron-down" width={14} />
 									</button>
@@ -2731,7 +2734,7 @@
 						</div>
 					{/each}
 					<!-- Add floor button -->
-					<label class="shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800/50 text-slate-500 hover:text-purple-400 hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1 {uploading ? 'opacity-50 pointer-events-none' : ''}">
+					<label class="shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800/50 text-slate-500 hover:text-indigo-400 hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1 {uploading ? 'opacity-50 pointer-events-none' : ''}">
 						<Icon icon="mdi:plus" width={14} />
 						<span>Add floor</span>
 						<input
@@ -2777,7 +2780,7 @@
 					<div class="flex items-center flex-wrap gap-y-1.5">
 						<div class="flex gap-1.5 items-center flex-wrap">
 							<span class="text-[10px] text-slate-500 mr-1">Layers:</span>
-							<button onclick={() => { visibleLayers.rooms = !visibleLayers.rooms; }} class="px-2 py-0.5 rounded text-[10px] font-medium transition-colors {visibleLayers.rooms ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800/50 text-slate-500 border border-transparent'}">
+							<button onclick={() => { visibleLayers.rooms = !visibleLayers.rooms; }} class="px-2 py-0.5 rounded text-[10px] font-medium transition-colors {visibleLayers.rooms ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800/50 text-slate-500 border border-transparent'}">
 								Rooms
 							</button>
 							<!-- Loads: click toggles, chevron opens type filter dropdown -->
@@ -2815,7 +2818,7 @@
 							<div class="relative flex items-center">
 								<button
 									onclick={() => { visibleLayers.receptacles = !visibleLayers.receptacles; }}
-									class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium transition-colors {visibleLayers.receptacles ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-slate-800/50 text-slate-500 border border-transparent'}"
+									class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium transition-colors {visibleLayers.receptacles ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800/50 text-slate-500 border border-transparent'}"
 								>
 									Receptacles{receptacleTypeFilter ? ` (${receptacleTypeFilter.size})` : ''}
 									<Icon icon="mdi:chevron-down" width={8} class="ml-1 opacity-60 hover:opacity-100" onclick={(e) => { e.stopPropagation(); recFilterOpen = !recFilterOpen; loadFilterOpen = false; }} />
@@ -2824,7 +2827,7 @@
 									<!-- svelte-ignore a11y_no_static_element_interactions -->
 									<div class="absolute top-full left-0 mt-1 z-50 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-2 min-w-[160px] max-h-[240px] overflow-y-auto"
 										onclick={(e) => e.stopPropagation()}>
-										<button onclick={() => { receptacleTypeFilter = null; }} class="w-full text-left px-2 py-1 rounded text-[10px] font-medium transition-colors {!receptacleTypeFilter ? 'bg-blue-500/20 text-blue-300' : 'text-slate-400 hover:text-white hover:bg-slate-700'}">
+										<button onclick={() => { receptacleTypeFilter = null; }} class="w-full text-left px-2 py-1 rounded text-[10px] font-medium transition-colors {!receptacleTypeFilter ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-400 hover:text-white hover:bg-slate-700'}">
 											Show All
 										</button>
 										<div class="border-t border-slate-700 my-1"></div>
@@ -2833,10 +2836,10 @@
 												if (!receptacleTypeFilter) receptacleTypeFilter = new Set([key]);
 												else if (receptacleTypeFilter.has(key)) { receptacleTypeFilter.delete(key); receptacleTypeFilter = receptacleTypeFilter.size === 0 ? null : new Set(receptacleTypeFilter); }
 												else { receptacleTypeFilter.add(key); receptacleTypeFilter = new Set(receptacleTypeFilter); }
-											}} class="w-full text-left px-2 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-1.5 {receptacleTypeFilter?.has(key) ? 'bg-blue-500/10 text-blue-300' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}">
+											}} class="w-full text-left px-2 py-0.5 rounded text-[10px] font-medium transition-colors flex items-center gap-1.5 {receptacleTypeFilter?.has(key) ? 'bg-indigo-500/10 text-indigo-300' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}">
 												<Icon icon={cfg.icon} width={11} class="shrink-0" />
 												{cfg.label}
-												{#if receptacleTypeFilter?.has(key)}<Icon icon="mdi:check" width={10} class="ml-auto text-blue-400" />{/if}
+												{#if receptacleTypeFilter?.has(key)}<Icon icon="mdi:check" width={10} class="ml-auto text-indigo-400" />{/if}
 											</button>
 										{/each}
 									</div>
@@ -3627,10 +3630,10 @@
 												style="left: clamp(8px, calc({areaPos.x * 100}% - 100px), calc(100% - 208px)); {roomPopFlip ? `top: calc(${areaPos.y * 100}% - 20px)` : `top: calc(${areaPos.y * 100}% + 20px)`}"
 												onclick={(e) => e.stopPropagation()}
 											>
-												<div class="bg-slate-900/95 border border-purple-500/40 rounded-lg shadow-xl backdrop-blur-sm p-2.5 space-y-1.5 max-h-[240px] overflow-y-auto">
+												<div class="bg-slate-900/95 border border-indigo-500/40 rounded-lg shadow-xl backdrop-blur-sm p-2.5 space-y-1.5 max-h-[240px] overflow-y-auto">
 												<div class="flex items-center justify-between">
 													<div class="flex items-center gap-1.5">
-														<span class="w-4 h-4 rounded-full bg-purple-500/80 flex items-center justify-center">
+														<span class="w-4 h-4 rounded-full bg-indigo-500/80 flex items-center justify-center">
 															<Icon icon="mdi:home-outline" width={9} class="text-white" />
 														</span>
 														<span class="text-[11px] font-medium text-white">{selectedArea.fields.Name}</span>
@@ -3674,7 +3677,7 @@
 												{#if areaRecs.length > 0}
 													{@const showAllRecs = expandedOverflow[`popover-recs-${selectedArea?.id}`]}
 													<div>
-														<p class="text-[9px] text-blue-300 font-medium mb-0.5">Receptacles ({areaRecs.length})</p>
+														<p class="text-[9px] text-indigo-300 font-medium mb-0.5">Receptacles ({areaRecs.length})</p>
 														{#each (showAllRecs ? areaRecs : areaRecs.slice(0, 8)) as rec}
 															{@const m = getDeviceMarker(rec, 'receptacle')}
 															{@const isPlaced = rec.fields.Floorplan_Id != null}
@@ -3692,7 +3695,7 @@
 																{#if !isPlaced}
 																	<button
 																		onclick={(e) => { e.stopPropagation(); if (!editingMarkers) editingMarkers = true; placingItem = { type: 'receptacle', id: rec.id }; expandedCluster = null; activePanel = { areaId: 0, mode: null }; }}
-																		class="ml-auto shrink-0 text-blue-400 hover:text-blue-200"
+																		class="ml-auto shrink-0 text-indigo-400 hover:text-indigo-200"
 																		title="Place on floorplan"
 																	>
 																		<Icon icon="mdi:map-marker-plus" width={12} />
@@ -3701,7 +3704,7 @@
 															</div>
 														{/each}
 														{#if !showAllRecs && areaRecs.length > 8}
-															<button onclick={(e) => { e.stopPropagation(); expandedOverflow = { ...expandedOverflow, [`popover-recs-${selectedArea?.id}`]: true }; }} class="text-[9px] text-blue-400 hover:text-blue-200 cursor-pointer mt-0.5">+{areaRecs.length - 8} more…</button>
+															<button onclick={(e) => { e.stopPropagation(); expandedOverflow = { ...expandedOverflow, [`popover-recs-${selectedArea?.id}`]: true }; }} class="text-[9px] text-indigo-400 hover:text-indigo-200 cursor-pointer mt-0.5">+{areaRecs.length - 8} more…</button>
 														{/if}
 													</div>
 												{/if}
@@ -3783,7 +3786,7 @@
 												</div>
 											</div>
 											<!-- Link to full panel view -->
-											<a href="/panels" class="block text-center text-[9px] text-blue-400 hover:text-blue-300 pt-1 border-t border-slate-700/50">
+											<a href="/panels" class="block text-center text-[9px] text-indigo-400 hover:text-indigo-300 pt-1 border-t border-slate-700/50">
 												View full panel →
 											</a>
 										</div>
@@ -3804,13 +3807,13 @@
 						<div class="bg-slate-800/60 rounded-xl border border-slate-700/40 p-3 space-y-3">
 							<!-- Rooms -->
 							<div>
-								<p class="text-[10px] font-semibold text-purple-300 uppercase tracking-wide mb-1">Rooms</p>
+								<p class="text-[10px] font-semibold text-indigo-300 uppercase tracking-wide mb-1">Rooms</p>
 								{#if unplaced.length > 0}
 									<div class="flex flex-wrap gap-1.5">
 										{#each unplaced as area}
 											<button
 												onclick={() => { placingItem = { type: 'room', areaId: area.id }; expandedCluster = null; }}
-												class="px-2 py-0.5 rounded text-[10px] transition-colors {placingItem?.type === 'room' && placingItem?.areaId === area.id ? 'bg-purple-500/30 text-purple-200 border border-purple-400/50' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white'}"
+												class="px-2 py-0.5 rounded text-[10px] transition-colors {placingItem?.type === 'room' && placingItem?.areaId === area.id ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-400/50' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white'}"
 											>
 												{area.fields.Name || 'Room'}
 											</button>
@@ -3843,7 +3846,7 @@
 							</div>
 							<!-- Receptacles -->
 							<div>
-								<p class="text-[10px] font-semibold text-blue-300 uppercase tracking-wide mb-1">Receptacles ({unplacedRecs.length} unplaced)</p>
+								<p class="text-[10px] font-semibold text-indigo-300 uppercase tracking-wide mb-1">Receptacles ({unplacedRecs.length} unplaced)</p>
 								{#if unplacedRecs.length > 0}
 									{@const showAllEditRecs = expandedOverflow['edit-recs']}
 									<div class="flex flex-wrap gap-1.5 {showAllEditRecs ? 'max-h-48' : 'max-h-24'} overflow-y-auto">
@@ -3851,14 +3854,14 @@
 											{@const mates = getGangMates(rec).filter(m => !m.fields.Floorplan_Id)}
 											<button
 												onclick={() => { placingItem = { type: 'receptacle', id: rec.id }; expandedCluster = null; }}
-												class="px-2 py-0.5 rounded text-[10px] transition-colors {placingItem?.type === 'receptacle' && placingItem?.id === rec.id ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white'}"
+												class="px-2 py-0.5 rounded text-[10px] transition-colors {placingItem?.type === 'receptacle' && placingItem?.id === rec.id ? 'bg-indigo-500/30 text-indigo-200 border border-indigo-400/50' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white'}"
 											>
 												{getDisplayName(rec, 'Receptacle')}{#if mates.length > 0} <span class="text-slate-500">+{mates.length}</span>{/if}
 											</button>
 										{/each}
 									</div>
 									{#if !showAllEditRecs && unplacedRecs.length > 20}
-										<button onclick={() => { if (unplacedRecs.length > 40) { overflowModal = { title: `Unplaced Receptacles (${unplacedRecs.length})`, items: unplacedRecs.map(r => ({ record: r, type: 'receptacle' })) }; } else { expandedOverflow = { ...expandedOverflow, ['edit-recs']: true }; } }} class="text-[9px] text-blue-400 hover:text-blue-200 cursor-pointer mt-1">+{unplacedRecs.length - 20} more…</button>
+										<button onclick={() => { if (unplacedRecs.length > 40) { overflowModal = { title: `Unplaced Receptacles (${unplacedRecs.length})`, items: unplacedRecs.map(r => ({ record: r, type: 'receptacle' })) }; } else { expandedOverflow = { ...expandedOverflow, ['edit-recs']: true }; } }} class="text-[9px] text-indigo-400 hover:text-indigo-200 cursor-pointer mt-1">+{unplacedRecs.length - 20} more…</button>
 									{/if}
 								{:else}
 									<p class="text-[10px] text-emerald-400">✓ All placed</p>
@@ -3884,7 +3887,7 @@
 							</div>
 
 							<div class="border-t border-slate-700/40 pt-2 flex gap-2">
-								<button onclick={() => openQuickAdd()} class="px-3 py-1.5 rounded-lg text-xs bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/30 transition-colors">
+								<button onclick={() => openQuickAdd()} class="px-3 py-1.5 rounded-lg text-xs bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30 transition-colors">
 									<Icon icon="mdi:plus" width={12} class="inline mr-1" />New Load
 								</button>
 								<button onclick={() => openQuickAddReceptacle()} class="px-3 py-1.5 rounded-lg text-xs bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 transition-colors">
@@ -3896,15 +3899,15 @@
 			{:else if floorplans.length === 0}
 				<!-- Empty state: upload/paste -->
 				<div class="border-2 border-dashed border-slate-700/60 rounded-xl p-8 text-center space-y-4">
-					<div class="w-14 h-14 mx-auto rounded-full bg-purple-500/10 flex items-center justify-center">
-						<Icon icon="mdi:floor-plan" width={28} class="text-purple-400" />
+					<div class="w-14 h-14 mx-auto rounded-full bg-indigo-500/10 flex items-center justify-center">
+						<Icon icon="mdi:floor-plan" width={28} class="text-indigo-400" />
 					</div>
 					<div>
 						<p class="text-sm font-medium text-white">Add a floorplan</p>
 						<p class="text-xs text-slate-400 mt-1">Upload an image or paste a screenshot (Ctrl+V)</p>
 					</div>
 					<div class="flex gap-2 justify-center">
-						<label class="cursor-pointer px-4 py-2 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-500 transition-colors active:scale-[0.96] {uploading ? 'opacity-50 pointer-events-none' : ''}">
+						<label class="cursor-pointer px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-500 transition-colors active:scale-[0.96] {uploading ? 'opacity-50 pointer-events-none' : ''}">
 							{uploading ? 'Uploading…' : 'Choose Image'}
 							<input
 								type="file"
@@ -3962,7 +3965,7 @@
 				</div>
 				<button
 					onclick={() => { showCreateRoom = true; }}
-					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-background-color active:scale-[0.96]"
+					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
 				>
 					<Icon icon="mdi:plus" width={18} />
 					Create Room
@@ -4000,7 +4003,7 @@
 
 								{@const hasActivePanel = devicesActive || editActive || commentsActive}
 
-								<div data-area-id={area.id} class="bg-slate-800/50 rounded-xl border transition-border-color {hasActivePanel ? 'border-blue-500/60' : 'border-slate-700/50'} relative">
+								<div data-area-id={area.id} class="bg-slate-800/50 rounded-xl border transition-border-color {hasActivePanel ? 'border-indigo-500/60' : 'border-slate-700/50'} relative">
 									<!-- Room header bar -->
 									<div class="flex items-center gap-3 px-3 py-3 min-h-[52px] group">
 										<!-- Colored icon -->
@@ -4025,8 +4028,8 @@
 													</span>
 												{/if}
 												{#if recCount > 0}
-													<span title="{recCount} receptacle{recCount !== 1 ? 's' : ''}" class="text-xs text-blue-400/80 flex items-center gap-1" style="font-variant-numeric: tabular-nums">
-														<Icon icon="mdi:power-socket-us" width={13} class="text-blue-400" />{recCount}
+													<span title="{recCount} receptacle{recCount !== 1 ? 's' : ''}" class="text-xs text-indigo-400/80 flex items-center gap-1" style="font-variant-numeric: tabular-nums">
+														<Icon icon="mdi:power-socket-us" width={13} class="text-indigo-400" />{recCount}
 													</span>
 												{/if}
 												{#if (f.Circuits as number) > 0}
@@ -4042,7 +4045,7 @@
 											<button
 												onclick={() => togglePanel(area.id, 'devices')}
 												title="Devices"
-												class="p-1.5 rounded-md transition-all {devicesActive ? 'text-blue-400 bg-blue-500/15 ring-1 ring-blue-500/40' : 'text-slate-500 opacity-0 group-hover:opacity-100 hover:text-blue-400 hover:bg-blue-500/10'}"
+												class="p-1.5 rounded-md transition-all {devicesActive ? 'text-indigo-400 bg-indigo-500/15 ring-1 ring-indigo-500/40' : 'text-slate-500 opacity-0 group-hover:opacity-100 hover:text-indigo-400 hover:bg-indigo-500/10'}"
 											>
 												<Icon icon="mdi:format-list-bulleted" width={15} />
 											</button>
@@ -4057,11 +4060,11 @@
 												onclick={() => toggleComments(area.id)}
 												onmouseenter={() => fetchCommentCount(area.id)}
 												title="Comments"
-												class="relative p-1.5 rounded-md transition-all {commentsActive ? 'text-purple-400 bg-purple-500/15 ring-1 ring-purple-500/40' : 'text-slate-500 opacity-0 group-hover:opacity-100 hover:text-purple-400 hover:bg-purple-500/10'}"
+												class="relative p-1.5 rounded-md transition-all {commentsActive ? 'text-indigo-400 bg-indigo-500/15 ring-1 ring-indigo-500/40' : 'text-slate-500 opacity-0 group-hover:opacity-100 hover:text-indigo-400 hover:bg-indigo-500/10'}"
 											>
 												<Icon icon="mdi:comment-outline" width={15} />
 												{#if (commentCounts[area.id] ?? 0) > 0}
-													<span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-purple-500 text-white rounded-full" style="font-variant-numeric: tabular-nums">{commentCounts[area.id]}</span>
+													<span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-indigo-500 text-white rounded-full" style="font-variant-numeric: tabular-nums">{commentCounts[area.id]}</span>
 												{/if}
 											</button>
 											<div class="relative">
@@ -4085,7 +4088,7 @@
 															onclick={() => { addMenuAreaId = null; openQuickAddReceptacle(area.id); }}
 															class="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-700/60 hover:text-white transition-background-color"
 														>
-															<Icon icon="mdi:power-socket-us" width={14} class="text-blue-400" />
+															<Icon icon="mdi:power-socket-us" width={14} class="text-indigo-400" />
 															Add Receptacle
 														</button>
 														<div class="border-t border-slate-700/50 my-1"></div>
@@ -4115,7 +4118,7 @@
 													<label for="edit-name-{area.id}" class="text-xs text-slate-500 block mb-1">Name</label>
 													<input id="edit-name-{area.id}" type="text" bind:value={editName}
 														oninput={() => { editDirty = true; }}
-														class="w-full bg-slate-800 border border-slate-600/50 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color" />
+														class="w-full bg-slate-800 border border-slate-600/50 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 												</div>
 												<div>
 													<span class="text-xs text-slate-500 block mb-1">Icon</span>
@@ -4140,7 +4143,7 @@
 												</div>
 												<div class="flex gap-2">
 													<button onclick={saveEdit} disabled={saving}
-														class="flex-1 bg-blue-600 text-white text-xs font-medium py-2 rounded-md hover:bg-blue-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
+														class="flex-1 bg-indigo-600 text-white text-xs font-medium py-2 rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
 														{saving ? 'Saving…' : 'Save'}
 													</button>
 													<button onclick={() => { cancelEdit(); activePanel = { areaId: 0, mode: null }; }} class="px-3 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
@@ -4169,9 +4172,9 @@
 												<div class="flex gap-1.5 mt-1">
 													<input type="text" bind:value={newComment} placeholder="Add a comment…"
 														onkeydown={(e) => { if (e.key === 'Enter') addComment(area.id); }}
-														class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-border-color" />
+														class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-border-color" />
 													<button onclick={() => addComment(area.id)} disabled={addingComment || !newComment.trim()}
-														class="px-2.5 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-500 transition-background-color active:scale-[0.96] disabled:opacity-40">
+														class="px-2.5 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-40">
 														<Icon icon="mdi:send" width={14} />
 													</button>
 												</div>
@@ -4228,7 +4231,7 @@
 																	role="button"
 																	tabindex="0"
 																	title="Move"
-																	class="p-1.5 rounded-md hover:bg-slate-700/60 text-slate-500 hover:text-blue-400 transition-color,background-color"
+																	class="p-1.5 rounded-md hover:bg-slate-700/60 text-slate-500 hover:text-indigo-400 transition-color,background-color"
 																>
 																	<Icon icon="mdi:swap-horizontal" width={15} />
 																</span>
@@ -4266,14 +4269,14 @@
 															<div class="px-3 pb-3 flex gap-2 items-center">
 																<select
 																	bind:value={moveTargetAreaId}
-																	class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500 transition-border-color"
+																	class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-border-color"
 																>
 																	<option value={null} disabled>Move to…</option>
 																	{#each areas.filter((a) => a.id !== movingDevice?.areaId) as a}
 																		<option value={a.id}>{a.fields.Name}</option>
 																	{/each}
 																</select>
-																<button onclick={confirmMoveDevice} disabled={saving || !moveTargetAreaId} class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-500 transition-background-color active:scale-[0.96] disabled:opacity-50">Move</button>
+																<button onclick={confirmMoveDevice} disabled={saving || !moveTargetAreaId} class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">Move</button>
 																<button onclick={() => { movingDevice = null; }} class="px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
 															</div>
 														{/if}
@@ -4282,7 +4285,7 @@
 												{#if devices.length > 8 && !showAllDevices[area.id]}
 													<button
 														onclick={() => { showAllDevices = { ...showAllDevices, [area.id]: true }; }}
-														class="w-full py-2.5 text-xs text-blue-400 hover:text-blue-300 bg-slate-800/30 transition-color"
+														class="w-full py-2.5 text-xs text-indigo-400 hover:text-indigo-300 bg-slate-800/30 transition-color"
 													>
 														Show all {devices.length} devices →
 													</button>
@@ -4337,7 +4340,7 @@
 {#if viewMode === 'list' && !loading && areas.length > 0}
 	<button
 		onclick={() => openQuickAdd()}
-		class="fixed bottom-24 right-4 z-20 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-500 transition-background-color active:scale-[0.92]"
+		class="fixed bottom-24 right-4 z-20 w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-indigo-500 transition-background-color active:scale-[0.92]"
 		aria-label="Add load"
 	>
 		<Icon icon="mdi:plus" width={24} />
@@ -4396,7 +4399,7 @@
 						type="text"
 						bind:value={newRoomName}
 						placeholder="e.g. Living Room"
-						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 						onkeydown={(e) => { if (e.key === 'Enter' && newRoomName.trim()) createRoom(); }}
 					/>
 				</div>
@@ -4411,7 +4414,7 @@
 						oninput={() => { floorDropdownOpen = true; }}
 						onblur={() => { setTimeout(() => { floorDropdownOpen = false; }, 150); }}
 						autocomplete="off"
-						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 					/>
 					{#if floorDropdownOpen && filteredFloorSuggestions.length > 0}
 						<div class="absolute z-10 top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-600/50 rounded-lg shadow-xl overflow-hidden">
@@ -4434,7 +4437,7 @@
 				<button
 					onclick={() => createRoom()}
 					disabled={!newRoomName.trim() || creatingRoom}
-					class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-background-color disabled:opacity-50 active:scale-[0.96]"
+					class="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color disabled:opacity-50 active:scale-[0.96]"
 				>{creatingRoom ? 'Creating…' : 'Create'}</button>
 			</div>
 		</div>

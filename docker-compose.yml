@@ -1,10 +1,11 @@
-# Docker Compose for deploying the Electrical Config PWA
-# Add this to your existing stack or run standalone
+# Docker Compose for deploying the Ohm PWA
+# Local dev-parity copy — the homelab-config repo's stacks/server-mini/ohm/compose.yaml
+# is the source of truth for the running deployment (pulls from registry.socko.us).
 
 services:
-  electrical-ui:
+  ohm:
     build: .
-    container_name: electrical-ui
+    container_name: ohm
     restart: unless-stopped
     env_file: .env
     environment:
@@ -13,9 +14,9 @@ services:
       - traefik
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.electrical.rule=Host(`electrical.socko.us`)"
-      - "traefik.http.routers.electrical.entrypoints=web"
-      - "traefik.http.services.electrical.loadbalancer.server.port=3000"
+      - "traefik.http.routers.ohm.rule=Host(`ohm.socko.us`)"
+      - "traefik.http.routers.ohm.entrypoints=web"
+      - "traefik.http.services.ohm.loadbalancer.server.port=3000"
       - "traefik.docker.network=traefik"
 
 networks:

@@ -37,10 +37,10 @@
 		class="fixed bottom-4 left-4 right-4 z-[60] flex items-start gap-3 px-4 py-3 rounded-2xl bg-slate-800/95 backdrop-blur-md border border-slate-700/60 shadow-lg shadow-black/30"
 		style="animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
 	>
-		<Icon icon="mdi:cellphone-arrow-down" class="w-6 h-6 text-blue-400 shrink-0 mt-0.5" />
+		<Icon icon="mdi:cellphone-arrow-down" class="w-6 h-6 text-indigo-400 shrink-0 mt-0.5" />
 		<div class="flex-1 min-w-0">
 			<p class="text-sm font-medium text-white">Open in Home Electrical app</p>
-			<p class="text-xs text-slate-400 mt-0.5">Add to Home Screen for the best experience — tap <Icon icon="mdi:export-variant" class="inline w-3.5 h-3.5 text-blue-400" /> then "Add to Home Screen"</p>
+			<p class="text-xs text-slate-400 mt-0.5">Add to Home Screen for the best experience — tap <Icon icon="mdi:export-variant" class="inline w-3.5 h-3.5 text-indigo-400" /> then "Add to Home Screen"</p>
 		</div>
 		<button
 			type="button"
