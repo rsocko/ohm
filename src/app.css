@@ -1,0 +1,236 @@
+@import 'tailwindcss';
+
+/* ─── Design Tokens ───
+ * These define the app's visual language. All colors, radii, and shadows
+ * should reference these tokens. Tailwind v4 generates utilities from @theme:
+ *   --color-surface-base  →  bg-surface-base, text-surface-base, border-surface-base
+ *   --color-fg            →  text-fg
+ *   --radius-card         →  rounded-card
+ *   --shadow-card         →  shadow-card
+ *
+ * See docs/design-tokens.md for the full reference.
+ */
+@theme {
+	/* ── Surfaces ── */
+	--color-surface-base: oklch(0.145 0.014 260);          /* app background */
+	--color-surface-raised: oklch(0.21 0.012 260 / 0.5);   /* cards, sections */
+	--color-surface-overlay: oklch(0.21 0.012 260 / 0.7);  /* popovers, sheets */
+	--color-surface-hover: oklch(0.24 0.012 260 / 0.5);    /* interactive hover */
+	--color-surface-active: oklch(0.24 0.012 260 / 0.7);   /* pressed/selected */
+
+	/* ── Foreground (text) ── */
+	--color-fg: oklch(1.0 0 0);                            /* primary text (white) */
+	--color-fg-secondary: oklch(0.78 0.01 260);            /* body text */
+	--color-fg-muted: oklch(0.64 0.01 260);                /* labels, captions */
+	--color-fg-faint: oklch(0.50 0.01 260);                /* disabled, meta */
+
+	/* ── Borders ── */
+	--color-border: oklch(0.40 0.01 260 / 0.6);           /* default borders */
+	--color-border-subtle: oklch(0.40 0.01 260 / 0.4);    /* card edges */
+	--color-border-focus: oklch(0.65 0.15 260);            /* focus rings */
+
+	/* ── Accent (purple — primary interactive) ── */
+	--color-accent: oklch(0.65 0.18 300);
+	--color-accent-subtle: oklch(0.65 0.18 300 / 0.2);    /* bg tint */
+	--color-accent-fg: oklch(0.78 0.12 300);               /* accent text */
+
+	/* ── Info (blue/sky) ── */
+	--color-info: oklch(0.70 0.14 230);
+	--color-info-subtle: oklch(0.70 0.14 230 / 0.15);
+	--color-info-fg: oklch(0.80 0.10 230);
+
+	/* ── Status ── */
+	--color-success: oklch(0.72 0.19 155);
+	--color-success-subtle: oklch(0.72 0.19 155 / 0.15);
+	--color-warning: oklch(0.75 0.15 85);
+	--color-warning-subtle: oklch(0.75 0.15 85 / 0.12);
+	--color-danger: oklch(0.65 0.20 25);
+	--color-danger-subtle: oklch(0.65 0.20 25 / 0.12);
+
+	/* ── Source indicators ── */
+	--color-source-nocodb: oklch(0.72 0.19 155);           /* emerald */
+	--color-source-unifi: oklch(0.65 0.18 250);            /* blue */
+	--color-source-ha: oklch(0.70 0.14 200);               /* sky/cyan */
+	--color-source-homebox: oklch(0.70 0.16 50);           /* amber */
+
+	/* ── Category colors ── */
+	--color-cat-networking: oklch(0.68 0.18 320);          /* fuchsia */
+	--color-cat-computing: oklch(0.64 0.01 260);           /* slate */
+	--color-cat-iot: oklch(0.70 0.14 175);                 /* teal */
+	--color-cat-media: oklch(0.65 0.18 290);               /* purple */
+	--color-cat-camera: oklch(0.60 0.20 25);               /* red */
+	--color-cat-climate: oklch(0.72 0.17 155);             /* green */
+	--color-cat-lighting: oklch(0.80 0.16 90);             /* yellow */
+	--color-cat-appliance: oklch(0.72 0.15 55);            /* orange */
+	--color-cat-power: oklch(0.75 0.15 75);                /* amber */
+
+	/* ── Radii ── */
+	--radius-pill: 9999px;
+	--radius-sm: 0.5rem;        /* 8px — badges, dots */
+	--radius-md: 0.75rem;       /* 12px — list items, inputs */
+	--radius-card: 1rem;        /* 16px — cards */
+	--radius-panel: 1.25rem;    /* 20px — bottom sheets, dialogs */
+
+	/* ── Shadows ── */
+	--shadow-card: 0 16px 48px oklch(0.10 0.02 260 / 0.28), inset 0 1px 0 oklch(1 0 0 / 0.04);
+	--shadow-sheet: 0 -16px 48px oklch(0 0 0 / 0.5);
+	--shadow-glow-online: 0 0 4px oklch(0.72 0.19 155 / 0.5);
+	--shadow-glow-offline: 0 0 4px oklch(0.65 0.20 25 / 0.3);
+
+	/* ── Spacing ── */
+	--spacing-page: 1rem;
+	--spacing-card: 1.25rem;
+	--spacing-section: 1rem;
+
+	/* ── Font sizes ── */
+	--font-size-page-title: 1.5rem;
+	--font-size-section-title: 0.875rem;
+	--font-size-body: 0.875rem;
+	--font-size-caption: 0.75rem;
+}
+
+/* ── Semantic utility shortcuts ── */
+@utility card {
+	border-radius: var(--radius-card);
+	background: var(--color-surface-raised);
+	border: 1px solid var(--color-border-subtle);
+	box-shadow: var(--shadow-card);
+}
+
+@utility sheet {
+	border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+	background: var(--color-surface-base);
+	border-top: 1px solid var(--color-border-subtle);
+	box-shadow: var(--shadow-sheet);
+}
+
+
+/* Hide scrollbar but keep scrollability */
+.scrollbar-hide {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+/* Custom scrollbar: thin, dark, matches app theme */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(100, 116, 139, 0.4) transparent;
+}
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+::-webkit-scrollbar-track {
+	background: transparent;
+}
+::-webkit-scrollbar-thumb {
+	background: rgba(100, 116, 139, 0.4);
+	border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(100, 116, 139, 0.6);
+}
+
+@keyframes fade-in {
+	from { opacity: 0; transform: translateY(-4px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+	animation: fade-in 0.3s ease-out;
+}
+
+@keyframes appear {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+@keyframes stagger-in {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+	opacity: 0;
+	animation: stagger-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes panel-slide-right {
+	from { opacity: 0; transform: translateX(140px); }
+	to { opacity: 1; transform: translateX(0); }
+}
+@keyframes panel-slide-left {
+	from { opacity: 0; transform: translateX(-140px); }
+	to { opacity: 1; transform: translateX(0); }
+}
+.panel-slide-right {
+	animation: panel-slide-right 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.panel-slide-left {
+	animation: panel-slide-left 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.panel-slide-right > *,
+.panel-slide-left > * {
+	opacity: 0;
+	animation: appear 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.panel-slide-right > *:nth-child(1),
+.panel-slide-left > *:nth-child(1) { animation-delay: 50ms; }
+.panel-slide-right > *:nth-child(2),
+.panel-slide-left > *:nth-child(2) { animation-delay: 100ms; }
+.panel-slide-right > *:nth-child(3),
+.panel-slide-left > *:nth-child(3) { animation-delay: 140ms; }
+.panel-slide-right > *:nth-child(4),
+.panel-slide-left > *:nth-child(4) { animation-delay: 180ms; }
+.panel-slide-right > *:nth-child(n+5),
+.panel-slide-left > *:nth-child(n+5) { animation-delay: 200ms; }
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-fade-in {
+		animation: none;
+	}
+	.stagger-item {
+		animation: none;
+		opacity: 1;
+	}
+	.panel-slide-right,
+	.panel-slide-left {
+		animation: none;
+		opacity: 1;
+	}
+	.deep-link-flash {
+		animation: none;
+	}
+}
+
+/* Deep link flash: brief glow to highlight navigated-to item */
+@keyframes deep-link-pulse {
+	0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+	25% { box-shadow: 0 0 8px 5px rgba(59, 130, 246, 0.5); }
+	60% { box-shadow: 0 0 4px 3px rgba(59, 130, 246, 0.25); }
+	100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+.deep-link-flash {
+	animation: deep-link-pulse 2s ease-out;
+	animation-delay: 0.5s;
+	animation-fill-mode: backwards;
+}
+
+/* Touch devices: always show action buttons (no hover available) */
+@media (hover: none) {
+	.group .group-hover\:opacity-100,
+	.group\/row .group-hover\/row\:opacity-100 {
+		opacity: 1 !important;
+	}
+}
+
+/* View Transitions: search bar animates between Home and Search pages */
+@view-transition {
+	navigation: auto;
+}
+::view-transition-old(search-bar),
+::view-transition-new(search-bar) {
+	animation-duration: 0.3s;
+	animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}

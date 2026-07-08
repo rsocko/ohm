@@ -1,0 +1,23 @@
+# Docker Compose for deploying the Electrical Config PWA
+# Add this to your existing stack or run standalone
+
+services:
+  electrical-ui:
+    build: .
+    container_name: electrical-ui
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - PORT=3000
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.electrical.rule=Host(`electrical.example.com`)"
+      - "traefik.http.routers.electrical.entrypoints=web"
+      - "traefik.http.services.electrical.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik"
+
+networks:
+  traefik:
+    external: true
