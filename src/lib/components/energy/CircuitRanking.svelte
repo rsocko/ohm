@@ -55,7 +55,7 @@
 				<div class="flex items-center gap-3">
 					<div class="flex-1 h-[7px] overflow-hidden rounded-full bg-slate-950/68 shadow-[inset_0_0_0_1px_rgba(148,163,184,0.06)]">
 						<div
-							class="h-full rounded-full bg-gradient-to-r from-blue-400/72 to-cyan-400/88 shadow-[0_0_18px_rgba(34,211,238,0.18)]"
+							class="h-full rounded-full bg-gradient-to-r from-indigo-400/72 to-cyan-400/88 shadow-[0_0_18px_rgba(34,211,238,0.18)]"
 							style="width: {Math.min(circuit.capacityPercent, 100)}%; transition: width 0.3s ease"
 						></div>
 					</div>

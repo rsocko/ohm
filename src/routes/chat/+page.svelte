@@ -61,7 +61,7 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between py-4 shrink-0">
 			<div class="flex items-center gap-3">
-				<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg shadow-blue-900/30">
+				<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center shadow-lg shadow-indigo-900/30">
 					<Icon icon="mdi:flash" width={22} class="text-white" />
 				</div>
 				<div>
@@ -88,7 +88,7 @@
 			{#if chatState.messages.length === 0}
 				<div class="flex flex-col items-center justify-center h-full text-center space-y-6 py-12">
 					<div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center">
-						<Icon icon="mdi:chat-processing-outline" width={32} class="text-blue-400" />
+						<Icon icon="mdi:chat-processing-outline" width={32} class="text-indigo-400" />
 					</div>
 					<div class="space-y-2">
 						<p class="text-base font-medium text-slate-200">What would you like to know?</p>
@@ -134,12 +134,12 @@
 					onkeydown={handleKeydown}
 					placeholder="Ask about your electrical setup..."
 					disabled={chatState.isLoading}
-					class="flex-1 bg-slate-900/80 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-colors disabled:opacity-60"
+					class="flex-1 bg-slate-900/80 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors disabled:opacity-60"
 				/>
 				<button
 					onclick={handleSend}
 					disabled={chatState.isLoading || !input.trim()}
-					class="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px] min-h-[44px] flex items-center justify-center"
+					class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px] min-h-[44px] flex items-center justify-center"
 					aria-label="Send message"
 				>
 					{#if chatState.isLoading}
@@ -163,7 +163,7 @@
 			</p>
 			<a
 				href="/settings"
-				class="mt-5 inline-flex min-h-[40px] items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 active:scale-[0.96]"
+				class="mt-5 inline-flex min-h-[40px] items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 active:scale-[0.96]"
 			>
 				Open Settings
 			</a>

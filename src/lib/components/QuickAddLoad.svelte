@@ -185,7 +185,7 @@
 				<select
 					id="area-select"
 					bind:value={selectedAreaId}
-					class="w-full bg-slate-900/60 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color appearance-none {attempted && !selectedAreaId ? 'border-red-500/70' : 'border-slate-600/50'}"
+					class="w-full bg-slate-900/60 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color appearance-none {attempted && !selectedAreaId ? 'border-red-500/70' : 'border-slate-600/50'}"
 				>
 					<option value={null} disabled>Select a room…</option>
 					{#each areas as area}
@@ -206,7 +206,7 @@
 						<select
 							id="rec-select"
 							bind:value={selectedReceptacleId}
-							class="w-full bg-slate-900/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color appearance-none"
+							class="w-full bg-slate-900/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color appearance-none"
 						>
 							<option value={null}>None / Not plugged in</option>
 							{#each receptacles as rec}
@@ -225,10 +225,10 @@
 						{@const active = selectedType === dt.type}
 						<button
 							onclick={() => { selectedType = dt.type; }}
-							class="flex flex-col items-center gap-1 p-2 rounded-lg text-center transition-background-color,transform active:scale-[0.94] min-h-[40px] {active ? 'bg-blue-600/20 ring-1 ring-blue-500' : 'bg-slate-700/40 hover:bg-slate-700/70'}"
+							class="flex flex-col items-center gap-1 p-2 rounded-lg text-center transition-background-color,transform active:scale-[0.94] min-h-[40px] {active ? 'bg-indigo-600/20 ring-1 ring-indigo-500' : 'bg-slate-700/40 hover:bg-slate-700/70'}"
 						>
-							<Icon icon={dt.icon} width={20} class="{active ? 'text-blue-400' : 'text-slate-400'}" />
-							<span class="text-[10px] leading-tight {active ? 'text-blue-300' : 'text-slate-500'}">{dt.type.split(' - ').pop() || dt.type}</span>
+							<Icon icon={dt.icon} width={20} class="{active ? 'text-indigo-400' : 'text-slate-400'}" />
+							<span class="text-[10px] leading-tight {active ? 'text-indigo-300' : 'text-slate-500'}">{dt.type.split(' - ').pop() || dt.type}</span>
 						</button>
 					{/each}
 				</div>
@@ -243,7 +243,7 @@
 					bind:value={loadName}
 					oninput={() => { nameManuallyEdited = true; }}
 					placeholder="e.g. Kitchen Ceiling Light"
-					class="w-full bg-slate-900/60 border rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-border-color {attempted && !loadName.trim() ? 'border-red-500/70' : 'border-slate-600/50'}"
+					class="w-full bg-slate-900/60 border rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-border-color {attempted && !loadName.trim() ? 'border-red-500/70' : 'border-slate-600/50'}"
 				/>
 			</div>
 
@@ -257,7 +257,7 @@
 
 			<!-- Add another toggle -->
 			<label class="flex items-center gap-2 cursor-pointer">
-				<input type="checkbox" bind:checked={addAnother} class="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900/60 text-blue-500 focus:ring-blue-500/30" />
+				<input type="checkbox" bind:checked={addAnother} class="w-3.5 h-3.5 rounded border-slate-600 bg-slate-900/60 text-indigo-500 focus:ring-indigo-500/30" />
 				<span class="text-xs text-slate-400">Add another after saving</span>
 			</label>
 
@@ -272,7 +272,7 @@
 			<button
 				onclick={save}
 				disabled={saving || !selectedAreaId || !selectedType || !loadName.trim()}
-				class="flex-1 bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-blue-500 transition-background-color active:scale-[0.96] disabled:opacity-40 min-h-[40px]"
+				class="flex-1 bg-indigo-600 text-white text-sm font-semibold py-2.5 rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-40 min-h-[40px]"
 			>
 				{saving ? 'Saving…' : 'Add Load'}
 			</button>

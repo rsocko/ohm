@@ -10,15 +10,16 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			manifest: {
-				name: 'Electrical Config',
-				short_name: 'Electrical',
-				description: 'Home electrical configuration lookup and AI assistant',
-				theme_color: '#1e293b',
-				background_color: '#0f172a',
+				name: 'Ohm',
+				short_name: 'Ohm',
+				description: 'Ohm — AI-powered home electrical intelligence',
+				theme_color: '#6366F1',
+				background_color: '#0F0F1A',
 				display: 'standalone',
 				icons: [
 					{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-					{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+					{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+					{ src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
 				]
 			},
 			workbox: {

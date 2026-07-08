@@ -25,7 +25,7 @@
 		{ id: 'networking', label: 'Networking', icon: 'mdi:router-wireless', color: 'text-fuchsia-400' },
 		{ id: 'computing', label: 'Computing', icon: 'mdi:desktop-tower', color: 'text-slate-400' },
 		{ id: 'iot-hub', label: 'IoT', icon: 'mdi:hub', color: 'text-teal-400' },
-		{ id: 'media', label: 'Media', icon: 'mdi:television', color: 'text-purple-400' },
+		{ id: 'media', label: 'Media', icon: 'mdi:television', color: 'text-indigo-400' },
 		{ id: 'camera', label: 'Cameras', icon: 'mdi:cctv', color: 'text-red-400' },
 		{ id: 'climate', label: 'Climate', icon: 'mdi:thermostat', color: 'text-green-400' },
 		{ id: 'lighting', label: 'Lighting', icon: 'mdi:lightbulb', color: 'text-yellow-400' },
@@ -38,7 +38,7 @@
 		networking: { icon: 'mdi:router-wireless', bg: 'bg-fuchsia-500/20', color: 'text-fuchsia-400' },
 		computing: { icon: 'mdi:desktop-tower', bg: 'bg-slate-500/20', color: 'text-slate-300' },
 		'iot-hub': { icon: 'mdi:hub', bg: 'bg-teal-500/20', color: 'text-teal-400' },
-		media: { icon: 'mdi:television', bg: 'bg-purple-500/20', color: 'text-purple-400' },
+		media: { icon: 'mdi:television', bg: 'bg-indigo-500/20', color: 'text-indigo-400' },
 		camera: { icon: 'mdi:cctv', bg: 'bg-red-500/20', color: 'text-red-400' },
 		climate: { icon: 'mdi:thermostat', bg: 'bg-green-500/20', color: 'text-green-400' },
 		lighting: { icon: 'mdi:lightbulb', bg: 'bg-yellow-500/20', color: 'text-yellow-400' },
@@ -245,8 +245,8 @@
 										</span>
 									{/if}
 									{#if device.sources.includes('unifi')}
-										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/15 text-blue-300">
-											<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>UniFi
+										<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-500/15 text-indigo-300">
+											<span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>UniFi
 										</span>
 								{/if}
 									{#if device.sources.includes('ha')}
@@ -298,8 +298,8 @@
 								{#if device.network}
 									<div class="rounded-lg bg-slate-900/80 border border-slate-700/30 p-2.5">
 										<div class="flex items-center gap-1.5 mb-2">
-											<Icon icon="mdi:lan" width={13} class="text-blue-400" />
-											<span class="text-[10px] font-semibold text-blue-300 uppercase tracking-wide">Network</span>
+											<Icon icon="mdi:lan" width={13} class="text-indigo-400" />
+											<span class="text-[10px] font-semibold text-indigo-300 uppercase tracking-wide">Network</span>
 										</div>
 										<div class="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
 											{#if device.network.ip}
@@ -349,7 +349,7 @@
 								<!-- Actions -->
 								<div class="flex gap-2 pt-1">
 									{#if device.areaId}
-											<a href="/rooms?view=floorplan&area={device.areaId}&device={device.id}" class="flex-1 text-[11px] font-medium text-center bg-purple-500/15 text-purple-300 hover:bg-purple-500/25 rounded-lg py-2 transition-colors">
+											<a href="/rooms?view=floorplan&area={device.areaId}&device={device.id}" class="flex-1 text-[11px] font-medium text-center bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 rounded-lg py-2 transition-colors">
 											<Icon icon="mdi:map-marker" width={12} class="inline -mt-0.5 mr-1" />View on Plan
 										</a>
 									{/if}

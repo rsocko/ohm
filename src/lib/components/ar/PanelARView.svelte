@@ -254,8 +254,8 @@
 
 				<button
 					onclick={handleLockAlignment}
-					class="px-5 py-2.5 rounded-full bg-blue-500 text-white text-sm font-semibold
-						shadow-lg shadow-blue-500/30 active:scale-[0.96] transition-transform duration-100"
+					class="px-5 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold
+						shadow-lg shadow-indigo-500/30 active:scale-[0.96] transition-transform duration-100"
 				>
 					<Icon icon="mdi:lock" class="w-4 h-4 inline mr-1.5" />
 					Lock Alignment
@@ -345,7 +345,7 @@
 							onclick={() => showLegend = !showLegend}
 							class="w-11 h-11 rounded-full flex items-center justify-center
 								active:scale-[0.96] transition-transform duration-100
-								{showLegend ? 'bg-blue-500/30 backdrop-blur-sm' : 'bg-white/10 backdrop-blur-sm'}"
+								{showLegend ? 'bg-indigo-500/30 backdrop-blur-sm' : 'bg-white/10 backdrop-blur-sm'}"
 						>
 							<Icon icon="mdi:information-outline" class="w-5 h-5 text-white" />
 						</button>
@@ -384,7 +384,7 @@
 								<span class="text-[11px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">GFCI</span>
 							{/if}
 							{#if selectedCircuit.fields['AFCI Protected'] || selectedCircuit.fields.AFCI_Protected}
-								<span class="text-[11px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-medium">AFCI</span>
+								<span class="text-[11px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-medium">AFCI</span>
 							{/if}
 						</div>
 					</div>
@@ -463,7 +463,7 @@
 	{#if cameraReady}
 		<div class="absolute top-0 inset-x-0 pt-12 px-4 pb-3 bg-gradient-to-b from-black/60 to-transparent">
 			<div class="flex items-center gap-2">
-				<Icon icon="mdi:augmented-reality" class="w-5 h-5 text-blue-400" />
+				<Icon icon="mdi:augmented-reality" class="w-5 h-5 text-indigo-400" />
 				<span class="text-white text-sm font-medium">{panel.fields.Name || 'Panel'}</span>
 				<span class="text-slate-400 text-xs">· AR Mode</span>
 			</div>

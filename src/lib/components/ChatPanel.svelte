@@ -50,7 +50,7 @@
 {#if !chatState.isOpen}
 	<button
 		onclick={toggleChat}
-		class="fixed bottom-20 right-4 z-50 w-14 h-14 bg-blue-600 hover:bg-blue-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-900/30 active:scale-[0.96] transition-transform"
+		class="fixed bottom-20 right-4 z-50 w-14 h-14 bg-indigo-600 hover:bg-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-indigo-900/30 active:scale-[0.96] transition-transform"
 		aria-label="Open AI chat"
 	>
 		<Icon icon="mdi:chat-processing-outline" width={26} class="text-white" />
@@ -79,7 +79,7 @@
 		<!-- Header -->
 		<div class="flex items-center justify-between px-4 pt-3 pb-2 border-b border-slate-700 shrink-0">
 			<div class="flex items-center gap-2">
-				<Icon icon="mdi:flash" width={18} class="text-blue-400" />
+				<Icon icon="mdi:flash" width={18} class="text-indigo-400" />
 				<h3 class="text-sm font-semibold text-white">AI Assistant</h3>
 				<div class="w-1.5 h-1.5 rounded-full bg-green-400"></div>
 			</div>
@@ -114,7 +114,7 @@
 			{#if chatState.messages.length === 0}
 				<div class="text-center text-slate-500 text-sm py-6 space-y-3">
 					<div class="w-12 h-12 mx-auto rounded-xl bg-slate-700/60 flex items-center justify-center">
-						<Icon icon="mdi:flash" width={24} class="text-blue-400" />
+						<Icon icon="mdi:flash" width={24} class="text-indigo-400" />
 					</div>
 					<div>
 						<p class="font-medium text-slate-300">Electrical Assistant</p>
@@ -149,12 +149,12 @@
 					onkeydown={handleKeydown}
 					placeholder="Ask about your electrical setup..."
 					disabled={chatState.isLoading}
-					class="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-60"
+					class="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-60"
 				/>
 				<button
 					onclick={handleSend}
 					disabled={chatState.isLoading || !input.trim()}
-					class="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px]"
+					class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px]"
 					aria-label="Send message"
 				>
 					<Icon icon="mdi:send" width={18} />

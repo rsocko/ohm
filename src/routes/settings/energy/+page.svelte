@@ -122,7 +122,7 @@
 			</button>
 			<button
 				onclick={() => { filter = 'mapped'; }}
-				class="flex-1 rounded-md py-1.5 text-xs font-medium transition-colors {filter === 'mapped' ? 'bg-blue-500/20 text-blue-300' : 'text-slate-400 hover:text-white'}"
+				class="flex-1 rounded-md py-1.5 text-xs font-medium transition-colors {filter === 'mapped' ? 'bg-indigo-500/20 text-indigo-300' : 'text-slate-400 hover:text-white'}"
 			>
 				Mapped ({mappedCount})
 			</button>
@@ -179,7 +179,7 @@
 
 		<!-- Tip -->
 		<div class="rounded-xl bg-slate-800/30 px-4 py-3 text-xs text-slate-500">
-			<p><strong class="text-slate-400">Tip:</strong> You can also map circuits directly from the <a href="/panels" class="text-blue-400 hover:underline">Panels</a> page by expanding any energy-monitored circuit.</p>
+			<p><strong class="text-slate-400">Tip:</strong> You can also map circuits directly from the <a href="/panels" class="text-indigo-400 hover:underline">Panels</a> page by expanding any energy-monitored circuit.</p>
 		</div>
 	{/if}
 </div>

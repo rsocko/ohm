@@ -121,7 +121,7 @@
 			{#if printing}
 				<div class="mx-5 mt-2">
 					<div class="h-2 rounded-full bg-slate-700 overflow-hidden">
-						<div class="h-full bg-blue-500 transition-[width] duration-200" style="width: {progress}%"></div>
+						<div class="h-full bg-indigo-500 transition-[width] duration-200" style="width: {progress}%"></div>
 					</div>
 					<p class="text-xs text-slate-400 mt-1 text-center">Printing… {progress}%</p>
 				</div>
@@ -134,8 +134,8 @@
 						<button
 							onclick={printViaBluetooth}
 							disabled={printing}
-							class="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold
-								hover:bg-blue-500 active:scale-[0.97] transition-transform duration-100
+							class="w-full py-3 rounded-xl bg-indigo-600 text-white font-semibold
+								hover:bg-indigo-500 active:scale-[0.97] transition-transform duration-100
 								disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							<Icon icon="mdi:printer-wireless" class="w-5 h-5 inline mr-2" />
