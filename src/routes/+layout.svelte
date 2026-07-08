@@ -87,13 +87,13 @@
 	}
 
 	const navItems = $derived.by(() => [
-		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-accent-fg' },
+		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-accent' },
 		{ href: '/rooms', label: 'Rooms', icon: 'mdi:floor-plan', activeColor: 'text-[#A78BFA]' },
 		{ href: '/panels', label: 'Panels', icon: 'mdi:transmission-tower', activeColor: 'text-[#F5A623]' },
 		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-[#E879F9]' },
 		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-[#22D3EE]' },
 		...(data.aiEnabled
-			? [{ href: '/chat', label: 'Ask AI', icon: 'mdi:chat-processing-outline', activeColor: 'text-accent-fg' }]
+			? [{ href: '/chat', label: 'Ask AI', icon: 'mdi:chat-processing-outline', activeColor: 'text-accent' }]
 			: [])
 	]);
 </script>
