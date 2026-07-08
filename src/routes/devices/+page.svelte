@@ -101,9 +101,9 @@
 
 <div class="space-y-(--spacing-section)">
 	<!-- Header -->
-	<div class="flex items-center gap-2">
+	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:devices" width={22} class="text-teal-400" />
-		<h1 class="text-xl font-bold text-white">Devices</h1>
+		<h1 class="text-xl font-bold text-fg">Devices</h1>
 		{#if meta?.discoveryCount}
 			<a href="/devices/discovery" class="flex items-center gap-1.5 text-caption font-medium bg-accent-subtle text-accent-fg hover:bg-accent-subtle/60 px-2.5 py-1 rounded-pill transition-colors">
 				<Icon icon="mdi:radar" width={14} />
