@@ -237,9 +237,9 @@
 
 	// Type → badge config maps (same as rooms page)
 	const receptacleTypeConfig: Record<string, { label: string; color: string; icon: string }> = {
-		'Outlet': { label: 'Outlet', color: 'bg-blue-500/20 text-blue-400', icon: 'mdi:power-socket-us' },
+		'Outlet': { label: 'Outlet', color: 'bg-indigo-500/20 text-indigo-400', icon: 'mdi:power-socket-us' },
 		'GFCI Outlet': { label: 'GFCI', color: 'bg-emerald-500/20 text-emerald-400', icon: 'mdi:shield-check' },
-		'Smart Switch': { label: 'Smart Switch', color: 'bg-violet-500/20 text-violet-400', icon: 'mdi:home-automation' },
+		'Smart Switch': { label: 'Smart Switch', color: 'bg-indigo-500/20 text-indigo-400', icon: 'mdi:home-automation' },
 		'Dimmer Switch': { label: 'Dimmer', color: 'bg-amber-500/20 text-amber-400', icon: 'mdi:brightness-6' },
 		'On/Off Switch': { label: 'Switch', color: 'bg-slate-500/20 text-slate-300', icon: 'mdi:toggle-switch' },
 		'On/Off Relay': { label: 'Relay', color: 'bg-cyan-500/20 text-cyan-400', icon: 'mdi:relay' },
@@ -256,7 +256,7 @@
 		'Camera': { label: 'Camera', color: 'bg-rose-500/20 text-rose-400', icon: 'mdi:cctv' },
 		'Camera/Light Combo': { label: 'Cam+Light', color: 'bg-rose-500/20 text-rose-300', icon: 'mdi:camera-plus' },
 		'Appliance': { label: 'Appliance', color: 'bg-orange-500/20 text-orange-400', icon: 'mdi:dishwasher' },
-		'Electronics': { label: 'Electronics', color: 'bg-blue-500/20 text-blue-400', icon: 'mdi:monitor' },
+		'Electronics': { label: 'Electronics', color: 'bg-indigo-500/20 text-indigo-400', icon: 'mdi:monitor' },
 		'Vent Fan': { label: 'Vent Fan', color: 'bg-teal-500/20 text-teal-400', icon: 'mdi:fan' },
 	};
 
@@ -320,7 +320,7 @@
 		const features = record.fields.Features as string[] | null;
 		if (features?.includes('GFCI') && receptacleTypeConfig['GFCI Outlet']) return receptacleTypeConfig['GFCI Outlet'];
 		if (recType && receptacleTypeConfig[recType]) return receptacleTypeConfig[recType];
-		return receptacleTypeConfig['Outlet'] || { label: 'Outlet', color: 'bg-blue-500/20 text-blue-400', icon: 'mdi:power-socket-us' };
+		return receptacleTypeConfig['Outlet'] || { label: 'Outlet', color: 'bg-indigo-500/20 text-indigo-400', icon: 'mdi:power-socket-us' };
 	}
 
 	onMount(() => {
@@ -564,7 +564,7 @@
 		if (!amps) return 'bg-slate-600/80 text-slate-400';
 		if (amps >= 50) return 'bg-red-600/90 text-red-100';
 		if (amps >= 30) return 'bg-amber-600/90 text-amber-100';
-		if (amps >= 20) return 'bg-blue-600/90 text-blue-100';
+		if (amps >= 20) return 'bg-indigo-600/90 text-indigo-100';
 		return 'bg-slate-600/80 text-slate-300';
 	}
 
@@ -572,7 +572,7 @@
 		if (!amps) return 'text-slate-500';
 		if (amps >= 50) return 'text-red-400';
 		if (amps >= 30) return 'text-amber-400';
-		if (amps >= 20) return 'text-blue-400';
+		if (amps >= 20) return 'text-indigo-400';
 		return 'text-slate-400';
 	}
 
@@ -965,10 +965,10 @@
 	<!-- Header -->
 	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:transmission-tower" width={22} class="text-amber-400" />
-		<h1 class="text-xl font-bold text-white">Panels</h1>
+		<h1 class="text-xl font-bold text-fg">Panels</h1>
 		<button
 			onclick={() => { showCreatePanel = true; }}
-			class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+			class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
 			aria-label="Add panel"
 		>
 			<Icon icon="mdi:plus" width={18} />
@@ -1014,7 +1014,7 @@
 				</div>
 				<button
 					onclick={() => { showCreatePanel = true; }}
-					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-background-color active:scale-[0.96]"
+					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
 				>
 					<Icon icon="mdi:plus" width={18} />
 					Create Panel
@@ -1034,7 +1034,7 @@
 						slideDirection = newIdx > oldIdx ? 'right' : 'left';
 						selectedPanelId = panel.id; expandedCircuit = null; searchQuery = ''; viewMode = 'schematic'; calibrating = false;
 					}}
-					class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-background-color active:scale-[0.96] {active ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600'}"
+					class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-background-color active:scale-[0.96] {active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600'}"
 				>
 					<Icon icon={isSubpanel ? 'lucide:layout-grid' : 'lucide:square-dot'} width={14} />
 					{shortName}
@@ -1072,7 +1072,7 @@
 								<button
 										type="button"
 										onclick={() => { showLabelPrint = !showLabelPrint; }}
-										class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-[11px] font-medium {showLabelPrint ? 'bg-blue-600 text-white shadow-sm border-blue-500/50' : 'text-slate-300 hover:text-white'} active:scale-[0.96] transition-all duration-150"
+										class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-[11px] font-medium {showLabelPrint ? 'bg-indigo-600 text-white shadow-sm border-indigo-500/50' : 'text-slate-300 hover:text-white'} active:scale-[0.96] transition-all duration-150"
 										title="Print Labels"
 									>
 										<Icon icon="mdi:printer" width={13} />
@@ -1081,14 +1081,14 @@
 								<div class="inline-flex rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 p-0.5">
 									<button
 										onclick={() => { viewMode = 'schematic'; }}
-										class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium {viewMode === 'schematic' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'}"
+										class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium {viewMode === 'schematic' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'}"
 									>
 										<Icon icon="mdi:view-grid-outline" width={13} />
 										<span class="hidden sm:inline">Schematic</span>
 									</button>
 									<button
 										onclick={() => { viewMode = 'photo'; }}
-										class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium {viewMode === 'photo' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'}"
+										class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium {viewMode === 'photo' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'}"
 									>
 										<Icon icon="mdi:image-outline" width={13} />
 										<span class="hidden sm:inline">Photo</span>
@@ -1113,7 +1113,7 @@
 								{/if}
 								{#if panelStats.afci}
 									<span class="flex items-center gap-1 text-[11px] text-slate-300">
-										<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> AFCI ({panelStats.afci})
+										<span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> AFCI ({panelStats.afci})
 									</span>
 								{/if}
 								{#if panelStats.twoForty}
@@ -1158,7 +1158,7 @@
 							{/if}
 							{#if panelStats.afci}
 								<span class="flex items-center gap-1 text-[11px] text-slate-400">
-									<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> AFCI ({panelStats.afci})
+									<span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> AFCI ({panelStats.afci})
 								</span>
 							{/if}
 							{#if panelStats.twoForty}
@@ -1188,7 +1188,7 @@
 								type="text"
 								bind:value={searchQuery}
 								placeholder="Highlight a circuit…"
-								class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+								class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 							/>
 							{#if searchQuery.trim()}
 								<button
@@ -1206,7 +1206,7 @@
 						<div class="flex items-center justify-between px-3 py-2 bg-slate-800/90 border-b border-slate-700/50">
 							<span class="text-[11px] text-slate-400">
 								{#if deskewing}
-									<span class="flex items-center gap-1 text-blue-400">
+									<span class="flex items-center gap-1 text-indigo-400">
 										<Icon icon="mdi:loading" width={12} class="animate-spin" /> Deskewing…
 									</span>
 								{:else if calibrating}
@@ -1258,7 +1258,7 @@
 										<!-- Label toggle -->
 										<button
 											onclick={() => { showOverlayLabels = !showOverlayLabels; }}
-											class="p-1.5 rounded-lg bg-slate-900/60 backdrop-blur-md border border-white/10 {showOverlayLabels ? 'text-blue-400' : 'text-white/50'} hover:bg-slate-900/80 hover:text-white active:scale-[0.96] transition-colors"
+											class="p-1.5 rounded-lg bg-slate-900/60 backdrop-blur-md border border-white/10 {showOverlayLabels ? 'text-indigo-400' : 'text-white/50'} hover:bg-slate-900/80 hover:text-white active:scale-[0.96] transition-colors"
 											title="{showOverlayLabels ? 'Hide' : 'Show'} labels"
 										>
 											<Icon icon={showOverlayLabels ? 'mdi:tag' : 'mdi:tag-off-outline'} width={15} />
@@ -1371,7 +1371,7 @@
 										{@const highlighted = searchQuery.trim() && isHighlighted(slot.circuit)}
 										<button
 											onclick={(e) => { e.stopPropagation(); expandedCircuit = isActive ? null : slot.circuit.id; }}
-											class="absolute rounded-sm border group {isActive ? 'bg-blue-500/30 border-blue-400/80 z-10' : highlighted ? 'bg-blue-400/20 border-blue-400/50' : 'border-slate-400/20 hover:bg-blue-500/20 hover:border-blue-400/60'}"
+											class="absolute rounded-sm border group {isActive ? 'bg-indigo-500/30 border-indigo-400/80 z-10' : highlighted ? 'bg-indigo-400/20 border-indigo-400/50' : 'border-slate-400/20 hover:bg-indigo-500/20 hover:border-indigo-400/60'}"
 											style="left: {slot.left}%; top: {slot.top}%; width: {slot.width}%; height: {slot.height}%"
 											title="#{slot.circuit.fields.Number} - {slot.circuit.fields.Name || 'Unnamed'} ({slot.circuit.fields.Amps}A)"
 										>
@@ -1417,7 +1417,7 @@
 												</div>
 												<p class="text-[11px] font-medium text-white">{f.Name || 'Unnamed'}</p>
 												{#if f['Area Name']}
-													<p class="text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={11} class="text-purple-400" /> {f['Area Name']}</p>
+													<p class="text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={11} class="text-indigo-400" /> {f['Area Name']}</p>
 												{/if}
 												{#if devices.loads.length > 0}
 													<div>
@@ -1465,10 +1465,10 @@
 								{#if calibrating && calibrationCorners.length > 0}
 									{#each calibrationCorners as corner, i}
 										<div
-											class="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-blue-500 border-2 border-white shadow-lg"
+											class="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-indigo-500 border-2 border-white shadow-lg"
 											style="left: {corner.x}%; top: {corner.y}%"
 										>
-											<span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] text-white font-bold bg-blue-600 rounded px-1">{i + 1}</span>
+											<span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] text-white font-bold bg-indigo-600 rounded px-1">{i + 1}</span>
 										</div>
 									{/each}
 									<!-- Connection lines between corners -->
@@ -1526,7 +1526,7 @@
 											</div>
 										</div>
 										{#if f['Area Name']}
-											<p class="text-xs text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={12} class="text-purple-400" /> {f['Area Name']}</p>
+											<p class="text-xs text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={12} class="text-indigo-400" /> {f['Area Name']}</p>
 										{/if}
 										{#if isEnergyMonitored(circuit)}
 											<div class="text-xs">
@@ -1603,7 +1603,7 @@
 					type="text"
 					bind:value={searchQuery}
 					placeholder="Find a circuit…"
-					class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+					class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 				/>
 				{#if searchQuery.trim()}
 					<button
@@ -1626,7 +1626,7 @@
 								{#if row.type === 'tandem'}
 									<!-- Tandem pair: two half-height circuits in one card -->
 									{@const tandemExpanded = row.circuits.some(c => expandedCircuit === c.id)}
-									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-blue-500/60' : 'border-amber-600/30'}">
+									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-indigo-500/60' : 'border-amber-600/30'}">
 										{#each row.circuits as circuit, ci}
 											{@const f = circuit.fields}
 											{@const amps = f.Amps as number | undefined}
@@ -1665,7 +1665,7 @@
 														</div>
 													{/if}
 													{#if f['Area Name']}
-														<p class="text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={11} class="text-purple-400" /> {f['Area Name']}</p>
+														<p class="text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={11} class="text-indigo-400" /> {f['Area Name']}</p>
 													{/if}
 													{#if f.Notes}
 														<p class="text-slate-400 italic">{f.Notes}</p>
@@ -1687,7 +1687,7 @@
 									{@const showLiveBadge = isEnergyMonitored(circuit) || getCircuitMapping(circuit.id)?.powerEntityId}
 									<div
 										data-circuit-id={circuit.id}
-										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-blue-500/60' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-blue-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
+										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-indigo-500/60' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-indigo-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
 									>
 										<button
 											onclick={() => expandedCircuit = isExpanded ? null : circuit.id}
@@ -1708,13 +1708,13 @@
 													{#if !isExpanded && (counts.loads > 0 || counts.recs > 0 || counts.areas > 0)}
 														<div class="flex items-center gap-2 mt-0.5">
 															{#if counts.areas > 0}
-																<span class="text-[10px] text-purple-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
-																	<Icon icon="mdi:floor-plan" width={11} class="text-purple-400" />{counts.areas}
+																<span class="text-[10px] text-indigo-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
+																	<Icon icon="mdi:floor-plan" width={11} class="text-indigo-400" />{counts.areas}
 																</span>
 															{/if}
 															{#if counts.recs > 0}
-																<span class="text-[10px] text-blue-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
-																	<Icon icon="mdi:power-socket-us" width={11} class="text-blue-400" />{counts.recs}
+																<span class="text-[10px] text-indigo-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
+																	<Icon icon="mdi:power-socket-us" width={11} class="text-indigo-400" />{counts.recs}
 																</span>
 															{/if}
 															{#if counts.loads > 0}
@@ -1749,7 +1749,7 @@
 												</div>
 											{/if}
 											{#if f['Area Name']}
-												<p class="stagger-item text-slate-400 flex items-center gap-1" style="animation-delay: 150ms"><Icon icon="mdi:map-marker" width={12} class="text-purple-400" /> {f['Area Name']}</p>
+												<p class="stagger-item text-slate-400 flex items-center gap-1" style="animation-delay: 150ms"><Icon icon="mdi:map-marker" width={12} class="text-indigo-400" /> {f['Area Name']}</p>
 											{/if}
 											{#if isEnergyMonitored(circuit)}
 												<div class="stagger-item" style="animation-delay: 175ms">
@@ -1823,7 +1823,7 @@
 												<button
 													type="button"
 													onclick={(e) => { e.stopPropagation(); previewQrLabel(circuit); }}
-													class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-700/60 text-purple-300 text-[11px] font-medium hover:bg-purple-900/40 hover:text-purple-200 active:scale-[0.96] transition-colors"
+													class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-700/60 text-indigo-300 text-[11px] font-medium hover:bg-indigo-900/40 hover:text-indigo-200 active:scale-[0.96] transition-colors"
 												>
 													<Icon icon="mdi:qrcode" width={12} />
 													QR Label
@@ -1842,7 +1842,7 @@
 								{#if row.type === 'tandem'}
 									<!-- Tandem pair -->
 									{@const tandemExpanded = row.circuits.some(c => expandedCircuit === c.id)}
-									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-blue-500/60' : 'border-amber-600/30'}">
+									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-indigo-500/60' : 'border-amber-600/30'}">
 										{#each row.circuits as circuit, ci}
 											{@const f = circuit.fields}
 											{@const amps = f.Amps as number | undefined}
@@ -1881,7 +1881,7 @@
 														</div>
 													{/if}
 													{#if f['Area Name']}
-														<p class="text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={11} class="text-purple-400" /> {f['Area Name']}</p>
+														<p class="text-slate-400 flex items-center gap-1"><Icon icon="mdi:map-marker" width={11} class="text-indigo-400" /> {f['Area Name']}</p>
 													{/if}
 													{#if f.Notes}
 														<p class="text-slate-400 italic">{f.Notes}</p>
@@ -1903,7 +1903,7 @@
 									{@const showLiveBadge = isEnergyMonitored(circuit) || getCircuitMapping(circuit.id)?.powerEntityId}
 									<div
 										data-circuit-id={circuit.id}
-										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-blue-500/60' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-blue-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
+										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-indigo-500/60' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-indigo-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
 									>
 										<button
 											onclick={() => expandedCircuit = isExpanded ? null : circuit.id}
@@ -1924,13 +1924,13 @@
 													{#if !isExpanded && (counts.loads > 0 || counts.recs > 0 || counts.areas > 0)}
 														<div class="flex items-center gap-2 mt-0.5">
 															{#if counts.areas > 0}
-																<span class="text-[10px] text-purple-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
-																	<Icon icon="mdi:floor-plan" width={11} class="text-purple-400" />{counts.areas}
+																<span class="text-[10px] text-indigo-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
+																	<Icon icon="mdi:floor-plan" width={11} class="text-indigo-400" />{counts.areas}
 																</span>
 															{/if}
 															{#if counts.recs > 0}
-																<span class="text-[10px] text-blue-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
-																	<Icon icon="mdi:power-socket-us" width={11} class="text-blue-400" />{counts.recs}
+																<span class="text-[10px] text-indigo-400/80 flex items-center gap-0.5" style="font-variant-numeric: tabular-nums">
+																	<Icon icon="mdi:power-socket-us" width={11} class="text-indigo-400" />{counts.recs}
 																</span>
 															{/if}
 															{#if counts.loads > 0}
@@ -1965,7 +1965,7 @@
 												</div>
 											{/if}
 											{#if f['Area Name']}
-												<p class="stagger-item text-slate-400 flex items-center gap-1" style="animation-delay: 150ms"><Icon icon="mdi:map-marker" width={12} class="text-purple-400" /> {f['Area Name']}</p>
+												<p class="stagger-item text-slate-400 flex items-center gap-1" style="animation-delay: 150ms"><Icon icon="mdi:map-marker" width={12} class="text-indigo-400" /> {f['Area Name']}</p>
 											{/if}
 											{#if isEnergyMonitored(circuit)}
 												<div class="stagger-item" style="animation-delay: 175ms">
@@ -2039,7 +2039,7 @@
 												<button
 													type="button"
 													onclick={(e) => { e.stopPropagation(); previewQrLabel(circuit); }}
-													class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-700/60 text-purple-300 text-[11px] font-medium hover:bg-purple-900/40 hover:text-purple-200 active:scale-[0.96] transition-colors"
+													class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-700/60 text-indigo-300 text-[11px] font-medium hover:bg-indigo-900/40 hover:text-indigo-200 active:scale-[0.96] transition-colors"
 												>
 													<Icon icon="mdi:qrcode" width={12} />
 													QR Label
@@ -2058,7 +2058,7 @@
 				<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> GFCI</span>
 				<span class="flex items-center gap-1.5"><Icon icon="mdi:flash" width={12} class="text-emerald-400" /> Energy</span>
 				<span class="flex items-center gap-1.5"><span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-slate-600/80 text-slate-300">15A</span></span>
-				<span class="flex items-center gap-1.5"><span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-blue-600/90 text-blue-100">20A</span></span>
+				<span class="flex items-center gap-1.5"><span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-indigo-600/90 text-indigo-100">20A</span></span>
 				<span class="flex items-center gap-1.5"><span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-amber-600/90 text-amber-100">30A</span></span>
 				<span class="flex items-center gap-1.5"><span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-red-600/90 text-red-100">50A+</span></span>
 			</div>
@@ -2104,7 +2104,7 @@
 						type="text"
 						bind:value={newPanelName}
 						placeholder="e.g. Main Panel"
-						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 						onkeydown={(e) => { if (e.key === 'Enter' && newPanelName.trim()) createPanel(); }}
 					/>
 				</div>
@@ -2113,7 +2113,7 @@
 					<select
 						id="new-panel-type"
 						bind:value={newPanelType}
-						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-border-color"
+						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color"
 					>
 						<option value="Main">Main Panel</option>
 						<option value="Sub">Sub Panel</option>
@@ -2126,7 +2126,7 @@
 						type="number"
 						bind:value={newPanelSpaces}
 						placeholder="e.g. 40"
-						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 					/>
 				</div>
 			</div>
@@ -2138,7 +2138,7 @@
 				<button
 					onclick={() => createPanel()}
 					disabled={!newPanelName.trim() || creatingPanel}
-					class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-500 transition-background-color disabled:opacity-50 active:scale-[0.96]"
+					class="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color disabled:opacity-50 active:scale-[0.96]"
 				>{creatingPanel ? 'Creating…' : 'Create'}</button>
 			</div>
 		</div>

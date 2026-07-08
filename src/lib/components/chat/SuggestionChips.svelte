@@ -35,7 +35,7 @@
 	const visible = $derived(shuffled.slice(0, count));
 </script>
 
-<div class="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+<div class="flex flex-wrap justify-center gap-1.5">
 	{#each visible as suggestion}
 		<button
 			class="shrink-0 px-3 py-1.5 rounded-full text-[11px] bg-slate-700/80 border border-slate-600/50 text-slate-400 hover:text-white hover:border-slate-400/50 active:scale-[0.96] transition-colors min-h-[32px]"

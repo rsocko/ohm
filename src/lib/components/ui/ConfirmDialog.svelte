@@ -37,7 +37,7 @@
 	const variantStyles = {
 		danger: 'bg-red-600 hover:bg-red-500 text-white',
 		warning: 'bg-amber-600 hover:bg-amber-500 text-white',
-		default: 'bg-blue-600 hover:bg-blue-500 text-white',
+		default: 'bg-indigo-600 hover:bg-indigo-500 text-white',
 	};
 
 	const variantIcons = {
@@ -50,8 +50,8 @@
 <AlertDialog bind:open>
 	<AlertDialogContent>
 		<div class="flex items-start gap-3">
-			<span class="w-10 h-10 rounded-full {variant === 'danger' ? 'bg-red-500/10' : variant === 'warning' ? 'bg-amber-500/10' : 'bg-blue-500/10'} flex items-center justify-center shrink-0 mt-0.5">
-				<Icon icon={variantIcons[variant]} width={22} class="{variant === 'danger' ? 'text-red-400' : variant === 'warning' ? 'text-amber-400' : 'text-blue-400'}" />
+			<span class="w-10 h-10 rounded-full {variant === 'danger' ? 'bg-red-500/10' : variant === 'warning' ? 'bg-amber-500/10' : 'bg-indigo-500/10'} flex items-center justify-center shrink-0 mt-0.5">
+				<Icon icon={variantIcons[variant]} width={22} class="{variant === 'danger' ? 'text-red-400' : variant === 'warning' ? 'text-amber-400' : 'text-indigo-400'}" />
 			</span>
 			<div class="space-y-1.5">
 				<h3 class="text-base font-semibold text-white">{title}</h3>

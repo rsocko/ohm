@@ -2,13 +2,30 @@
 	import '../app.css';
 	import Icon from '@iconify/svelte';
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import { refresh, dataStore, refreshing, doRefresh } from '$lib/stores/data.svelte';
 	import { homeContext, initHomeContext } from '$lib/stores/home-context.svelte';
 	import { onMount } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
 	import IosPwaNudge from '$lib/components/ui/IosPwaNudge.svelte';
+	import AskOhmIcon from '$lib/components/icons/AskOhmIcon.svelte';
 
 	let { children, data } = $props();
+
+	const onSettingsPage = $derived(page.url.pathname.startsWith('/settings'));
+
+	function toggleSettings() {
+		if (onSettingsPage) {
+			// Leaving settings: return to prior page if there's local history, else home
+			if (window.history.length > 1) {
+				window.history.back();
+			} else {
+				goto('/');
+			}
+		} else {
+			goto('/settings');
+		}
+	}
 
 	let homeDropdownOpen = $state(false);
 
@@ -71,21 +88,21 @@
 	}
 
 	const navItems = $derived.by(() => [
-		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-blue-400' },
-		{ href: '/rooms', label: 'Rooms', icon: 'mdi:floor-plan', activeColor: 'text-purple-400' },
-		{ href: '/panels', label: 'Panels', icon: 'mdi:transmission-tower', activeColor: 'text-amber-400' },
-		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-fuchsia-400' },
-		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-green-400' },
+		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-accent' },
+		{ href: '/rooms', label: 'Rooms', icon: 'lucide:layout-panel-left', activeColor: 'text-[#A78BFA]' },
+		{ href: '/panels', label: 'Panels', icon: 'mdi:transmission-tower', activeColor: 'text-[#F5A623]' },
+		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-[#E879F9]' },
+		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-[#22D3EE]' },
 		...(data.aiEnabled
-			? [{ href: '/chat', label: 'Ask AI', icon: 'mdi:chat-processing-outline', activeColor: 'text-emerald-400' }]
+			? [{ href: '/chat', label: 'Ask Ωhm', icon: 'mdi:chat-processing-outline', activeColor: 'text-accent' }]
 			: [])
 	]);
 </script>
 
 <svelte:head>
-	<title>Ohm</title>
-	<meta name="description" content="Ohm — AI-powered home electrical intelligence" />
-	<meta name="theme-color" content="#1e293b" />
+	<title>Ωhm</title>
+	<meta name="description" content="Ωhm — AI-powered home electrical intelligence" />
+	<meta name="theme-color" content="#6366F1" />
 </svelte:head>
 
 <!-- Close home dropdown on outside click -->
@@ -96,7 +113,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="flex flex-col min-h-screen bg-slate-900 text-slate-100"
+	class="flex flex-col min-h-screen bg-surface-base text-fg"
 	style="-webkit-font-smoothing: antialiased"
 	ontouchstart={onTouchStart}
 	ontouchmove={onTouchMove}
@@ -112,7 +129,7 @@
 				<Icon
 					icon={refreshing.value ? 'mdi:loading' : 'mdi:arrow-down'}
 					width={18}
-					class="{refreshing.value ? 'animate-spin' : ''} text-blue-400 transition-transform duration-150"
+					class="{refreshing.value ? 'animate-spin' : ''} text-accent-fg transition-transform duration-150"
 					style="transform: rotate({!refreshing.value && pullY >= THRESHOLD ? '180deg' : '0deg'})"
 				/>
 			</div>
@@ -122,7 +139,7 @@
 	<main class="flex-1 pb-20 px-4 pt-4 relative">
 		<!-- Offline banner -->
 		{#if dataStore.offline}
-			<div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px]">
+			<div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-energy-subtle border border-[#F5A623]/30 text-[#F5A623] text-[11px]">
 				<Icon icon="mdi:wifi-off" width={14} />
 				<span>Offline — showing data from {relativeTime(dataStore.lastFetchedAt)}</span>
 			</div>
@@ -169,13 +186,14 @@
 					<Icon icon="mdi:refresh" width={12} class="{refreshing.value ? 'animate-spin' : ''}" />
 					<span>{refreshing.value ? 'Refreshing…' : relativeTime(dataStore.lastFetchedAt)}</span>
 				</button>
-				<a
-					href="/settings"
-					class="flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors"
-					title="Settings"
+				<button
+					onclick={toggleSettings}
+					class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors {onSettingsPage ? 'text-accent-fg bg-accent-subtle hover:bg-accent-subtle' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}"
+					title={onSettingsPage ? 'Close settings' : 'Settings'}
+					aria-label={onSettingsPage ? 'Close settings' : 'Settings'}
 				>
-					<Icon icon="mdi:cog-outline" width={18} />
-				</a>
+					<Icon icon={onSettingsPage ? 'mdi:close' : 'mdi:cog-outline'} width={18} />
+				</button>
 			</div>
 		{/if}
 		{@render children()}
@@ -188,7 +206,11 @@
 				href={item.href}
 				class="flex flex-col items-center gap-0.5 text-xs min-w-[44px] min-h-[44px] justify-center rounded-lg transition-color,opacity {active ? item.activeColor : 'text-slate-400 hover:text-white'}"
 			>
-				<Icon icon={item.icon} width={22} />
+				{#if item.href === '/chat'}
+					<AskOhmIcon size={22} />
+				{:else}
+					<Icon icon={item.icon} width={22} />
+				{/if}
 				<span class="font-medium">{item.label}</span>
 			</a>
 		{/each}

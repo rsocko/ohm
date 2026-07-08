@@ -12,7 +12,7 @@
 	const isPending = $derived(chatState.pendingAction !== null);
 </script>
 
-<div class="mt-2 p-3 rounded-xl space-y-2 bg-blue-500/[0.08] border border-blue-500/20">
+<div class="mt-2 p-3 rounded-xl space-y-2 bg-indigo-500/[0.08] border border-indigo-500/20">
 	{#each action.changes as change}
 		<div class="flex items-center gap-2">
 			<div class="w-4 h-4 rounded flex items-center justify-center shrink-0 bg-slate-700/60">

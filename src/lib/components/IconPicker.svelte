@@ -106,7 +106,7 @@
 					bind:value={query}
 					oninput={handleInput}
 					placeholder="Search icons…"
-					class="w-full bg-slate-900/60 border border-slate-600/50 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-border-color"
+					class="w-full bg-slate-900/60 border border-slate-600/50 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
 				/>
 			</div>
 
@@ -115,7 +115,7 @@
 				{#each libs as lib}
 					<button
 						onclick={() => switchLib(lib.id)}
-						class="px-2.5 py-1 rounded-md text-xs font-medium transition-background-color,color {activeLib === lib.id ? 'bg-blue-600 text-white' : 'bg-slate-700/60 text-slate-400 hover:text-white'}"
+						class="px-2.5 py-1 rounded-md text-xs font-medium transition-background-color,color {activeLib === lib.id ? 'bg-indigo-600 text-white' : 'bg-slate-700/60 text-slate-400 hover:text-white'}"
 					>
 						{lib.label}
 					</button>
@@ -126,7 +126,7 @@
 		<!-- Current selection -->
 		{#if value}
 			<div class="px-4 py-2 border-b border-slate-700/40 flex items-center gap-2 text-xs text-slate-400">
-				<Icon icon={value} width={16} class="text-blue-400" />
+				<Icon icon={value} width={16} class="text-indigo-400" />
 				<span>Current: <code class="text-slate-300">{value}</code></span>
 			</div>
 		{/if}
@@ -147,9 +147,9 @@
 						<button
 							onclick={() => onselect(icon)}
 							title={icon}
-							class="aspect-square flex items-center justify-center rounded-lg transition-background-color,transform hover:bg-slate-700/60 active:scale-[0.92] {selected ? 'bg-blue-600/20 ring-1 ring-blue-500' : ''}"
+							class="aspect-square flex items-center justify-center rounded-lg transition-background-color,transform hover:bg-slate-700/60 active:scale-[0.92] {selected ? 'bg-indigo-600/20 ring-1 ring-indigo-500' : ''}"
 						>
-							<Icon {icon} width={22} class="{selected ? 'text-blue-400' : 'text-slate-300'}" />
+							<Icon {icon} width={22} class="{selected ? 'text-indigo-400' : 'text-slate-300'}" />
 						</button>
 					{/each}
 				</div>
