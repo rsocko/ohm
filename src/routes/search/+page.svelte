@@ -23,7 +23,7 @@
 	// Category config
 	const categoryConfig: Record<string, { icon: string; color: string; label: string }> = {
 		'Circuit': { icon: 'lucide:plug-zap', color: 'text-emerald-400', label: 'Circuits' },
-		'Area': { icon: 'mdi:floor-plan', color: 'text-violet-400', label: 'Rooms' },
+		'Area': { icon: 'lucide:layout-panel-left', color: 'text-violet-400', label: 'Rooms' },
 		'Load': { icon: 'mdi:lightbulb-outline', color: 'text-amber-400', label: 'Loads' },
 		'Receptacle': { icon: 'mdi:power-socket-us', color: 'text-blue-400', label: 'Receptacles' },
 		'Panel': { icon: 'mdi:view-grid-outline', color: 'text-cyan-400', label: 'Panels' },

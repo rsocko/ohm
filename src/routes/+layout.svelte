@@ -88,7 +88,7 @@
 
 	const navItems = $derived.by(() => [
 		{ href: '/', label: 'Home', icon: 'mdi:home', activeColor: 'text-accent' },
-		{ href: '/rooms', label: 'Rooms', icon: 'mdi:floor-plan', activeColor: 'text-[#A78BFA]' },
+		{ href: '/rooms', label: 'Rooms', icon: 'lucide:layout-panel-left', activeColor: 'text-[#A78BFA]' },
 		{ href: '/panels', label: 'Panels', icon: 'mdi:transmission-tower', activeColor: 'text-[#F5A623]' },
 		{ href: '/devices', label: 'Devices', icon: 'mdi:devices', activeColor: 'text-[#E879F9]' },
 		{ href: '/energy', label: 'Energy', icon: 'mdi:lightning-bolt', activeColor: 'text-[#22D3EE]' },

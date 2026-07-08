@@ -2595,7 +2595,7 @@
 	<!-- Header + Search + Filter row (sticky) -->
 	<div class="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm pb-3 pt-1 space-y-3 -mx-1 px-1">
 		<div class="flex items-center gap-2.5">
-			<Icon icon="mdi:floor-plan" width={22} class="text-violet-400" />
+			<Icon icon="lucide:layout-panel-left" width={22} class="text-violet-400" />
 		<h1 class="text-xl font-bold text-fg">Rooms & Areas</h1>
 			<!-- View toggle -->
 			<div class="flex gap-0.5 bg-slate-800/50 rounded-lg p-0.5 ml-auto">
