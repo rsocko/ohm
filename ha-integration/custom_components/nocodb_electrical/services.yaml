@@ -1,0 +1,56 @@
+query:
+  name: Query NocoDB
+  description: Execute a read query against the NocoDB electrical database
+  fields:
+    table:
+      name: Table
+      description: The NocoDB table to query
+      required: true
+      example: "Circuits"
+      selector:
+        select:
+          options:
+            - "Circuits"
+            - "Loads"
+            - "Receptacles"
+            - "Areas"
+            - "Panels"
+    filter:
+      name: Filter
+      description: NocoDB where filter expression (e.g., "(Breaker_Type,eq,GFCI)")
+      required: false
+      example: "(Breaker_Type,eq,GFCI)"
+      selector:
+        text:
+
+update_record:
+  name: Update Record
+  description: Update a record in the NocoDB electrical database
+  fields:
+    table:
+      name: Table
+      description: The NocoDB table containing the record
+      required: true
+      example: "Circuits"
+      selector:
+        select:
+          options:
+            - "Circuits"
+            - "Loads"
+            - "Receptacles"
+            - "Areas"
+            - "Panels"
+    record_id:
+      name: Record ID
+      description: The NocoDB record ID to update
+      required: true
+      example: "rec_abc123"
+      selector:
+        text:
+    data:
+      name: Data
+      description: JSON object of fields to update
+      required: true
+      example: '{"Status": "active"}'
+      selector:
+        object:

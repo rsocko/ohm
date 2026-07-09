@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'>
+<title>Architecture Decision Record</title>
+<style>
+body { background: #0d1117; color: #c9d1d9; padding: 32px 24px; max-width: 900px; margin: 0 auto; font-family: -apple-system, system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+h1 { color: #f0f6fc; border-bottom: 1px solid #21262d; padding-bottom: 8px; }
+h2 { color: #f0f6fc; border-bottom: 1px solid #21262d; padding-bottom: 6px; margin-top: 40px; }
+h3 { color: #e6edf3; margin-top: 28px; }
+h4 { color: #e6edf3; }
+a { color: #58a6ff; }
+code { background: #161b22; padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #e6edf3; }
+pre { background: #161b22; padding: 16px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+th, td { padding: 8px 12px; border: 1px solid #30363d; text-align: left; }
+th { background: #161b22; font-weight: 600; }
+strong { color: #e6edf3; }
+ul, ol { padding-left: 24px; }
+li { margin: 4px 0; }
+hr { border: none; border-top: 1px solid #21262d; margin: 32px 0; }
+blockquote { border-left: 3px solid #3b82f6; padding-left: 16px; color: #8b949e; margin: 16px 0; }
+</style>
+</head>
+<body>
+<h1>Architecture Decision Record: Electrical Config AI UX</h1>
+<h2>Context</h2>
+<p>the project owner has a NocoDB instance (<code>nocodb.example.com</code>) storing detailed electrical configuration for 2 homes. The data includes areas, panels, circuits, receptacles, and loads. He wants:</p>
+<ol>
+<li><strong>AI chat against the data</strong> — ask questions like "which circuit controls the master bath lights?" or "update outlet type to GFCI for the kitchen island"</li>
+<li><strong>Mobile-friendly custom UX</strong> — browse, search, and update data on a phone (e.g., while at the breaker panel)</li>
+<li><strong>Leverage existing homelab</strong> — Docker on WSL, Ollama, Open-WebUI, Traefik reverse proxy</li>
+</ol>
+<hr />
+<h2>Options Evaluated</h2>
+<h3>Option A: Open-WebUI Tool/Function (Lowest Effort)</h3>
+<p><strong>How it works:</strong> Create a custom "Tool" in Open-WebUI that wraps NocoDB API calls. The LLM gets function-calling access to query/update your electrical data.</p>
+<table>
+<thead>
+<tr>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Zero new services to deploy</td>
+<td>Limited to chat interface only</td>
+</tr>
+<tr>
+<td>Leverages existing Ollama + Open-WebUI</td>
+<td>No custom visual UX (floor plans, panel views)</td>
+</tr>
+<tr>
+<td>NocoDB MCP server already exists</td>
+<td>Mobile UX is just Open-WebUI's chat (acceptable but not optimized)</td>
+</tr>
+<tr>
+<td>Can start today</td>
+<td>Update confirmations are conversational only</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Effort:</strong> ~2-4 hours<br />
+<strong>Best for:</strong> Getting AI query capability immediately</p>
+<hr />
+<h3>Option B: Lightweight PWA + AI Chat Panel (Recommended)</h3>
+<p><strong>How it works:</strong> A single Docker container running a small web app (Next.js or SvelteKit) that:
+- Connects to NocoDB REST API for CRUD
+- Provides a mobile-optimized browse/search/edit UI
+- Includes an embedded AI chat panel that uses Ollama (via OpenAI-compatible API) with NocoDB context</p>
+<table>
+<thead>
+<tr>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Purpose-built mobile UX</td>
+<td>Custom code to build &amp; maintain</td>
+</tr>
+<tr>
+<td>PWA = installable on phone homescreen</td>
+<td>~1-2 weeks to MVP</td>
+</tr>
+<tr>
+<td>AI chat integrated inline</td>
+<td>Another Docker container</td>
+</tr>
+<tr>
+<td>Full control over views (panel diagram, room views)</td>
+<td></td>
+</tr>
+<tr>
+<td>Offline-capable for basic browsing</td>
+<td></td>
+</tr>
+<tr>
+<td>NocoDB stays as source of truth</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Effort:</strong> ~1-2 weeks to MVP<br />
+<strong>Best for:</strong> The full vision — great UX + AI + mobile</p>
+<hr />
+<h3>Option C: Low-Code Platform (Appsmith/Budibase/Tooljet)</h3>
+<p><strong>How it works:</strong> Deploy a self-hosted low-code platform, connect it to NocoDB's underlying database or REST API, build UI visually.</p>
+<table>
+<thead>
+<tr>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Drag-and-drop UI builder</td>
+<td>Another heavy service to run</td>
+</tr>
+<tr>
+<td>Pre-built table/form widgets</td>
+<td>AI integration is bolt-on at best</td>
+</tr>
+<tr>
+<td>Self-hostable</td>
+<td>Mobile experience varies (often mediocre)</td>
+</tr>
+<tr>
+<td></td>
+<td>Learning the platform's quirks</td>
+</tr>
+<tr>
+<td></td>
+<td>Limited customization for specialized views</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Effort:</strong> ~3-5 days<br />
+<strong>Best for:</strong> If you want a traditional CRUD UI without AI and don't mind running another platform</p>
+<hr />
+<h3>Option D: Native iOS App (Swift/React Native)</h3>
+<p><strong>How it works:</strong> Build a native mobile app that talks to NocoDB API + Ollama.</p>
+<table>
+<thead>
+<tr>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Best possible mobile experience</td>
+<td>Significant dev effort (~4-6 weeks)</td>
+</tr>
+<tr>
+<td>Native gestures, offline, push notifications</td>
+<td>App Store deployment complexity (or TestFlight)</td>
+</tr>
+<tr>
+<td></td>
+<td>Two codebases if you also want desktop access</td>
+</tr>
+<tr>
+<td></td>
+<td>Overkill for data that changes infrequently</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Effort:</strong> 4-6 weeks<br />
+<strong>Best for:</strong> If this were a product for many users. Overkill for personal use.</p>
+<hr />
+<h2>Recommendation: Hybrid Approach (A now → B soon)</h2>
+<h3>Phase 1: Immediate AI Access (Option A) — Today</h3>
+<p>Deploy the <strong>NocoDB MCP server as an Open-WebUI Tool</strong>. This gives you:
+- Natural language queries against your electrical data immediately
+- Zero new infrastructure
+- A way to validate what questions/interactions are most useful before building custom UI</p>
+<p><strong>Implementation:</strong>
+1. The NocoDB MCP config you already generated can be used with Open-WebUI's "Tools" feature
+2. Register it as an Open-WebUI function/tool that wraps the MCP endpoints
+3. You can now chat: "What circuit is the garage door opener on?" → gets live data from NocoDB</p>
+<h3>Phase 2: Custom Mobile PWA (Option B) — 1-2 Weeks</h3>
+<p>Build a <strong>lightweight PWA</strong> with these characteristics:</p>
+<p><strong>Tech Stack:</strong>
+- <strong>Framework:</strong> SvelteKit (lighter than Next.js, excellent mobile perf, SSR + client hydration)
+- <strong>Styling:</strong> Tailwind CSS (rapid mobile-first design)
+- <strong>AI:</strong> Direct Ollama OpenAI-compatible API calls from the server
+- <strong>Data:</strong> NocoDB REST API v2
+- <strong>Deployment:</strong> Single Docker container behind Traefik
+- <strong>Domain:</strong> e.g., <code>electrical.example.com</code></p>
+<p><strong>Why SvelteKit over Next.js:</strong>
+- Smaller bundle size (critical for mobile)
+- Simpler mental model
+- Excellent PWA support via <code>@vite-pwa/sveltekit</code>
+- Server routes for proxying Ollama/NocoDB (keeps API keys server-side)</p>
+<hr />
+<h2>Proposed Architecture</h2>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│                   User's Phone                       │
+│              (PWA installed to homescreen)           │
+└──────────────────────┬──────────────────────────────┘
+                       │ HTTPS
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│                    Traefik                            │
+│            (electrical.example.com)                      │
+└──────────────────────┬───────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────┐
+│           SvelteKit PWA Container                    │
+│                                                      │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────┐  │
+│  │ Browse/     │  │  AI Chat     │  │  Search   │  │
+│  │ Edit UI     │  │  Panel       │  │  Engine   │  │
+│  └──────┬──────┘  └──────┬───────┘  └─────┬─────┘  │
+│         │                │                 │         │
+│  ┌──────┴────────────────┴─────────────────┴─────┐  │
+│  │           Server Routes (API Proxy)           │  │
+│  └──────┬────────────────┬───────────────────────┘  │
+└─────────┼────────────────┼───────────────────────────┘
+          │                │
+          ▼                ▼
+┌──────────────┐   ┌──────────────┐
+│   NocoDB     │   │   Ollama     │
+│  REST API    │   │  (local LLM) │
+│              │   │              │
+│ Tables:      │   │ Models:      │
+│ - Areas      │   │ - llama3.1   │
+│ - Panels     │   │ - mistral    │
+│ - Circuits   │   │ - etc.       │
+│ - Receptacles│   │              │
+│ - Loads      │   │              │
+└──────────────┘   └──────────────┘
+</code></pre>
+<hr />
+<h2>Key UX Features for the PWA</h2>
+<h3>1. <strong>Quick Lookup Mode</strong> (Primary mobile use case)</h3>
+<ul>
+<li>Open app → type or speak "garage outlets" → instant filtered results</li>
+<li>Shows: room, circuit #, panel, breaker amp, outlet type</li>
+<li>One-tap to see full details or navigate to that circuit's other loads</li>
+</ul>
+<h3>2. <strong>Panel View</strong></h3>
+<ul>
+<li>Visual representation of each breaker panel</li>
+<li>Tap a breaker → see all loads on that circuit</li>
+<li>Color coding: GFCI (green), AFCI (blue), standard (gray), unknown (red)</li>
+</ul>
+<h3>3. <strong>Room/Area Browser</strong></h3>
+<ul>
+<li>Hierarchical: Home → Floor → Room → Devices</li>
+<li>Each device shows circuit, type, notes</li>
+<li>Inline edit for quick updates</li>
+</ul>
+<h3>4. <strong>AI Chat</strong></h3>
+<ul>
+<li>Floating chat button (bottom-right)</li>
+<li>Context-aware: "what else is on this circuit?" when viewing a specific circuit</li>
+<li>Can execute updates: "mark all kitchen outlets as GFCI" → confirmation → batch update</li>
+</ul>
+<h3>5. <strong>Offline Support</strong></h3>
+<ul>
+<li>Service worker caches the full dataset (small enough at ~500 records)</li>
+<li>Queued updates sync when back online</li>
+<li>AI chat requires connectivity (Ollama is on the network)</li>
+</ul>
+<hr />
+<h2>AI Integration Detail</h2>
+<h3>System Prompt for the Electrical Assistant</h3>
+<pre><code>You are an electrical configuration assistant for the project owner's homes. You have access 
+to NocoDB tables containing: Areas, Panels, Circuits, Receptacles, and Loads.
+
+When answering questions:
+- Be specific with circuit numbers and panel locations
+- If a query is ambiguous (multiple matches), list all and ask for clarification
+- For update requests, always confirm before executing
+- Reference data by room/area name for human-friendliness
+
+You can:
+- Query any table with filters
+- Update records (with user confirmation)
+- Cross-reference (e.g., find all loads on a circuit, all circuits in a panel)
+</code></pre>
+<h3>Tool Definitions (for function calling)</h3>
+<pre><code class="language-json">[
+  {
+    &quot;name&quot;: &quot;query_electrical_data&quot;,
+    &quot;description&quot;: &quot;Search electrical configuration data&quot;,
+    &quot;parameters&quot;: {
+      &quot;table&quot;: &quot;string (Areas|Panels|Circuits|Receptacles|Loads)&quot;,
+      &quot;filters&quot;: &quot;object (field conditions)&quot;,
+      &quot;fields&quot;: &quot;array of field names to return&quot;
+    }
+  },
+  {
+    &quot;name&quot;: &quot;update_electrical_record&quot;,
+    &quot;description&quot;: &quot;Update a record in the electrical database&quot;,
+    &quot;parameters&quot;: {
+      &quot;table&quot;: &quot;string&quot;,
+      &quot;record_id&quot;: &quot;string&quot;,
+      &quot;updates&quot;: &quot;object (field: new_value pairs)&quot;
+    }
+  },
+  {
+    &quot;name&quot;: &quot;cross_reference&quot;,
+    &quot;description&quot;: &quot;Find related records across tables&quot;,
+    &quot;parameters&quot;: {
+      &quot;from_table&quot;: &quot;string&quot;,
+      &quot;from_id&quot;: &quot;string&quot;, 
+      &quot;to_table&quot;: &quot;string&quot;
+    }
+  }
+]
+</code></pre>
+<hr />
+<h2>Docker Deployment</h2>
+<pre><code class="language-yaml"># docker-compose.yml (addition to existing stack)
+services:
+  electrical-ui:
+    build: ./electrical-config-ai
+    container_name: electrical-ui
+    restart: unless-stopped
+    environment:
+      - NOCODB_URL=http://nocodb:8080
+      - NOCODB_TOKEN=${NOCODB_API_TOKEN}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.1:8b
+    labels:
+      - &quot;traefik.enable=true&quot;
+      - &quot;traefik.http.routers.electrical.rule=Host(`electrical.example.com`)&quot;
+      - &quot;traefik.http.routers.electrical.tls.certresolver=letsencrypt&quot;
+    networks:
+      - proxy
+      - internal
+</code></pre>
+<hr />
+<h2>Model Recommendation for AI Chat</h2>
+<p>For this use case (structured data queries, small context window needed):</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Why</th>
+<th>Tradeoff</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>llama3.1:8b</strong></td>
+<td>Fast, good at structured tasks, function calling support</td>
+<td>May struggle with complex multi-hop queries</td>
+</tr>
+<tr>
+<td><strong>mistral:7b</strong></td>
+<td>Excellent instruction following</td>
+<td>Slightly less capable at tool use</td>
+</tr>
+<tr>
+<td><strong>qwen2.5:14b</strong></td>
+<td>Best function calling in this size range</td>
+<td>Needs more VRAM</td>
+</tr>
+<tr>
+<td><strong>llama3.1:70b</strong> (desktop)</td>
+<td>Superior reasoning for complex queries</td>
+<td>Only on powerful desktop</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recommendation:</strong> Use <code>qwen2.5:14b</code> or <code>llama3.1:8b</code> as default. The dataset is small enough to include full schema + relevant records in context without RAG.</p>
+<hr />
+<h2>Phase 4: Interactive Floor Plan</h2>
+<h3>Overview</h3>
+<p>A visual, interactive floor plan layer that shows the physical location of every receptacle, switch, fixture, and load — mapped to their circuit data. This is the spatial complement to the tabular/chat views.</p>
+<h3>Data Model Addition</h3>
+<p>New fields needed in NocoDB (or a new <code>DeviceLocations</code> table):</p>
+<pre><code>DeviceLocations table:
+- id (auto)
+- device_id (link to Receptacles or Loads)
+- device_type (receptacle | switch | fixture | load)
+- floor_plan_id (link to FloorPlans)
+- x_position (float, 0-100 as % of plan width)
+- y_position (float, 0-100 as % of plan height)
+- rotation (optional, degrees)
+
+FloorPlans table:
+- id (auto)
+- home_id (link to home)
+- name (&quot;1st Floor&quot;, &quot;2nd Floor&quot;, &quot;Exterior&quot;)
+- image_url (uploaded floor plan image path)
+- width_px (original image width)
+- height_px (original image height)
+</code></pre>
+<p>Positions stored as percentages make the layout responsive regardless of display size.</p>
+<h3>Core Features (Phase 4a)</h3>
+<h4>Interactive Map View</h4>
+<ul>
+<li><strong>Pan &amp; zoom</strong> — touch gestures on mobile, scroll/drag on desktop</li>
+<li><strong>Device markers</strong> overlaid on floor plan image:</li>
+<li>🟢 Green circles = GFCI outlets</li>
+<li>⚪ Gray circles = Standard outlets</li>
+<li>🟣 Purple squares = Switches</li>
+<li>🟡 Amber diamonds = Fixtures/lights</li>
+<li>🔴 Red = Unknown/unmapped</li>
+<li><strong>Tap a marker</strong> → bottom sheet shows device details + circuit info</li>
+<li><strong>Circuit highlight mode</strong> — toggle to color-code all markers by circuit</li>
+<li>Tapping a circuit in the panel view could navigate here with that circuit pre-highlighted</li>
+<li><strong>Floor selector</strong> — tab between floors (some circuits span multiple floors, markers light up on both)</li>
+<li><strong>Desktop layout</strong> — side-by-side: floor plan (left 60%) + detail panel (right 40%)</li>
+</ul>
+<h4>AI Chat Integration</h4>
+<ul>
+<li>When asking "where is circuit 7?" → AI responds with text AND triggers the floor plan view with circuit 7 highlighted</li>
+<li>"Show me all GFCI outlets on the first floor" → floor plan opens with those markers pulsing</li>
+<li>Context-aware: if viewing the floor plan and tapping the AI chat, the question gets floor plan context ("I'm looking at the kitchen area")</li>
+</ul>
+<h4>Cross-Floor Circuit Visualization</h4>
+<ul>
+<li>When a circuit spans multiple floors, show a small multi-floor indicator</li>
+<li>Option to view "all floors" stacked/overlaid or switch between them</li>
+<li>Small minimap showing which floors have activity for the selected circuit</li>
+</ul>
+<h3>Advanced Features (Phase 4b)</h3>
+<h4>Floor Plan Upload &amp; Device Placement</h4>
+<ul>
+<li><strong>Upload interface:</strong> Drag-and-drop or camera photo of a floor plan/blueprint</li>
+<li><strong>Calibration:</strong> Set scale (drag to mark a known distance, e.g., "this wall is 12ft")</li>
+<li><strong>Device placement mode:</strong></li>
+<li>Tap on the plan to place a new device marker</li>
+<li>Picker appears: select device type → link to existing NocoDB record or create new</li>
+<li>Drag markers to reposition</li>
+<li>Long-press to delete</li>
+<li><strong>Bulk import from draw.io:</strong></li>
+<li>Provide a draw.io template with electrical symbol stencils</li>
+<li>User draws their floor plan in draw.io (free, works on any device)</li>
+<li>Export as SVG → import into the app</li>
+<li>App parses SVG layers to extract marker positions</li>
+<li>User maps markers to NocoDB records via a guided wizard</li>
+</ul>
+<h4>Draw.io Integration Pattern</h4>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│  Option A: In-App Placement (simpler)                        │
+│  - Upload any image (photo, scan, sketch)                    │
+│  - Tap to place markers directly in the PWA                  │
+│  - Positions saved to NocoDB DeviceLocations table           │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│  Option B: Draw.io External Tool (more precise)              │
+│  - Provide custom draw.io library with electrical symbols    │
+│  - User creates floor plan with labeled shapes               │
+│  - Export as SVG with metadata (shape IDs = device names)    │
+│  - Import SVG into app → auto-maps shapes to NocoDB records  │
+│  - Best for: detailed, precise architectural plans           │
+└─────────────────────────────────────────────────────────────┘
+
+│  Option C: Hybrid                                            │
+│  - Use draw.io for the floor plan base (walls, rooms)        │
+│  - Import as background image into the PWA                   │
+│  - Place device markers in-app on top of the imported plan   │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Recommendation:</strong> Start with <strong>Option C (Hybrid)</strong> — draw.io for the floor plan artwork, in-app for device placement. This separates the hard problem (floor plan drawing) from the data problem (device positioning).</p>
+<h3>Super Advanced (Phase 4c) — AR/VR &amp; Import/Export</h3>
+<h4>AR Mode (iPhone 16 Pro)</h4>
+<ul>
+<li><strong>ARKit + LiDAR:</strong> iPhone 16 Pro has a LiDAR scanner — could place virtual markers in real space</li>
+<li><strong>Implementation:</strong> Would require a native Swift component (not PWA-compatible)</li>
+<li><strong>Use case:</strong> Point phone at a wall → see overlaid info about outlets and their circuits</li>
+<li><strong>Feasibility:</strong> Medium-high effort (~4-6 weeks), requires native iOS development</li>
+<li><strong>Alternative lightweight AR:</strong> Use the camera + object detection to identify outlet covers, then overlay data. Simpler but less precise.</li>
+</ul>
+<h4>WebXR (PWA-compatible, no native app)</h4>
+<ul>
+<li><strong>WebXR Device API</strong> can provide basic AR in Safari on iPhone</li>
+<li>More limited than ARKit but works within the PWA</li>
+<li>Could show simple floating labels when pointing at walls</li>
+<li><strong>Feasibility:</strong> Experimental, limited Safari support, not recommended for MVP</li>
+</ul>
+<h4>Import/Export</h4>
+<ul>
+<li><strong>Export formats:</strong></li>
+<li>SVG floor plan with embedded device metadata</li>
+<li>PDF report (floor plan + circuit schedule)</li>
+<li>CSV of all device locations</li>
+<li>JSON (full data dump for backup/migration)</li>
+<li><strong>Import formats:</strong></li>
+<li>Draw.io XML/SVG</li>
+<li>Home Assistant floor plan YAML (if you've already mapped rooms there)</li>
+<li>Image files (PNG, JPG, PDF) as floor plan backgrounds</li>
+</ul>
+<h3>Technology Choices for Floor Plan</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Technology</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rendering</td>
+<td>SVG + Canvas hybrid</td>
+<td>SVG for markers (interactive), Canvas for background image (performant zoom)</td>
+</tr>
+<tr>
+<td>Pan/Zoom</td>
+<td><code>panzoom</code> or <code>d3-zoom</code> library</td>
+<td>Battle-tested, touch-friendly</td>
+</tr>
+<tr>
+<td>Marker overlay</td>
+<td>SVG <code>&lt;g&gt;</code> elements positioned by %</td>
+<td>Responsive, resolution-independent</td>
+</tr>
+<tr>
+<td>Mobile gestures</td>
+<td>Hammer.js or native touch events</td>
+<td>Pinch-to-zoom, pan, tap</td>
+</tr>
+<tr>
+<td>Desktop</td>
+<td>Same tech, larger viewport</td>
+<td>Side panel for details instead of bottom sheet</td>
+</tr>
+<tr>
+<td>AR (future)</td>
+<td>ARKit (native) or WebXR (web)</td>
+<td>LiDAR on iPhone 16 Pro enables room scanning</td>
+</tr>
+</tbody>
+</table>
+<h3>Floor Plan UX Mockup Description</h3>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│  ← Floor Plan          [1st Floor] [2nd] [Ext]         │
+├─────────────────────────────────────────────────────────┤
+│  [+] [-] [⊡] [☰ Layers]    [Circuit Highlight: ON]     │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │          FLOOR PLAN IMAGE                       │   │
+│   │                                                 │   │
+│   │    ┌──────────┐  ┌───────────────┐             │   │
+│   │    │ Kitchen  │  │  Living Room  │             │   │
+│   │    │  ●  ●    │  │    ●     ●    │             │   │
+│   │    │  ◆  ■    │  │  ■   ◆       │             │   │
+│   │    └──────────┘  └───────────────┘             │   │
+│   │    ┌──────────┐  ┌───────────────┐             │   │
+│   │    │ Garage   │  │    Office     │             │   │
+│   │    │  ●  ●  ● │  │  ●  ●  ◆     │             │   │
+│   │    └──────────┘  └───────────────┘             │   │
+│   │                                                 │   │
+│   └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  Legend: ● Outlet  ■ Switch  ◆ Fixture                  │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ Kitchen Counter Outlet (N wall)                 │    │
+│  │ Circuit 7 · Main Panel · 20A  [GFCI]           │    │
+│  │                                                 │    │
+│  │ [View Circuit]  [Edit]  [Show on All Floors]    │    │
+│  └─────────────────────────────────────────────────┘    │
+├─────────────────────────────────────────────────────────┤
+│  🏠   ⚡   🏢   🗺️   💬                               │
+│ Home  Panels Rooms Map  Ask AI                          │
+└─────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Desktop Layout (wider viewport)</h3>
+<pre><code>┌────────────────────────────────────────────────────────────────────────┐
+│  Electrical Config — Floor Plan                    [Boynton] [Milford] │
+├──────────────────────────────────────────┬─────────────────────────────┤
+│                                          │  Selected: Kitchen Counter  │
+│         FLOOR PLAN                       │  Outlet (N wall, left)      │
+│         (large, zoomable)                │                             │
+│                                          │  Circuit: 7 (Main Panel)    │
+│    Markers visible and interactive       │  Breaker: 20A GFCI          │
+│                                          │  Wire: 12/2 Romex           │
+│                                          │                             │
+│                                          │  Other loads on Circuit 7:  │
+│                                          │  • Counter outlet (right)   │
+│                                          │  • Under-cabinet lights     │
+│                                          │  • Disposal                 │
+│                                          │                             │
+│                                          │  [Edit] [View in Table]     │
+│                                          │                             │
+│  [+][-][⊡] Circuit: [All ▾]             │  ─── AI Chat ───            │
+│  Legend: ● ■ ◆                           │  Ask about this location... │
+└──────────────────────────────────────────┴─────────────────────────────┘
+</code></pre>
+<h3>Phase 4 Timeline</h3>
+<table>
+<thead>
+<tr>
+<th>Sub-phase</th>
+<th>Effort</th>
+<th>Deliverable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4a: Core floor plan viewer</td>
+<td>3-5 days</td>
+<td>Pan/zoom, markers, tap-to-info, circuit highlight</td>
+</tr>
+<tr>
+<td>4a+: AI integration</td>
+<td>1-2 days</td>
+<td>Chat triggers map highlights, map context in chat</td>
+</tr>
+<tr>
+<td>4b: Upload &amp; placement</td>
+<td>3-5 days</td>
+<td>Upload image, tap-to-place markers, save positions</td>
+</tr>
+<tr>
+<td>4b+: Draw.io template</td>
+<td>1-2 days</td>
+<td>Custom library + import/parse SVG</td>
+</tr>
+<tr>
+<td>4c: AR exploration</td>
+<td>4-6 weeks</td>
+<td>Native ARKit prototype (stretch goal)</td>
+</tr>
+<tr>
+<td>4c: Import/export</td>
+<td>2-3 days</td>
+<td>SVG, PDF, CSV, JSON export</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>What I'd Need to Proceed to Implementation</h2>
+<ol>
+<li><strong>NocoDB schema details</strong> — exact table names, column names, relationships (I can get this via the MCP server if you want to connect me)</li>
+<li><strong>Decision on Phase 1 vs Phase 2</strong> — want to start with Open-WebUI tool first, or jump to the PWA?</li>
+<li><strong>Model preference</strong> — which Ollama model(s) do you want to use?</li>
+<li><strong>Auth requirement</strong> — should the PWA have a login, or is network-level security (Traefik + LAN only) sufficient?</li>
+<li><strong>Floor plans</strong> — do you have existing floor plans (blueprints, sketches, photos) for either home? Or should we plan for creation from scratch?</li>
+</ol>
+<hr />
+<h2>Phase 1.5: Siri Voice Bridge (iOS Shortcuts + PWA API)</h2>
+<h3>How It Works</h3>
+<p>Siri doesn't understand MCP — it's purely a voice trigger for iOS Shortcuts. MCP is a protocol between AI agents and data sources (Claude, Open-WebUI, etc.), not something iOS can speak natively.</p>
+<p>However, Siri + Shortcuts can make HTTP requests to <strong>any local LAN endpoint</strong> — no internet required. The Shortcut itself contains the endpoint URL (e.g., <code>http://electrical.local/api/ask</code> or <code>http://192.168.1.x:3000/api/ask</code>).</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│  &quot;Hey Siri, ask electrical what circuit the pool pump is on&quot; │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ Voice → text transcription (on-device)
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│              iOS Shortcut: &quot;Ask Electrical&quot;                    │
+│                                                              │
+│  1. &quot;Ask for Input&quot; or use Siri's transcription              │
+│  2. &quot;Get Contents of URL&quot;                                    │
+│     → POST http://electrical.local/api/ask                   │
+│     → Body: { &quot;question&quot;: &quot;&lt;transcribed text&gt;&quot; }             │
+│  3. &quot;Get value from JSON&quot; → extract .answer                  │
+│  4. &quot;Speak Text&quot; → reads answer aloud                        │
+└──────────────────────────┬───────────────────────────────────┘
+                           │ HTTP (local WiFi, no internet)
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│           SvelteKit PWA — /api/ask endpoint                   │
+│                                                              │
+│  1. Receives question text                                   │
+│  2. Builds prompt with NocoDB schema context                 │
+│  3. Calls Ollama (function calling) to query NocoDB          │
+│  4. Returns plain text answer                                │
+└──────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>Key Points</h3>
+<ul>
+<li><strong>No internet needed</strong> — Shortcut hits LAN IP or <code>.local</code> hostname</li>
+<li><strong>Siri is just the voice trigger</strong> — all logic is in the Shortcut + your server</li>
+<li><strong>MCP stays where it belongs</strong> — in Open-WebUI and other AI agent tools, not Siri</li>
+<li><strong>Works hands-free</strong> — perfect for when you're at the panel with dirty hands</li>
+</ul>
+<h3>Why Not Use MCP Directly from Siri?</h3>
+<p>MCP requires a compatible client runtime (JSON-RPC over stdio/SSE). iOS Shortcuts can only do simple HTTP requests. The bridge pattern (Shortcut → your API → Ollama → NocoDB) gives you the same result with technology Siri can actually use.</p>
+<h3>iOS Shortcut Setup</h3>
+<pre><code>Shortcut: &quot;Ask Electrical&quot;
+──────────────────────────
+1. [Ask for Input] — &quot;What do you want to know?&quot;
+   (or skip if Siri passes the phrase directly)
+
+2. [URL] — http://electrical.local:3000/api/ask
+
+3. [Get Contents of URL]
+   Method: POST
+   Headers: Content-Type: application/json
+   Body (JSON): { &quot;question&quot;: &quot;[Provided Input]&quot; }
+
+4. [Get Value from Dictionary] — key: &quot;answer&quot;
+
+5. [Speak Text] — speak the answer aloud
+
+Optional: [Show Result] — also display on screen
+</code></pre>
+<p><strong>Effort:</strong> ~2-4 hours (API endpoint + Shortcut creation)</p>
+<hr />
+<h2>Phase 3: Home Assistant Integration</h2>
+<h3>Why This Fits Naturally</h3>
+<p>Your NocoDB electrical data maps directly to Home Assistant's domain model:</p>
+<table>
+<thead>
+<tr>
+<th>NocoDB Table</th>
+<th>HA Concept</th>
+<th>Connection</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Areas</td>
+<td>HA Areas/Rooms</td>
+<td>Same physical spaces</td>
+</tr>
+<tr>
+<td>Circuits</td>
+<td>— (no native equivalent)</td>
+<td>New entities</td>
+</tr>
+<tr>
+<td>Receptacles</td>
+<td>HA Devices/Entities</td>
+<td>Z-Wave switches, smart plugs already in HA</td>
+</tr>
+<tr>
+<td>Loads</td>
+<td>HA Devices</td>
+<td>Lights, fans, etc. you already control</td>
+</tr>
+<tr>
+<td>Panels</td>
+<td>—</td>
+<td>Organizational grouping</td>
+</tr>
+</tbody>
+</table>
+<p>The key insight: <strong>your HA already knows about many of these devices</strong> (Z-Wave switches, smart outlets). NocoDB adds the <em>electrical context</em> (which breaker, what circuit, wire gauge, GFCI status) that HA doesn't track.</p>
+<h3>Integration Approaches (Ranked)</h3>
+<h4>Approach A: RESTful Sensors + Panel Iframe (Lowest Effort) ⭐</h4>
+<p>Use HA's built-in REST integration to pull data from NocoDB, plus embed your PWA as an iframe panel.</p>
+<p><strong><code>configuration.yaml</code>:</strong></p>
+<pre><code class="language-yaml"># Pull circuit data as sensors
+rest:
+  - resource: &quot;http://nocodb:8080/api/v2/meta/bases/your_nocodb_base_id/tables/Circuits/records&quot;
+    method: GET
+    headers:
+      xc-auth: &quot;YOUR_NOCODB_TOKEN&quot;
+    scan_interval: 300  # refresh every 5 min
+    sensor:
+      - name: &quot;Total Circuits&quot;
+        value_template: &quot;{{ value_json.list | length }}&quot;
+      - name: &quot;GFCI Circuits&quot;
+        value_template: &quot;{{ value_json.list | selectattr('breaker_type', 'eq', 'GFCI') | list | length }}&quot;
+
+# Embed the PWA as a sidebar panel
+panel_iframe:
+  electrical:
+    title: &quot;Electrical Config&quot;
+    url: &quot;http://electrical.local:3000&quot;
+    icon: &quot;mdi:flash&quot;
+    require_admin: false
+
+# REST commands to update NocoDB from HA automations
+rest_command:
+  update_circuit_status:
+    url: &quot;http://nocodb:8080/api/v2/meta/bases/your_nocodb_base_id/tables/Circuits/records/{{ record_id }}&quot;
+    method: PATCH
+    headers:
+      xc-auth: &quot;YOUR_NOCODB_TOKEN&quot;
+      Content-Type: &quot;application/json&quot;
+    payload: '{{ payload }}'
+</code></pre>
+<p><strong>Effort:</strong> ~2-4 hours<br />
+<strong>Gives you:</strong> Circuit data visible in HA dashboards, PWA accessible from HA sidebar, ability to update NocoDB from automations.</p>
+<h4>Approach B: Custom Integration (HACS-installable) — Medium Effort</h4>
+<p>A proper HA custom integration (<code>custom_components/nocodb_electrical/</code>) that:
+- Creates entities for each circuit (with attributes: amp rating, type, loads count)
+- Links circuits to existing HA areas
+- Provides services: <code>nocodb_electrical.query</code>, <code>nocodb_electrical.update_record</code>
+- Syncs bidirectionally (HA area changes → NocoDB, NocoDB updates → HA entities)</p>
+<pre><code class="language-python"># custom_components/nocodb_electrical/sensor.py (simplified)
+class CircuitSensor(SensorEntity):
+    &quot;&quot;&quot;Represent a single electrical circuit.&quot;&quot;&quot;
+
+    def __init__(self, circuit_data):
+        self._attr_name = f&quot;Circuit {circuit_data['number']} - {circuit_data['label']}&quot;
+        self._attr_native_value = circuit_data['status']
+        self._attr_extra_state_attributes = {
+            &quot;panel&quot;: circuit_data['panel_name'],
+            &quot;breaker_amps&quot;: circuit_data['amps'],
+            &quot;breaker_type&quot;: circuit_data['type'],  # GFCI, AFCI, Standard
+            &quot;loads_count&quot;: circuit_data['loads_count'],
+            &quot;area&quot;: circuit_data['area_name'],
+        }
+</code></pre>
+<p><strong>Effort:</strong> ~1-2 weeks<br />
+<strong>Gives you:</strong> First-class HA entities, automations that reference circuits, Lovelace cards.</p>
+<h4>Approach C: Bidirectional Entity Linking — Advanced</h4>
+<p>The most powerful option: <strong>link your NocoDB receptacles/loads to their actual HA entities</strong> (Z-Wave switches, smart plugs).</p>
+<p><strong>Concept:</strong> Add an <code>ha_entity_id</code> field to your NocoDB Receptacles/Loads tables. This creates a mapping:</p>
+<pre><code>NocoDB: Kitchen Island Outlet 2 (Circuit 9, GFCI, 20A)
+    ↕ linked to
+HA: switch.kitchen_island_zwave_outlet_2 (Z-Wave, controllable)
+</code></pre>
+<p><strong>This enables:</strong>
+- "Hey Siri, what circuit is the kitchen island switch on?" → looks up HA entity → finds NocoDB record → "Circuit 9, Main Panel, 20A GFCI"
+- HA automation: if a breaker trips (via smart panel monitor), mark all linked entities as unavailable
+- Dashboard: tap a Z-Wave switch in HA → see its full electrical context (circuit, panel, wire gauge)
+- Safety alerts: "Circuit 9 has 6 loads totaling estimated 14A on a 20A breaker"</p>
+<p><strong>Implementation:</strong></p>
+<pre><code class="language-yaml"># HA automation: when a device goes unavailable, log to NocoDB
+automation:
+  - alias: &quot;Log circuit issues&quot;
+    trigger:
+      - platform: state
+        entity_id: switch.kitchen_island_outlet
+        to: &quot;unavailable&quot;
+    action:
+      - service: rest_command.update_circuit_status
+        data:
+          record_id: &quot;rec_abc123&quot;
+          payload: '{&quot;status&quot;: &quot;issue_detected&quot;, &quot;last_event&quot;: &quot;{{ now() }}&quot;}'
+</code></pre>
+<p><strong>Effort:</strong> ~2-3 weeks (including entity mapping data entry)<br />
+<strong>Gives you:</strong> True smart-home-meets-electrical-documentation. Live circuit awareness.</p>
+<h3>Recommended HA Approach: A now → B later → C as stretch goal</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>What</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>3a</strong></td>
+<td>Panel iframe + REST sensors</td>
+<td>With Phase 2 (same deployment)</td>
+</tr>
+<tr>
+<td><strong>3b</strong></td>
+<td>Custom integration with circuit entities</td>
+<td>After PWA MVP works</td>
+</tr>
+<tr>
+<td><strong>3c</strong></td>
+<td>Bidirectional entity linking</td>
+<td>When entity mapping is populated</td>
+</tr>
+</tbody>
+</table>
+<h3>HA Dashboard Card (Mock)</h3>
+<pre><code class="language-yaml"># Lovelace card showing circuit info for a room
+type: custom:auto-entities
+card:
+  type: entities
+  title: &quot;Kitchen - Electrical&quot;
+filter:
+  include:
+    - attributes:
+        area: &quot;Kitchen&quot;
+      options:
+        secondary_info: attribute
+        attribute: panel
+</code></pre>
+<hr />
+<h2>Revised Architecture Diagram</h2>
+<pre><code>┌────────────────────────────────────────────────────────────────────┐
+│                        User Interfaces                              │
+├──────────┬──────────────┬─────────────────┬───────────────────────┤
+│  iPhone  │   PWA        │  Home Assistant  │  Open-WebUI          │
+│  Siri    │  (mobile     │  Dashboard +     │  (AI chat with       │
+│  Shortcut│   browser)   │  Iframe + Cards  │   MCP tools)         │
+└────┬─────┴──────┬───────┴────────┬─────────┴──────────┬───────────┘
+     │            │                │                     │
+     │ HTTP/LAN   │ HTTP/LAN       │ HTTP/LAN            │ MCP protocol
+     ▼            ▼                ▼                     ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                    SvelteKit PWA Server                            │
+│                  (electrical.local:3000)                           │
+│                                                                   │
+│  /api/ask ←─── Siri Shortcuts                                    │
+│  /api/query ←── HA REST sensors                                  │
+│  /api/update ←── HA rest_commands                                │
+│  UI routes ←── Browser / HA iframe                               │
+└─────────────────────┬────────────────────┬────────────────────────┘
+                      │                    │
+                      ▼                    ▼
+              ┌──────────────┐     ┌──────────────┐
+              │   NocoDB     │     │   Ollama     │
+              │  REST API    │     │  (LLM)       │
+              │              │     │              │
+              │ + MCP Server │◄────│  (used by    │
+              │   endpoint   │     │  Open-WebUI  │
+              └──────────────┘     │  directly)   │
+                                   └──────────────┘
+</code></pre>
+<hr />
+<h2>Timeline Estimate</h2>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Effort</th>
+<th>Deliverable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1: Open-WebUI Tool</td>
+<td>2-4 hours</td>
+<td>AI chat against electrical data via Open-WebUI</td>
+</tr>
+<tr>
+<td>Phase 1.5: Siri Voice Bridge</td>
+<td>2-4 hours</td>
+<td>"Hey Siri, ask electrical..." via LAN</td>
+</tr>
+<tr>
+<td>Phase 2a: PWA scaffold + NocoDB integration</td>
+<td>2-3 days</td>
+<td>Browse/search/edit working on mobile</td>
+</tr>
+<tr>
+<td>Phase 2b: AI chat panel</td>
+<td>2-3 days</td>
+<td>Embedded Ollama chat with tool calling</td>
+</tr>
+<tr>
+<td>Phase 2c: Polish + PWA features</td>
+<td>2-3 days</td>
+<td>Offline, panel view, install-to-homescreen</td>
+</tr>
+<tr>
+<td>Phase 3a: HA iframe + REST sensors</td>
+<td>2-4 hours</td>
+<td>Electrical data visible in HA</td>
+</tr>
+<tr>
+<td>Phase 3b: Custom HA integration</td>
+<td>1-2 weeks</td>
+<td>Circuit entities, services, automations</td>
+</tr>
+<tr>
+<td>Phase 3c: Entity linking</td>
+<td>2-3 weeks</td>
+<td>Bidirectional HA ↔ NocoDB mapping</td>
+</tr>
+<tr>
+<td><strong>Phase 4a: Floor plan viewer</strong></td>
+<td><strong>3-5 days</strong></td>
+<td>Pan/zoom map, markers, tap-to-info, circuit highlight</td>
+</tr>
+<tr>
+<td>Phase 4a+: AI ↔ Map integration</td>
+<td>1-2 days</td>
+<td>Chat triggers highlights, map context in queries</td>
+</tr>
+<tr>
+<td>Phase 4b: Upload &amp; device placement</td>
+<td>3-5 days</td>
+<td>Upload plan, tap-to-place, draw.io import</td>
+</tr>
+<tr>
+<td>Phase 4c: AR/VR exploration</td>
+<td>4-6 weeks</td>
+<td>Native ARKit prototype (stretch)</td>
+</tr>
+<tr>
+<td>Phase 4c: Import/export</td>
+<td>2-3 days</td>
+<td>SVG, PDF, CSV, JSON</td>
+</tr>
+<tr>
+<td><strong>Total MVP (Phases 1-2c + 3a + 4a)</strong></td>
+<td><strong>~3 weeks</strong></td>
+<td>Full PWA + Siri + HA + Floor Plan</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

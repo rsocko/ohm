@@ -1,0 +1,144 @@
+# ===========================================================================
+# Home Assistant Automations for Electrical Config AI
+# ===========================================================================
+# Copy relevant automations into your automations.yaml or create via UI
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Circuit Monitoring — Detect potential issues
+# ---------------------------------------------------------------------------
+
+- alias: "Alert: Circuit capacity warning"
+  description: "Warn when a circuit exceeds 80% of rated amperage"
+  trigger:
+    - platform: numeric_state
+      entity_id:
+        - sensor.emporia_vue_circuit_1_power
+        - sensor.emporia_vue_circuit_2_power
+        - sensor.emporia_vue_circuit_3_power
+        - sensor.emporia_vue_circuit_4_power
+        - sensor.emporia_vue_circuit_5_power
+        - sensor.emporia_vue_circuit_6_power
+        - sensor.emporia_vue_circuit_7_power
+        - sensor.emporia_vue_circuit_8_power
+      above: 1920  # 80% of 20A @ 120V = 1920W (adjust per circuit rating)
+  condition:
+    - condition: template
+      value_template: "{{ trigger.to_state.state | float > 1920 }}"
+  action:
+    - service: notify.mobile_app_ryans_iphone
+      data:
+        title: "⚡ Circuit Capacity Warning"
+        message: >
+          {{ trigger.to_state.attributes.friendly_name }} is drawing
+          {{ trigger.to_state.state }}W (above 80% capacity).
+        data:
+          push:
+            sound: "default"
+            interruption-level: "time-sensitive"
+    - service: rest_command.log_electrical_event
+      data:
+        event_type: "capacity_warning"
+        circuit_id: "{{ trigger.entity_id }}"
+        details: "{{ trigger.to_state.state }}W exceeded 80% threshold"
+
+- alias: "Alert: Device went unavailable (possible trip)"
+  description: "Detect when a Z-Wave device becomes unavailable, which may indicate a tripped breaker"
+  trigger:
+    - platform: state
+      entity_id:
+        - switch.kitchen_island_outlet
+        - switch.office_desk_outlet
+        - light.kitchen_pendant
+        - light.living_room_fan
+      to: "unavailable"
+      for: "00:02:00"  # Must be unavailable for 2 minutes (not just a brief blip)
+  action:
+    - service: notify.mobile_app_ryans_iphone
+      data:
+        title: "🔌 Device Unavailable"
+        message: >
+          {{ trigger.to_state.attributes.friendly_name }} has been unavailable
+          for 2 minutes. Possible breaker trip?
+        data:
+          actions:
+            - action: "CHECK_PANEL"
+              title: "Open Electrical App"
+              uri: "http://electrical.local:3000"
+    - service: rest_command.log_electrical_event
+      data:
+        event_type: "device_unavailable"
+        circuit_id: "unknown"
+        details: "{{ trigger.entity_id }} unavailable for 2+ minutes"
+
+# ---------------------------------------------------------------------------
+# Energy Cost Tracking
+# ---------------------------------------------------------------------------
+
+- alias: "Daily energy cost summary"
+  description: "Send daily energy cost notification at 9 PM"
+  trigger:
+    - platform: time
+      at: "21:00:00"
+  action:
+    - service: notify.mobile_app_ryans_iphone
+      data:
+        title: "💡 Daily Energy Summary"
+        message: >
+          Today's usage: {{ states('sensor.emporia_vue_total_daily_energy') }}kWh
+          (est. ${{ (states('sensor.emporia_vue_total_daily_energy') | float * 0.12) | round(2) }})
+          Top circuit: {{ state_attr('sensor.emporia_vue_circuit_7_power', 'friendly_name') }}
+
+# ---------------------------------------------------------------------------
+# Smart Control — Context-aware device management
+# ---------------------------------------------------------------------------
+
+- alias: "Turn off forgotten lights"
+  description: "Turn off lights that have been on for 4+ hours with no motion"
+  trigger:
+    - platform: state
+      entity_id:
+        - light.office_lights
+        - light.guest_room
+      to: "on"
+      for: "04:00:00"
+  condition:
+    - condition: template
+      value_template: >
+        {% set area = state_attr(trigger.entity_id, 'area_id') %}
+        {% set motion = 'binary_sensor.' ~ area ~ '_motion' %}
+        {{ is_state(motion, 'off') }}
+  action:
+    - service: notify.mobile_app_ryans_iphone
+      data:
+        title: "💡 Forgotten Light?"
+        message: >
+          {{ trigger.to_state.attributes.friendly_name }} has been on for 4 hours
+          with no motion detected. Turn off?
+        data:
+          actions:
+            - action: "TURN_OFF_{{ trigger.entity_id }}"
+              title: "Turn Off"
+            - action: "IGNORE"
+              title: "Leave On"
+
+# ---------------------------------------------------------------------------
+# NocoDB Sync — Keep electrical records updated
+# ---------------------------------------------------------------------------
+
+- alias: "Sync device state to NocoDB"
+  description: "When a linked device changes state, update its NocoDB record"
+  trigger:
+    - platform: state
+      entity_id:
+        - switch.kitchen_island_outlet
+        - switch.office_desk_outlet
+  action:
+    - service: nocodb_electrical.update_record
+      data:
+        table: "Loads"
+        record_id: >
+          {{ state_attr(trigger.entity_id, 'nocodb_record_id') }}
+        data:
+          ha_last_state: "{{ trigger.to_state.state }}"
+          ha_last_seen: "{{ now().isoformat() }}"

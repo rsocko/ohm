@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Electrical Config - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/1.4.2/css/phosphor.min.css">
+    <style>
+        :root {
+            --accent: #3b82f6;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        * { -webkit-font-smoothing: antialiased; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+            min-height: 100dvh;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .search-bar {
+            background: var(--surface-2);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .nav-item {
+            transition: transform 0.15s ease, opacity 0.15s ease;
+        }
+        .nav-item:active {
+            transform: scale(0.96);
+            opacity: 0.8;
+        }
+        .stat-card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 16px;
+            min-width: 0;
+        }
+        .fab {
+            background: var(--accent);
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.15s ease;
+        }
+        .fab:active { transform: scale(0.96); }
+        .badge {
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .badge-gfci { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .badge-afci { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .badge-standard { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    </style>
+</head>
+<body class="pb-24">
+    <!-- Status Bar Spacer -->
+    <div class="h-12"></div>
+
+    <!-- Header -->
+    <header class="px-5 pb-4">
+        <div class="flex items-center justify-between mb-1">
+            <div>
+                <p class="text-sm text-slate-400">Good morning</p>
+                <h1 class="text-2xl font-bold text-white" style="text-wrap: balance;">Electrical Config</h1>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Home Selector -->
+        <div class="flex gap-2 mt-3 mb-4">
+            <button class="px-4 py-1.5 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">Boynton</button>
+            <button class="px-4 py-1.5 rounded-full text-sm font-medium text-slate-400 border border-slate-700">Milford</button>
+        </div>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="px-5 mb-5">
+        <div class="search-bar flex items-center gap-3 px-4 py-3">
+            <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" placeholder="Search rooms, circuits, devices..." class="bg-transparent w-full text-sm text-slate-200 placeholder-slate-500 outline-none">
+            <svg class="w-5 h-5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="px-5 mb-5">
+        <div class="grid grid-cols-3 gap-3">
+            <div class="stat-card text-center">
+                <p class="text-2xl font-bold text-white" style="font-variant-numeric: tabular-nums;">4</p>
+                <p class="text-xs text-slate-400 mt-1">Panels</p>
+            </div>
+            <div class="stat-card text-center">
+                <p class="text-2xl font-bold text-white" style="font-variant-numeric: tabular-nums;">194</p>
+                <p class="text-xs text-slate-400 mt-1">Receptacles</p>
+            </div>
+            <div class="stat-card text-center">
+                <p class="text-2xl font-bold text-white" style="font-variant-numeric: tabular-nums;">125</p>
+                <p class="text-xs text-slate-400 mt-1">Loads</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="px-5 mb-5">
+        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Browse</h2>
+        <div class="grid grid-cols-2 gap-3">
+            <a href="panel-view.html" class="nav-item card p-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">Panels</p>
+                    <p class="text-xs text-slate-400">4 panels</p>
+                </div>
+            </a>
+            <a href="room-browser.html" class="nav-item card p-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-green-500/15 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">Rooms</p>
+                    <p class="text-xs text-slate-400">23 areas</p>
+                </div>
+            </a>
+            <div class="nav-item card p-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/15 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">Circuits</p>
+                    <p class="text-xs text-slate-400">~60 circuits</p>
+                </div>
+            </div>
+            <div class="nav-item card p-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-white">Loads</p>
+                    <p class="text-xs text-slate-400">125 devices</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="px-5 mb-5">
+        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Recent Queries</h2>
+        <div class="card divide-y divide-slate-700/50">
+            <div class="px-4 py-3 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm text-white truncate">"Which circuit is the garage door on?"</p>
+                    <p class="text-xs text-slate-500">2 hours ago · Panel A, Circuit 14</p>
+                </div>
+            </div>
+            <div class="px-4 py-3 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-green-500/15 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="text-sm text-white truncate">"Update kitchen island to GFCI"</p>
+                    <p class="text-xs text-slate-500">Yesterday · 3 records updated</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat FAB -->
+    <button class="fab fixed bottom-24 right-5 flex items-center justify-center z-50" onclick="window.location.href='ai-chat.html'">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        </svg>
+    </button>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 px-6 py-2 max-w-[430px] mx-auto" style="padding-bottom: env(safe-area-inset-bottom, 8px);">
+        <div class="flex justify-around items-center">
+            <a href="index.html" class="flex flex-col items-center gap-1 py-1 text-blue-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </a>
+            <a href="panel-view.html" class="flex flex-col items-center gap-1 py-1 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span class="text-[10px] font-medium">Panels</span>
+            </a>
+            <a href="room-browser.html" class="flex flex-col items-center gap-1 py-1 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span class="text-[10px] font-medium">Rooms</span>
+            </a>
+            <a href="ai-chat.html" class="flex flex-col items-center gap-1 py-1 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                <span class="text-[10px] font-medium">Ask AI</span>
+            </a>
+        </div>
+    </nav>
+</body>
+</html>

@@ -1,0 +1,91 @@
+# ===========================================================================
+# Home Assistant Configuration for Electrical Config AI Integration
+# ===========================================================================
+# Copy relevant sections into your configuration.yaml
+# Replace placeholders (YOUR_*) with your actual values
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Panel iFrame — Embed PWA in HA sidebar
+# ---------------------------------------------------------------------------
+panel_iframe:
+  electrical:
+    title: "Electrical Config"
+    url: "http://electrical.local:3000"
+    icon: "mdi:flash"
+    require_admin: false
+
+# ---------------------------------------------------------------------------
+# REST Sensors — Pull circuit summary data into HA
+# ---------------------------------------------------------------------------
+rest:
+  - resource: "http://electrical.local:3000/api/query"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: '{"table": "Circuits"}'
+    scan_interval: 300
+    sensor:
+      - name: "Total Circuits"
+        value_template: "{{ value_json.data | length }}"
+        unit_of_measurement: "circuits"
+        icon: "mdi:flash"
+      - name: "GFCI Circuits"
+        value_template: "{{ value_json.data | selectattr('Breaker_Type', 'eq', 'GFCI') | list | length }}"
+        unit_of_measurement: "circuits"
+        icon: "mdi:shield-check"
+      - name: "AFCI Circuits"
+        value_template: "{{ value_json.data | selectattr('Breaker_Type', 'eq', 'AFCI') | list | length }}"
+        unit_of_measurement: "circuits"
+        icon: "mdi:shield-alert"
+
+  - resource: "http://electrical.local:3000/api/query"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: '{"table": "Panels"}'
+    scan_interval: 600
+    sensor:
+      - name: "Electrical Panels"
+        value_template: "{{ value_json.data | length }}"
+        unit_of_measurement: "panels"
+        icon: "mdi:electric-switch"
+
+# ---------------------------------------------------------------------------
+# REST Commands — Allow HA automations to update NocoDB
+# ---------------------------------------------------------------------------
+rest_command:
+  update_circuit_status:
+    url: "http://nocodb.local:8080/api/v2/meta/bases/YOUR_BASE_ID/tables/Circuits/records"
+    method: PATCH
+    headers:
+      xc-auth: !secret nocodb_token
+      Content-Type: "application/json"
+    payload: '{"Id": "{{ record_id }}", "Status": "{{ status }}"}'
+
+  log_electrical_event:
+    url: "http://electrical.local:3000/api/events"
+    method: POST
+    headers:
+      Content-Type: "application/json"
+    payload: '{"type": "{{ event_type }}", "circuit_id": "{{ circuit_id }}", "details": "{{ details }}", "timestamp": "{{ now() }}"}'
+
+# ---------------------------------------------------------------------------
+# Template Sensors — Derived electrical metrics
+# ---------------------------------------------------------------------------
+template:
+  - sensor:
+      - name: "Main Panel Utilization"
+        unit_of_measurement: "%"
+        state: >
+          {% set total_amps = states('sensor.total_circuits') | int * 20 %}
+          {% set max_amps = 200 %}
+          {{ ((total_amps / max_amps) * 100) | round(1) }}
+        icon: "mdi:gauge"
+
+      - name: "Kitchen Circuit Load"
+        unit_of_measurement: "W"
+        state: >
+          {{ states('sensor.emporia_vue_circuit_7_power') | float(0) +
+             states('sensor.emporia_vue_circuit_8_power') | float(0) }}
+        icon: "mdi:lightning-bolt"
