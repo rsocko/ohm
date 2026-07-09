@@ -39,6 +39,7 @@ export const homePanelIds: Set<number>; // panels in those areas
 
 **Key behavior:**
 - Set once on app init (auto-detect via geolocation or default to first home)
+  > ⚠️ **Deployment note:** The Geolocation API requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API#secure_context). The app must be served over **HTTPS** (TLS) in production — plain `http://` will silently block `getCurrentPosition()` without ever showing a browser permission prompt. Use a reverse proxy (e.g. Caddy, nginx + Let's Encrypt) in front of the app.
 - Persisted to `localStorage` so it survives page reloads
 - Home switcher on homepage updates this store
 - ALL pages read from this store to filter their data
