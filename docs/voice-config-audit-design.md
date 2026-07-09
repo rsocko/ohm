@@ -282,6 +282,9 @@ See `docs/mockups/voice-config-batch-confirmation.html` for interactive mockup.
 - **Confirm All** — Executes entire batch sequentially (creates first, then links)
 - **Cancel** — Discards all; AI asks what to change
 - **Individual row tap** (future) — Could allow editing before confirm
+- **Voice confirm/modify** — User can say "confirm all", "remove the second one", "change circuit 7 to 3", etc. The AI interprets these as modifications to the pending batch since it has full conversation context. No special wiring needed — voice is just text input to the same chat.
+
+> **Design note:** Tap buttons are the _fast path_ (one tap, instant). Voice is the _hands-free path_ (speak, wait for AI parsing). Both work for confirms, cancels, disambiguation responses, and partial edits. The architecture gives us this for free.
 
 ---
 
