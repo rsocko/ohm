@@ -560,6 +560,47 @@
 		return `/api/image?path=${encodeURIComponent(photo.signedPath)}`;
 	}
 
+	// --- Panel Photo Upload ---
+	let photoInputEl: HTMLInputElement | undefined = $state(undefined);
+	let uploadingPhoto = $state(false);
+
+	function triggerPhotoCapture() {
+		photoInputEl?.click();
+	}
+
+	async function handlePhotoFile(e: Event) {
+		const input = e.target as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file || !selectedPanelId) return;
+
+		uploadingPhoto = true;
+		try {
+			const formData = new FormData();
+			formData.append('file', file);
+			formData.append('table', 'Panels');
+			formData.append('field', 'Attachment');
+			formData.append('recordId', String(selectedPanelId));
+
+			const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+			if (!resp.ok) throw new Error('Upload failed');
+
+			const result = await resp.json();
+			// Update local panel record with the new attachment
+			const panel = panels.find(p => p.id === selectedPanelId);
+			if (panel && result.attachment) {
+				const existing = (panel.fields.Attachment as Attachment[] | undefined) || [];
+				panel.fields.Attachment = [...existing, result.attachment];
+			}
+			toast.success('Panel photo saved');
+		} catch (err) {
+			console.error('Photo upload error:', err);
+			toast.error('Failed to upload photo');
+		} finally {
+			uploadingPhoto = false;
+			input.value = '';
+		}
+	}
+
 	function getAmpBadgeColor(amps: number | undefined): string {
 		if (!amps) return 'bg-slate-600/80 text-slate-400';
 		if (amps >= 50) return 'bg-red-600/90 text-red-100';
@@ -961,6 +1002,16 @@
 	});
 </script>
 
+<!-- Hidden file input for panel photo capture -->
+<input
+	type="file"
+	accept="image/*"
+	capture="environment"
+	bind:this={photoInputEl}
+	onchange={handlePhotoFile}
+	class="hidden"
+/>
+
 <div class="max-w-2xl mx-auto space-y-4">
 	<!-- Header -->
 	<div class="flex items-center gap-2.5">
@@ -1071,6 +1122,16 @@
 							<div class="flex items-center gap-2">
 								<button
 										type="button"
+										onclick={triggerPhotoCapture}
+										disabled={uploadingPhoto}
+										class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-[11px] font-medium text-slate-300 hover:text-white active:scale-[0.96] transition-all duration-150 disabled:opacity-50"
+										title="Replace Panel Photo"
+									>
+										<Icon icon={uploadingPhoto ? 'mdi:loading' : 'mdi:camera-flip'} width={13} class={uploadingPhoto ? 'animate-spin' : ''} />
+										<span class="hidden sm:inline">Retake</span>
+									</button>
+								<button
+										type="button"
 										onclick={() => { showLabelPrint = !showLabelPrint; }}
 										class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-[11px] font-medium {showLabelPrint ? 'bg-indigo-600 text-white shadow-sm border-indigo-500/50' : 'text-slate-300 hover:text-white'} active:scale-[0.96] transition-all duration-150"
 										title="Print Labels"
@@ -1140,15 +1201,25 @@
 								{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size'] || selectedPanel.fields.Capacity} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields['Service Size'] || `${selectedPanel.fields.Capacity} spaces`}{/if}
 							</p>
 						</div>
-							<button
-								type="button"
-								onclick={() => { showLabelPrint = !showLabelPrint; }}
-								class="p-2 rounded-lg bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white active:scale-[0.96] transition-colors duration-150"
-								title="Print Labels"
-							>
-								<Icon icon="mdi:printer" width={18} />
-							</button>
-						</div>
+							<div class="flex items-center gap-1.5">
+								<button
+									type="button"
+									onclick={triggerPhotoCapture}
+									disabled={uploadingPhoto}
+									class="p-2 rounded-lg bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white active:scale-[0.96] transition-colors duration-150 disabled:opacity-50"
+									title="Take Panel Photo"
+								>
+									<Icon icon={uploadingPhoto ? 'mdi:loading' : 'mdi:camera-plus'} width={18} class={uploadingPhoto ? 'animate-spin' : ''} />
+								</button>
+								<button
+									type="button"
+									onclick={() => { showLabelPrint = !showLabelPrint; }}
+									class="p-2 rounded-lg bg-slate-700/60 text-slate-300 hover:bg-slate-700 hover:text-white active:scale-[0.96] transition-colors duration-150"
+									title="Print Labels"
+								>
+									<Icon icon="mdi:printer" width={18} />
+								</button>
+							</div>
 					{#if panelStats.gfci || panelStats.afci || panelStats.twoForty}
 						<div class="flex gap-3 mt-2.5">
 							{#if panelStats.gfci}
