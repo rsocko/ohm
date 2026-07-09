@@ -20,7 +20,10 @@
 	let listening = $state(false);
 	let interimText = $state('');
 	let finalText = $state('');
-	let recognition: SpeechRecognition | null = $state(null);
+	// SpeechRecognition is not in the default TypeScript DOM lib;
+	// use a loose type since we feature-detect at runtime.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let recognition: any = $state(null);
 	let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	/** Whether the component is currently recording. Exposed for parent layout control. */
