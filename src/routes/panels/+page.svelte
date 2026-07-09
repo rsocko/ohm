@@ -29,7 +29,7 @@
 		height: number;
 	}
 
-	import { dataStore, ensureLoaded } from '$lib/stores/data.svelte';
+	import { dataStore, ensureLoaded, refresh } from '$lib/stores/data.svelte';
 	import { homeFiltered, homeContext } from '$lib/stores/home-context.svelte';
 
 	let panels: V3Record[] = $state([]);
@@ -37,6 +37,7 @@
 	let allLoads: V3Record[] = $state([]);
 	let allReceptacles: V3Record[] = $state([]);
 	let loading = $state(true);
+	const isLocked = $derived(homeContext.isLocked);
 	let selectedPanelId: number | null = $state(null);
 	let expandedCircuit: number | null = $state(null);
 	let searchQuery = $state('');
@@ -97,17 +98,67 @@
 			newPanelName = '';
 			newPanelSpaces = '';
 			newPanelType = 'Main';
-			// Reload data
-			await ensureLoaded();
+				// Reload data from server
+				await refresh();
 			panels = homeFiltered.panels;
 			circuits = homeFiltered.circuits;
 			allLoads = homeFiltered.loads;
 			allReceptacles = homeFiltered.receptacles;
-			if (panels.length > 0 && !selectedPanelId) selectedPanelId = panels[0].id;
+				// Select the newly created panel (last one in the list)
+				if (panels.length > 0) selectedPanelId = panels[panels.length - 1].id;
 		} catch (err) {
 			toast.error('Failed to create panel');
 		} finally {
 			creatingPanel = false;
+		}
+	}
+
+	// Create Circuit state
+	let showCreateCircuit = $state(false);
+	let newCircuitName = $state('');
+	let newCircuitNumber = $state('');
+	let newCircuitAmps: string = $state('20');
+	let newCircuitVoltage: '120V' | '240V' = $state('120V');
+	let creatingCircuit = $state(false);
+
+	async function createCircuit() {
+		if (!newCircuitName.trim() || !selectedPanelId) return;
+		creatingCircuit = true;
+		try {
+			const fields: Record<string, unknown> = {
+				Name: newCircuitName.trim(),
+				Amps: Number(newCircuitAmps) || 20,
+				Voltage: newCircuitVoltage
+			};
+			if (newCircuitNumber) fields['Number'] = Number(newCircuitNumber);
+
+			const linkUpdates: { title: string; ids: number[] }[] = [
+				{ title: 'Panel', ids: [selectedPanelId] }
+			];
+
+			const resp = await fetch('/api/nocodb', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ table: 'Circuit', fields, linkUpdates })
+			});
+
+			if (!resp.ok) throw new Error('Failed to create circuit');
+			toast.success(`Created circuit "${newCircuitName.trim()}"`);
+			showCreateCircuit = false;
+			newCircuitName = '';
+			newCircuitNumber = '';
+			newCircuitAmps = '20';
+			newCircuitVoltage = '120V';
+			// Reload data from server
+			await refresh();
+			panels = homeFiltered.panels;
+			circuits = homeFiltered.circuits;
+			allLoads = homeFiltered.loads;
+			allReceptacles = homeFiltered.receptacles;
+		} catch (err) {
+			toast.error('Failed to create circuit');
+		} finally {
+			creatingCircuit = false;
 		}
 	}
 
@@ -1017,13 +1068,19 @@
 	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:transmission-tower" width={22} class="text-amber-400" />
 		<h1 class="text-xl font-bold text-fg">Panels</h1>
-		<button
-			onclick={() => { showCreatePanel = true; }}
-			class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-			aria-label="Add panel"
-		>
-			<Icon icon="mdi:plus" width={18} />
-		</button>
+		{#if isLocked}
+			<span class="p-1.5 text-amber-400" title="Home is locked">
+				<Icon icon="mdi:lock" width={16} />
+			</span>
+		{:else}
+			<button
+				onclick={() => { showCreatePanel = true; }}
+				class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+				aria-label="Add panel"
+			>
+				<Icon icon="mdi:plus" width={18} />
+			</button>
+		{/if}
 	</div>
 
 	{#if loading}
@@ -1061,15 +1118,17 @@
 				</div>
 				<div class="text-center">
 					<p class="text-slate-300 font-medium">No panels yet</p>
-					<p class="text-slate-500 text-sm mt-1">Create your first electrical panel to start mapping circuits</p>
+					<p class="text-slate-500 text-sm mt-1">{isLocked ? 'Unlock this home in Settings to add panels' : 'Create your first electrical panel to start mapping circuits'}</p>
 				</div>
-				<button
-					onclick={() => { showCreatePanel = true; }}
-					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
-				>
-					<Icon icon="mdi:plus" width={18} />
-					Create Panel
-				</button>
+				{#if !isLocked}
+					<button
+						onclick={() => { showCreatePanel = true; }}
+						class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
+					>
+						<Icon icon="mdi:plus" width={18} />
+						Create Panel
+					</button>
+				{/if}
 			</div>
 		{:else}
 		<!-- Panel Selector Pills (wrapping, not scrolling) -->
@@ -1668,24 +1727,36 @@
 			{/if}
 
 			{#if viewMode === 'schematic' || !getPanelPhoto(selectedPanel)}
-			<!-- Search -->
-			<div class="relative">
-				<Icon icon="mdi:magnify" width={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-				<input
-					type="text"
-					bind:value={searchQuery}
-					placeholder="Find a circuit…"
-					class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
-				/>
-				{#if searchQuery.trim()}
-					<button
-						onclick={() => { searchQuery = ''; }}
-						class="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-500 hover:text-white hover:bg-slate-600 transition-color,background-color"
-					>
-						<Icon icon="mdi:close" width={14} />
-					</button>
-				{/if}
-			</div>
+				<!-- Search + Add Circuit -->
+				<div class="flex items-center gap-2">
+					<div class="relative flex-1">
+						<Icon icon="mdi:magnify" width={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+						<input
+							type="text"
+							bind:value={searchQuery}
+							placeholder="Find a circuit…"
+							class="w-full bg-slate-800/60 border border-slate-700/60 rounded-lg pl-9 pr-8 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
+						/>
+						{#if searchQuery.trim()}
+							<button
+								onclick={() => { searchQuery = ''; }}
+								class="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full text-slate-500 hover:text-white hover:bg-slate-600 transition-color,background-color"
+							>
+								<Icon icon="mdi:close" width={14} />
+							</button>
+						{/if}
+					</div>
+					{#if !isLocked}
+						<button
+							onclick={() => { showCreateCircuit = true; }}
+							class="shrink-0 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700/60 transition-colors"
+							aria-label="Add circuit"
+							title="Add circuit"
+						>
+							<Icon icon="mdi:plus" width={16} />
+						</button>
+					{/if}
+				</div>
 			{#if searchQuery.trim()}
 				<p class="text-[11px] text-slate-500 px-1">{filteredCircuits.length} of {panelCircuits.length} circuits</p>
 			{/if}
@@ -2212,6 +2283,81 @@
 					disabled={!newPanelName.trim() || creatingPanel}
 					class="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color disabled:opacity-50 active:scale-[0.96]"
 				>{creatingPanel ? 'Creating…' : 'Create'}</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Create Circuit Modal -->
+{#if showCreateCircuit}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onclick={() => { showCreateCircuit = false; }}>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-[90vw] max-w-sm p-5" onclick={(e) => e.stopPropagation()}>
+			<h3 class="text-base font-semibold text-white mb-4">Add Circuit</h3>
+			<div class="space-y-3">
+				<div>
+					<label for="new-circuit-name" class="text-xs text-slate-400 block mb-1">Circuit Name</label>
+					<input
+						id="new-circuit-name"
+						type="text"
+						bind:value={newCircuitName}
+						placeholder="e.g. Kitchen Outlets"
+						class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
+						onkeydown={(e) => { if (e.key === 'Enter' && newCircuitName.trim()) createCircuit(); }}
+					/>
+				</div>
+				<div class="grid grid-cols-3 gap-2">
+					<div>
+						<label for="new-circuit-number" class="text-xs text-slate-400 block mb-1">Slot #</label>
+						<input
+							id="new-circuit-number"
+							type="number"
+							bind:value={newCircuitNumber}
+							placeholder="1"
+							class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color"
+						/>
+					</div>
+					<div>
+						<label for="new-circuit-amps" class="text-xs text-slate-400 block mb-1">Amps</label>
+						<select
+							id="new-circuit-amps"
+							bind:value={newCircuitAmps}
+							class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color"
+						>
+							<option value="15">15A</option>
+							<option value="20">20A</option>
+							<option value="30">30A</option>
+							<option value="40">40A</option>
+							<option value="50">50A</option>
+							<option value="60">60A</option>
+							<option value="100">100A</option>
+							<option value="200">200A</option>
+						</select>
+					</div>
+					<div>
+						<label for="new-circuit-voltage" class="text-xs text-slate-400 block mb-1">Voltage</label>
+						<select
+							id="new-circuit-voltage"
+							bind:value={newCircuitVoltage}
+							class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color"
+						>
+							<option value="120V">120V</option>
+							<option value="240V">240V</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="flex gap-2 mt-5">
+				<button
+					onclick={() => { showCreateCircuit = false; }}
+					class="flex-1 px-4 py-2.5 bg-slate-700 text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-600 transition-background-color"
+				>Cancel</button>
+				<button
+					onclick={() => createCircuit()}
+					disabled={!newCircuitName.trim() || creatingCircuit}
+					class="flex-1 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color disabled:opacity-50 active:scale-[0.96]"
+				>{creatingCircuit ? 'Adding…' : 'Add'}</button>
 			</div>
 		</div>
 	</div>
