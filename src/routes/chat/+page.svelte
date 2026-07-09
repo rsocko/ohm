@@ -58,17 +58,21 @@
 	function handleVoiceTranscript(text: string) {
 		input = text;
 		handleSend();
+		// Explicitly clear in case handleSend didn't (e.g., if loading)
+		input = '';
 	}
 
 	function handleVoiceInterim(text: string) {
-		input = text;
+		// Don't write interim text to the input field — it's shown
+		// inside the VoiceInput component's own transcript display.
+		// Setting input here caused stale text to remain after send.
 	}
 
 	function handleVoiceListeningChange(isListening: boolean) {
 		voiceListening = isListening;
 		if (!isListening) {
-			// Clear interim text when voice stops without transcript
-			// (transcript handler will overwrite if there's actual text)
+			// Clear any interim text that leaked into the input
+			input = '';
 		}
 	}
 </script>
