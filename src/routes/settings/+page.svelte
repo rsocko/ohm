@@ -710,6 +710,9 @@
 
 	// Homes management state
 	const homes = $derived(dataStore.homes);
+	function _isHomeLocked(homeId: number): boolean {
+		return homeContext.isHomeLocked(homeId);
+	}
 	let showCreateHome = $state(false);
 	let newHomeName = $state('');
 	let newHomeAddress = $state('');
@@ -1717,6 +1720,13 @@
 							{#if homeContext.selectedHomeId === home.id}
 								<span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-600/20 text-indigo-400 font-medium">Active</span>
 							{/if}
+							<button
+								onclick={() => { homeContext.setLocked(home.id, !_isHomeLocked(home.id)); }}
+								class="p-1.5 rounded-lg transition-colors {_isHomeLocked(home.id) ? 'text-amber-400 hover:text-amber-300 bg-amber-500/10' : 'text-slate-400 hover:text-white hover:bg-slate-700'}"
+								title="{_isHomeLocked(home.id) ? 'Unlock home (allow edits)' : 'Lock home (prevent edits)'}"
+							>
+								<Icon icon="{_isHomeLocked(home.id) ? 'mdi:lock' : 'mdi:lock-open-variant'}" width={16} />
+							</button>
 							<button
 								onclick={() => { expandedHomeId = expandedHomeId === home.id ? null : home.id; }}
 								class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700 transition-colors"

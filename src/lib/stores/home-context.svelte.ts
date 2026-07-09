@@ -14,6 +14,7 @@ interface V3Record {
 // --- State ---
 
 const STORAGE_KEY = 'electrical-config:selectedHomeId';
+const LOCKED_STORAGE_KEY = 'electrical-config:lockedHomes';
 
 function loadPersistedHomeId(): number | null {
 	if (typeof window === 'undefined') return null;
@@ -21,7 +22,23 @@ function loadPersistedHomeId(): number | null {
 	return raw ? Number(raw) : null;
 }
 
+function loadLockedHomes(): Set<number> {
+	if (typeof window === 'undefined') return new Set();
+	try {
+		const raw = localStorage.getItem(LOCKED_STORAGE_KEY);
+		return raw ? new Set(JSON.parse(raw) as number[]) : new Set();
+	} catch {
+		return new Set();
+	}
+}
+
+function persistLockedHomes(locked: Set<number>): void {
+	if (typeof window === 'undefined') return;
+	localStorage.setItem(LOCKED_STORAGE_KEY, JSON.stringify([...locked]));
+}
+
 let _selectedHomeId: number | null = $state(loadPersistedHomeId());
+let _lockedHomes: Set<number> = $state(loadLockedHomes());
 
 export const homeContext = {
 	get selectedHomeId() { return _selectedHomeId; },
@@ -38,7 +55,37 @@ export const homeContext = {
 		return (home?.fields?.Name as string) || '';
 	},
 	get homes() { return dataStore.homes; },
-	get hasMultipleHomes() { return dataStore.homes.length > 1; }
+	get hasMultipleHomes() { return dataStore.homes.length > 1; },
+	/** Whether the currently selected home is locked (read-only). */
+	get isLocked(): boolean {
+		if (!_selectedHomeId) return false;
+		return _lockedHomes.has(_selectedHomeId);
+	},
+	/** Toggle lock state for the currently selected home. */
+	toggleLocked(): void {
+		if (!_selectedHomeId) return;
+		if (_lockedHomes.has(_selectedHomeId)) {
+			_lockedHomes.delete(_selectedHomeId);
+		} else {
+			_lockedHomes.add(_selectedHomeId);
+		}
+		_lockedHomes = new Set(_lockedHomes); // trigger reactivity
+		persistLockedHomes(_lockedHomes);
+	},
+	/** Set lock state for a specific home. */
+	setLocked(homeId: number, locked: boolean): void {
+		if (locked) {
+			_lockedHomes.add(homeId);
+		} else {
+			_lockedHomes.delete(homeId);
+		}
+		_lockedHomes = new Set(_lockedHomes);
+		persistLockedHomes(_lockedHomes);
+	},
+	/** Check if a specific home is locked. */
+	isHomeLocked(homeId: number): boolean {
+		return _lockedHomes.has(homeId);
+	}
 };
 
 /**
