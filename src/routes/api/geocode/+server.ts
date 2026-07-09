@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { NOCODB_URL, NOCODB_API_TOKEN } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const HOME_TABLE_ID = 'm00j4ejurglc7az';
@@ -58,10 +58,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		const lng = parseFloat(results[0].lon);
 
 		// Write back to NocoDB
-		const patchResp = await fetch(`${NOCODB_URL}/api/v2/tables/${HOME_TABLE_ID}/records`, {
+		const patchResp = await fetch(`${env.NOCODB_URL}/api/v2/tables/${HOME_TABLE_ID}/records`, {
 			method: 'PATCH',
 			headers: {
-				'xc-token': NOCODB_API_TOKEN,
+				'xc-token': env.NOCODB_API_TOKEN ?? '',
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify([{ Id: homeId, Latitude: lat, Longitude: lng }])
