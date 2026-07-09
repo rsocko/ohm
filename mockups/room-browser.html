@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Electrical Config - Room Browser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --text: #f1f5f9;
+        }
+        * { -webkit-font-smoothing: antialiased; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+            min-height: 100dvh;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+        .card { background: var(--surface); border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .room-card {
+            background: var(--surface);
+            border-radius: 14px;
+            padding: 14px 16px;
+            transition: transform 0.12s ease;
+            cursor: pointer;
+        }
+        .room-card:active { transform: scale(0.98); }
+        .device-row {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .device-row:last-child { border-bottom: none; }
+        .badge {
+            font-size: 10px;
+            font-variant-numeric: tabular-nums;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        .badge-gfci { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .badge-standard { background: rgba(148,163,184,0.1); color: #64748b; }
+        .badge-switch { background: rgba(168,85,247,0.15); color: #c084fc; }
+        .badge-fixture { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .floor-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            padding: 12px 0 6px;
+        }
+    </style>
+</head>
+<body class="pb-24">
+    <div class="h-12"></div>
+
+    <!-- Header -->
+    <header class="px-5 pb-2">
+        <div class="flex items-center gap-3 mb-4">
+            <a href="index.html" class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-xl font-bold text-white">Rooms & Areas</h1>
+                <p class="text-xs text-slate-400">23 areas · Boynton Beach</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Room List -->
+    <div class="px-5">
+        <!-- First Floor -->
+        <div class="floor-header">First Floor</div>
+        
+        <div class="space-y-2 mb-4">
+            <!-- Kitchen - Expanded -->
+            <div class="card overflow-hidden">
+                <div class="p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+                            <span class="text-lg">🍳</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-white">Kitchen</p>
+                            <p class="text-xs text-slate-400">12 devices · 3 circuits</p>
+                        </div>
+                    </div>
+                    <svg class="w-5 h-5 text-slate-500 transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+                
+                <!-- Expanded device list -->
+                <div class="px-4 pb-3 border-t border-slate-700/50">
+                    <div class="device-row flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-200">Counter Outlet (N wall, left)</p>
+                            <p class="text-xs text-slate-500">Circuit 7 · Main Panel · 20A</p>
+                        </div>
+                        <span class="badge badge-gfci">GFCI</span>
+                    </div>
+                    <div class="device-row flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-200">Counter Outlet (N wall, right)</p>
+                            <p class="text-xs text-slate-500">Circuit 7 · Main Panel · 20A</p>
+                        </div>
+                        <span class="badge badge-gfci">GFCI</span>
+                    </div>
+                    <div class="device-row flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-200">Island Outlet 1</p>
+                            <p class="text-xs text-slate-500">Circuit 9 · Main Panel · 20A</p>
+                        </div>
+                        <span class="badge badge-gfci">GFCI</span>
+                    </div>
+                    <div class="device-row flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-200">Pendant Lights (island)</p>
+                            <p class="text-xs text-slate-500">Circuit 9 · Main Panel · 20A</p>
+                        </div>
+                        <span class="badge badge-fixture">Fixture</span>
+                    </div>
+                    <div class="device-row flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-slate-200">Under-cabinet switch</p>
+                            <p class="text-xs text-slate-500">Circuit 7 · Main Panel · 20A</p>
+                        </div>
+                        <span class="badge badge-switch">Switch</span>
+                    </div>
+                    <button class="w-full mt-2 py-2 text-xs text-blue-400 font-medium text-center rounded-lg bg-blue-500/10">
+                        Show all 12 devices →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Living Room - Collapsed -->
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                        <span class="text-lg">🛋️</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Living Room</p>
+                        <p class="text-xs text-slate-400">8 devices · 2 circuits</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+
+            <!-- Dining Room - Collapsed -->
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/15 flex items-center justify-center">
+                        <span class="text-lg">🍽️</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Dining Room</p>
+                        <p class="text-xs text-slate-400">5 devices · 1 circuit</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+
+            <!-- Garage -->
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-500/15 flex items-center justify-center">
+                        <span class="text-lg">🚗</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Garage</p>
+                        <p class="text-xs text-slate-400">9 devices · 2 circuits</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Second Floor -->
+        <div class="floor-header">Second Floor</div>
+        
+        <div class="space-y-2 mb-4">
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center">
+                        <span class="text-lg">🛏️</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Master Bedroom</p>
+                        <p class="text-xs text-slate-400">8 devices · 1 circuit</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/15 flex items-center justify-center">
+                        <span class="text-lg">🚿</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Master Bathroom</p>
+                        <p class="text-xs text-slate-400">6 devices · 1 circuit</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-green-500/15 flex items-center justify-center">
+                        <span class="text-lg">💻</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Office</p>
+                        <p class="text-xs text-slate-400">5 devices · 1 circuit</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Exterior -->
+        <div class="floor-header">Exterior</div>
+        
+        <div class="space-y-2">
+            <div class="room-card flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-teal-500/15 flex items-center justify-center">
+                        <span class="text-lg">🏊</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Pool / Patio</p>
+                        <p class="text-xs text-slate-400">7 devices · 2 circuits</p>
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 px-6 py-2 max-w-[430px] mx-auto" style="padding-bottom: env(safe-area-inset-bottom, 8px);">
+        <div class="flex justify-around items-center">
+            <a href="index.html" class="flex flex-col items-center gap-1 py-1 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </a>
+            <a href="panel-view.html" class="flex flex-col items-center gap-1 py-1 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span class="text-[10px] font-medium">Panels</span>
+            </a>
+            <a href="room-browser.html" class="flex flex-col items-center gap-1 py-1 text-blue-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span class="text-[10px] font-medium">Rooms</span>
+            </a>
+            <a href="ai-chat.html" class="flex flex-col items-center gap-1 py-1 text-slate-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                <span class="text-[10px] font-medium">Ask AI</span>
+            </a>
+        </div>
+    </nav>
+</body>
+</html>

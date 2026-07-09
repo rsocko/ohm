@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrical Config - Floor Plan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --surface-3: #475569;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --outline: rgba(148, 163, 184, 0.16);
+            --shadow-lg: 0 18px 50px rgba(2, 6, 23, 0.46), 0 8px 18px rgba(15, 23, 42, 0.28);
+            --shadow-md: 0 10px 30px rgba(2, 6, 23, 0.34), 0 3px 10px rgba(15, 23, 42, 0.2);
+            --success: #22c55e;
+            --standard: #94a3b8;
+            --switch: #a855f7;
+            --fixture: #f59e0b;
+            --circuit-7: #38bdf8;
+            --circuit-9: #34d399;
+            --circuit-11: #f97316;
+            --circuit-12: #c084fc;
+            --circuit-14: #facc15;
+            --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html {
+            background: var(--bg);
+        }
+
+        body {
+            margin: 0 auto;
+            min-height: 100dvh;
+            max-width: 430px;
+            background:
+                radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 34%),
+                linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 1));
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+            letter-spacing: 0.01em;
+        }
+
+        .app-shell {
+            min-height: 100dvh;
+            padding: 14px 16px 176px;
+        }
+
+        .surface {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(15, 23, 42, 0.92));
+            border: 1px solid var(--outline);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .surface-subtle {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            box-shadow: var(--shadow-md);
+        }
+
+        .icon-button,
+        .toolbar-button,
+        .nav-item,
+        .floor-tab,
+        .action-button {
+            transition: transform 150ms var(--ease-out), background-color 180ms var(--ease-out), border-color 180ms var(--ease-out), color 180ms var(--ease-out), box-shadow 180ms var(--ease-out), opacity 180ms var(--ease-out);
+        }
+
+        .icon-button:active,
+        .toolbar-button:active,
+        .nav-item:active,
+        .floor-tab:active,
+        .action-button:active {
+            transform: scale(0.96);
+        }
+
+        .icon-button,
+        .toolbar-button {
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        .room-label {
+            fill: rgba(241, 245, 249, 0.92);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .room-sub {
+            fill: rgba(148, 163, 184, 0.9);
+            font-size: 7px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .plan-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+            background-size: 24px 24px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(0,0,0,0.55));
+            pointer-events: none;
+        }
+
+        .plan-shell {
+            position: relative;
+            overflow: hidden;
+            border-radius: 28px;
+            height: 510px;
+            background:
+                radial-gradient(circle at 28% 18%, rgba(59, 130, 246, 0.16), transparent 26%),
+                radial-gradient(circle at 72% 70%, rgba(56, 189, 248, 0.1), transparent 24%),
+                linear-gradient(180deg, rgba(15, 23, 42, 0.84), rgba(2, 6, 23, 0.92));
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), var(--shadow-lg);
+        }
+
+        .plan-stage {
+            position: absolute;
+            inset: 0;
+            transform: translate(-22px, -34px) scale(1.16);
+            transform-origin: center center;
+        }
+
+        .hint-overlay {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            color: rgba(226, 232, 240, 0.92);
+            font-size: 11px;
+            letter-spacing: 0.02em;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 8px 24px rgba(2, 6, 23, 0.3);
+            animation: fade-hint 5.2s var(--ease-out) forwards;
+            pointer-events: none;
+            z-index: 3;
+            white-space: nowrap;
+        }
+
+        @keyframes fade-hint {
+            0%, 58% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+        }
+
+        .marker {
+            cursor: pointer;
+        }
+
+        .marker-shape,
+        .marker-halo,
+        .marker-pulse,
+        .marker-hit {
+            transition: transform 180ms var(--ease-out), opacity 180ms var(--ease-out), stroke-width 180ms var(--ease-out), filter 180ms var(--ease-out);
+        }
+
+        .marker:hover .marker-shape,
+        .marker:hover .marker-halo {
+            transform: scale(1.06);
+        }
+
+        .marker-hit {
+            fill: transparent;
+        }
+
+        .marker-halo {
+            opacity: 0.98;
+            filter: drop-shadow(0 4px 10px rgba(15, 23, 42, 0.7));
+        }
+
+        .marker-shape {
+            stroke: rgba(241, 245, 249, 0.9);
+            stroke-width: 1.5;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .marker-outlet.standard .marker-shape { fill: var(--standard); }
+        .marker-outlet.gfci .marker-shape { fill: var(--success); }
+        .marker-switch .marker-shape { fill: var(--switch); }
+        .marker-fixture .marker-shape { fill: var(--fixture); }
+
+        .marker-selected .marker-pulse {
+            opacity: 1;
+            animation: selected-pulse 2.2s ease-out infinite;
+        }
+
+        .marker-selected .marker-halo {
+            stroke-width: 2.6;
+            filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.38));
+        }
+
+        @keyframes selected-pulse {
+            0% { opacity: 0.75; transform: scale(0.92); }
+            70% { opacity: 0; transform: scale(1.6); }
+            100% { opacity: 0; transform: scale(1.6); }
+        }
+
+        .c7 { --circuit-color: var(--circuit-7); }
+        .c9 { --circuit-color: var(--circuit-9); }
+        .c11 { --circuit-color: var(--circuit-11); }
+        .c12 { --circuit-color: var(--circuit-12); }
+        .c14 { --circuit-color: var(--circuit-14); }
+
+        .marker .marker-halo,
+        .marker .marker-pulse {
+            fill: var(--circuit-color);
+            fill-opacity: 0.18;
+            stroke: var(--circuit-color);
+            stroke-width: 2;
+            transform-origin: center center;
+        }
+
+        .legend-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .selected-card {
+            position: fixed;
+            left: 50%;
+            bottom: 86px;
+            width: min(calc(100% - 24px), 406px);
+            transform: translateX(-50%);
+            z-index: 20;
+            padding: 14px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.97), rgba(30, 41, 59, 0.98));
+            border: 1px solid rgba(96, 165, 250, 0.24);
+            box-shadow: 0 20px 44px rgba(2, 6, 23, 0.55), 0 8px 18px rgba(2, 6, 23, 0.34);
+            backdrop-filter: blur(18px);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .badge-green {
+            background: rgba(34, 197, 94, 0.16);
+            color: #86efac;
+            box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.18);
+        }
+
+        .badge-slate {
+            background: rgba(71, 85, 105, 0.42);
+            color: #cbd5e1;
+            box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.12);
+        }
+
+        .toggle-track {
+            position: relative;
+            width: 50px;
+            height: 30px;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.28);
+            box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.28);
+        }
+
+        .toggle-track::after {
+            content: "";
+            position: absolute;
+            top: 4px;
+            left: 24px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.28);
+        }
+
+        .action-primary {
+            color: #93c5fd;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.42);
+        }
+
+        .action-secondary {
+            color: var(--text);
+            background: rgba(51, 65, 85, 0.84);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 30;
+            max-width: 430px;
+            margin-inline: auto;
+            padding: 10px 10px calc(env(safe-area-inset-bottom, 8px) + 10px);
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(18px);
+            border-top: 1px solid rgba(148, 163, 184, 0.12);
+            box-shadow: 0 -12px 32px rgba(2, 6, 23, 0.34);
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: #64748b;
+            text-decoration: none;
+            min-height: 52px;
+            border-radius: 16px;
+        }
+
+        .nav-item.active {
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.12);
+            box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.14);
+        }
+
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .pretty { text-wrap: pretty; }
+        .balance { text-wrap: balance; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hint-overlay,
+            .marker-selected .marker-pulse {
+                animation: none;
+            }
+
+            .icon-button,
+            .toolbar-button,
+            .nav-item,
+            .floor-tab,
+            .action-button,
+            .marker-shape,
+            .marker-halo,
+            .marker-pulse,
+            .marker-hit {
+                transition-duration: 0.01ms;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <div class="h-3"></div>
+
+        <header class="mb-4 flex items-start gap-3">
+            <a href="room-browser.html" class="icon-button surface-subtle flex shrink-0 items-center justify-center rounded-2xl text-slate-300" aria-label="Back to rooms">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Spatial View</p>
+                        <h1 class="balance text-[1.6rem] font-bold leading-tight text-white">Floor Plan</h1>
+                    </div>
+                    <div class="surface-subtle rounded-2xl px-3 py-2 text-right">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Home</p>
+                        <p class="text-sm font-semibold text-slate-100">Boynton</p>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-2 rounded-[20px] border border-slate-700/60 bg-slate-900/50 p-1.5">
+                    <button class="floor-tab rounded-2xl bg-blue-500/18 px-3 py-2 text-sm font-semibold text-blue-300 shadow-[inset_0_0_0_1px_rgba(96,165,250,0.28)]">1st Floor</button>
+                    <button class="floor-tab rounded-2xl px-3 py-2 text-sm font-semibold text-slate-400">2nd Floor</button>
+                    <button class="floor-tab rounded-2xl px-3 py-2 text-sm font-semibold text-slate-400">Exterior</button>
+                </div>
+            </div>
+        </header>
+
+        <section class="surface mb-4 p-4">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-sm font-semibold text-white">Circuit Highlight</p>
+                    <p class="pretty mt-1 text-xs leading-5 text-slate-400">Markers keep their device shape and type color, with circuit halos turned on for tracing.</p>
+                </div>
+                <button class="flex items-center gap-3 rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-200" aria-checked="true" role="switch">
+                    <span>On</span>
+                    <span class="toggle-track"></span>
+                </button>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <span class="badge badge-slate"><span class="legend-dot" style="background: var(--circuit-7);"></span>Circuit 7</span>
+                <span class="badge badge-slate"><span class="legend-dot" style="background: var(--circuit-9);"></span>Circuit 9</span>
+                <span class="badge badge-slate"><span class="legend-dot" style="background: var(--circuit-11);"></span>Circuit 11</span>
+                <span class="badge badge-slate"><span class="legend-dot" style="background: var(--circuit-12);"></span>Circuit 12</span>
+                <span class="badge badge-slate"><span class="legend-dot" style="background: var(--circuit-14);"></span>Circuit 14</span>
+            </div>
+        </section>
+
+        <section class="relative mb-4">
+            <div class="plan-shell">
+                <div class="plan-grid"></div>
+                <div class="hint-overlay">Pinch to zoom • drag to pan</div>
+
+                <div class="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2">
+                    <button class="toolbar-button surface-subtle flex items-center justify-center rounded-2xl text-slate-100" aria-label="Zoom in">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14" />
+                        </svg>
+                    </button>
+                    <button class="toolbar-button surface-subtle flex items-center justify-center rounded-2xl text-slate-100" aria-label="Zoom out">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14" />
+                        </svg>
+                    </button>
+                    <button class="toolbar-button surface-subtle flex items-center justify-center rounded-2xl text-slate-100" aria-label="Fit to screen">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 3H5a2 2 0 00-2 2v3m16-5h-3m3 0v3M3 16v3a2 2 0 002 2h3m11-5v3a2 2 0 01-2 2h-3" />
+                        </svg>
+                    </button>
+                    <button class="toolbar-button surface-subtle flex items-center justify-center rounded-2xl text-slate-100" aria-label="Layers and filters">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l9 4.5-9 4.5-9-4.5L12 3zm0 9l9 4.5-9 4.5-9-4.5" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="plan-stage">
+                    <svg viewBox="0 0 360 520" class="h-full w-full" aria-label="First floor plan with room outlines and device markers">
+                        <defs>
+                            <linearGradient id="roomFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="rgba(51,65,85,0.92)" />
+                                <stop offset="100%" stop-color="rgba(30,41,59,0.92)" />
+                            </linearGradient>
+                        </defs>
+
+                        <g opacity="0.12">
+                            <rect x="40" y="52" width="280" height="410" rx="28" fill="#020617" stroke="#64748b" stroke-width="1.2" stroke-dasharray="5 5"></rect>
+                        </g>
+
+                        <g fill="url(#roomFill)" stroke="rgba(203,213,225,0.14)" stroke-width="2">
+                            <rect x="58" y="70" width="96" height="86" rx="18"></rect>
+                            <rect x="154" y="70" width="70" height="62" rx="16"></rect>
+                            <rect x="154" y="132" width="70" height="24" rx="12"></rect>
+                            <rect x="58" y="156" width="166" height="104" rx="20"></rect>
+                            <rect x="224" y="70" width="78" height="190" rx="22"></rect>
+                            <rect x="58" y="260" width="108" height="92" rx="20"></rect>
+                            <rect x="166" y="260" width="136" height="92" rx="20"></rect>
+                            <rect x="58" y="352" width="244" height="92" rx="22"></rect>
+                            <rect x="302" y="94" width="18" height="150" rx="8"></rect>
+                        </g>
+
+                        <g stroke="rgba(241,245,249,0.22)" stroke-width="2" stroke-linecap="round">
+                            <line x1="154" y1="102" x2="154" y2="122"></line>
+                            <line x1="224" y1="160" x2="224" y2="184"></line>
+                            <line x1="166" y1="306" x2="166" y2="324"></line>
+                            <line x1="130" y1="352" x2="148" y2="352"></line>
+                            <line x1="224" y1="352" x2="244" y2="352"></line>
+                        </g>
+
+                        <g>
+                            <text class="room-label" x="79" y="104">Kitchen</text>
+                            <text class="room-sub" x="79" y="120">Prep + counter run</text>
+
+                            <text class="room-label" x="168" y="101">Pantry</text>
+                            <text class="room-sub" x="170" y="117">Storage</text>
+
+                            <text class="room-label" x="166" y="147">Hall</text>
+
+                            <text class="room-label" x="91" y="206">Dining Room</text>
+                            <text class="room-sub" x="92" y="222">Lighting + outlets</text>
+
+                            <text class="room-label" x="239" y="168">Living Room</text>
+                            <text class="room-sub" x="238" y="184">Media wall</text>
+
+                            <text class="room-label" x="74" y="309">Office</text>
+                            <text class="room-sub" x="76" y="325">Desk wall</text>
+
+                            <text class="room-label" x="184" y="309">Master Bedroom</text>
+                            <text class="room-sub" x="184" y="325">North suite</text>
+
+                            <text class="room-label" x="148" y="401">Garage</text>
+                            <text class="room-sub" x="148" y="417">Main panel + tools</text>
+                        </g>
+
+                        <g aria-label="device markers">
+                            <g class="marker marker-outlet gfci c7 marker-selected" transform="translate(92 98)">
+                                <circle class="marker-pulse" r="10"></circle>
+                                <circle class="marker-halo" r="9"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-outlet gfci c7" transform="translate(125 98)">
+                                <circle class="marker-pulse" r="0"></circle>
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-outlet standard c9" transform="translate(104 132)">
+                                <circle class="marker-pulse" r="0"></circle>
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-switch c7" transform="translate(142 145)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="5"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="2.5"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-fixture c9" transform="translate(116 116)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="4" transform="rotate(45)"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="1.5" transform="rotate(45)"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-outlet standard c12" transform="translate(101 186)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-outlet standard c12" transform="translate(174 188)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-fixture c12" transform="translate(144 214)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="4" transform="rotate(45)"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="1.5" transform="rotate(45)"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-outlet standard c11" transform="translate(246 110)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-outlet standard c11" transform="translate(280 194)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-switch c11" transform="translate(242 160)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="5"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="2.5"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-fixture c11" transform="translate(270 152)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="4" transform="rotate(45)"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="1.5" transform="rotate(45)"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-outlet standard c12" transform="translate(88 294)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-outlet standard c12" transform="translate(143 318)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-switch c12" transform="translate(127 286)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="5"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="2.5"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-outlet standard c14" transform="translate(200 286)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-fixture c14" transform="translate(248 304)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="4" transform="rotate(45)"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="1.5" transform="rotate(45)"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                            <g class="marker marker-outlet gfci c14" transform="translate(86 392)">
+                                <circle class="marker-halo" r="8"></circle>
+                                <circle class="marker-shape" r="4.5"></circle>
+                                <circle class="marker-hit" r="15"></circle>
+                            </g>
+                            <g class="marker marker-switch c14" transform="translate(206 392)">
+                                <rect class="marker-halo" x="-8" y="-8" width="16" height="16" rx="5"></rect>
+                                <rect class="marker-shape" x="-4.5" y="-4.5" width="9" height="9" rx="2.5"></rect>
+                                <rect class="marker-hit" x="-15" y="-15" width="30" height="30" rx="15"></rect>
+                            </g>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <aside class="selected-card">
+        <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300">Selected Device</p>
+                <h2 class="balance mt-1 text-base font-semibold text-white">Kitchen Counter Outlet (N wall, left)</h2>
+                <p class="mt-1 text-sm font-medium text-slate-300">Receptacle · Counter run</p>
+                <p class="mt-2 text-sm text-slate-400" style="font-variant-numeric: tabular-nums;">Circuit 7 · Main Panel · 20A GFCI</p>
+            </div>
+            <span class="badge badge-green">GFCI</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <button class="action-button action-primary rounded-2xl px-4 py-3 text-sm font-semibold">View Circuit</button>
+            <button class="action-button action-secondary rounded-2xl px-4 py-3 text-sm font-semibold">Edit</button>
+        </div>
+    </aside>
+
+    <nav class="bottom-nav">
+        <div class="nav-grid">
+            <a href="index.html" class="nav-item">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2 7-7 7 7 2 2M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0h6" />
+                </svg>
+                <span class="nav-label">Home</span>
+            </a>
+            <a href="panel-view.html" class="nav-item">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span class="nav-label">Panels</span>
+            </a>
+            <a href="room-browser.html" class="nav-item">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span class="nav-label">Rooms</span>
+            </a>
+            <a href="ai-chat.html" class="nav-item">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <span class="nav-label">Ask AI</span>
+            </a>
+            <a href="floorplan.html" class="nav-item active" aria-current="page">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4l6 2 5-2v16l-5 2-6-2-5 2V6l5-2zm0 0v16m6-14v16" />
+                </svg>
+                <span class="nav-label">Map</span>
+            </a>
+        </div>
+    </nav>
+</body>
+</html>

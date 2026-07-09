@@ -1,0 +1,11 @@
+{
+  "domain": "nocodb_electrical",
+  "name": "NocoDB Electrical",
+  "codeowners": ["@rsocko"],
+  "config_flow": true,
+  "documentation": "https://github.com/rsocko/ideation/tree/main/experiments/home-automation/electrical-config-ai",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/rsocko/ideation/issues",
+  "requirements": ["aiohttp>=3.8.0"],
+  "version": "0.1.0"
+}
