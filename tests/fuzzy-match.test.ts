@@ -12,7 +12,7 @@ describe('trigrams', () => {
 		const result = trigrams('ab');
 		expect(result).toContain(' ab');
 		expect(result).toContain('ab ');
-		expect(result).toContain(' a '); // won't exist for 'ab'
+		expect(result.size).toBe(2);
 	});
 
 	it('returns empty set for empty string', () => {
