@@ -37,6 +37,7 @@
 	let allLoads: V3Record[] = $state([]);
 	let allReceptacles: V3Record[] = $state([]);
 	let loading = $state(true);
+	const isLocked = $derived(homeContext.isLocked);
 	let selectedPanelId: number | null = $state(null);
 	let expandedCircuit: number | null = $state(null);
 	let searchQuery = $state('');
@@ -1067,13 +1068,19 @@
 	<div class="flex items-center gap-2.5">
 		<Icon icon="mdi:transmission-tower" width={22} class="text-amber-400" />
 		<h1 class="text-xl font-bold text-fg">Panels</h1>
-		<button
-			onclick={() => { showCreatePanel = true; }}
-			class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-			aria-label="Add panel"
-		>
-			<Icon icon="mdi:plus" width={18} />
-		</button>
+		{#if isLocked}
+			<span class="p-1.5 text-amber-400" title="Home is locked">
+				<Icon icon="mdi:lock" width={16} />
+			</span>
+		{:else}
+			<button
+				onclick={() => { showCreatePanel = true; }}
+				class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+				aria-label="Add panel"
+			>
+				<Icon icon="mdi:plus" width={18} />
+			</button>
+		{/if}
 	</div>
 
 	{#if loading}
@@ -1111,15 +1118,17 @@
 				</div>
 				<div class="text-center">
 					<p class="text-slate-300 font-medium">No panels yet</p>
-					<p class="text-slate-500 text-sm mt-1">Create your first electrical panel to start mapping circuits</p>
+					<p class="text-slate-500 text-sm mt-1">{isLocked ? 'Unlock this home in Settings to add panels' : 'Create your first electrical panel to start mapping circuits'}</p>
 				</div>
-				<button
-					onclick={() => { showCreatePanel = true; }}
-					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
-				>
-					<Icon icon="mdi:plus" width={18} />
-					Create Panel
-				</button>
+				{#if !isLocked}
+					<button
+						onclick={() => { showCreatePanel = true; }}
+						class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
+					>
+						<Icon icon="mdi:plus" width={18} />
+						Create Panel
+					</button>
+				{/if}
 			</div>
 		{:else}
 		<!-- Panel Selector Pills (wrapping, not scrolling) -->
@@ -1737,14 +1746,16 @@
 							</button>
 						{/if}
 					</div>
-					<button
-						onclick={() => { showCreateCircuit = true; }}
-						class="shrink-0 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700/60 transition-colors"
-						aria-label="Add circuit"
-						title="Add circuit"
-					>
-						<Icon icon="mdi:plus" width={16} />
-					</button>
+					{#if !isLocked}
+						<button
+							onclick={() => { showCreateCircuit = true; }}
+							class="shrink-0 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 border border-slate-700/60 transition-colors"
+							aria-label="Add circuit"
+							title="Add circuit"
+						>
+							<Icon icon="mdi:plus" width={16} />
+						</button>
+					{/if}
 				</div>
 			{#if searchQuery.trim()}
 				<p class="text-[11px] text-slate-500 px-1">{filteredCircuits.length} of {panelCircuits.length} circuits</p>

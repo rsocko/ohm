@@ -40,6 +40,7 @@
 	let allCircuits: V3Record[] = $state([]);
 	let allPanels: V3Record[] = $state([]);
 	let loading = $state(true);
+	const isLocked = $derived(homeContext.isLocked);
 	let deviceFilter: 'all' | 'receptacles' | 'loads' = $state('all');
 
 	// View mode: list (default) or floorplan
@@ -580,8 +581,8 @@
 
 	// Quick Add
 	const areaOptions = $derived(areas.map((a) => ({ id: a.id, name: a.fields.Name as string, icon: getRoomIcon(a) })));
-	function openQuickAdd(areaId?: number) { quickAddAreaId = areaId; showQuickAdd = true; }
-	function openQuickAddReceptacle(areaId?: number) { quickAddAreaId = areaId; showQuickAddReceptacle = true; }
+	function openQuickAdd(areaId?: number) { if (isLocked) { toast.error('Home is locked'); return; } quickAddAreaId = areaId; showQuickAdd = true; }
+	function openQuickAddReceptacle(areaId?: number) { if (isLocked) { toast.error('Home is locked'); return; } quickAddAreaId = areaId; showQuickAddReceptacle = true; }
 	async function onLoadSaved(load: SavedLoad) {
 		showQuickAdd = false;
 		toast.success(`Added "${load.name}"`);
@@ -2624,14 +2625,16 @@
 					<Icon icon="mdi:floor-plan" width={14} class="inline -mt-0.5" /> Plan
 				</button>
 			</div>
-			<button
-				onclick={() => { showCreateRoom = true; }}
-				class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-				aria-label="Add room"
-			>
-				<Icon icon="mdi:plus" width={18} />
-			</button>
-		</div>
+				{#if !isLocked}
+					<button
+						onclick={() => { showCreateRoom = true; }}
+						class="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+						aria-label="Add room"
+					>
+						<Icon icon="mdi:plus" width={18} />
+					</button>
+				{/if}
+			</div>
 
 		{#if viewMode === 'list'}
 		<div class="flex items-center gap-2">
@@ -3961,8 +3964,9 @@
 				</div>
 				<div class="text-center">
 					<p class="text-slate-300 font-medium">No rooms yet</p>
-					<p class="text-slate-500 text-sm mt-1">Create your first room to start organizing devices</p>
+					<p class="text-slate-500 text-sm mt-1">{isLocked ? 'Unlock this home in Settings to add rooms' : 'Create your first room to start organizing devices'}</p>
 				</div>
+				{#if !isLocked}
 				<button
 					onclick={() => { showCreateRoom = true; }}
 					class="mt-2 inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-500 transition-background-color active:scale-[0.96]"
@@ -3970,6 +3974,7 @@
 					<Icon icon="mdi:plus" width={18} />
 					Create Room
 				</button>
+				{/if}
 			</div>
 		{/if}
 	{:else}
