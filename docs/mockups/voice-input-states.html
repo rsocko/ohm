@@ -35,12 +35,27 @@
       50% { height: 16px; }
     }
     
+    @keyframes orbit {
+      0% { transform: rotate(0deg) translateX(10px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(10px) rotate(-360deg); }
+    }
+
+    @keyframes orbit-reverse {
+      0% { transform: rotate(0deg) translateX(7px) rotate(0deg); }
+      100% { transform: rotate(-360deg) translateX(7px) rotate(360deg); }
+    }
+    
     .pulse-ring { animation: pulse-ring 1.5s ease-in-out infinite; }
     
     .wave-bar {
       animation: waveform 0.8s ease-in-out infinite;
       animation-delay: var(--delay);
     }
+
+    .orb-1 { animation: orbit 2s linear infinite; }
+    .orb-2 { animation: orbit 2s linear infinite; animation-delay: -0.66s; }
+    .orb-3 { animation: orbit 2s linear infinite; animation-delay: -1.33s; }
+    .orb-inner { animation: orbit-reverse 1.5s linear infinite; }
   </style>
 </head>
 <body class="bg-ohm-bg text-ohm-text min-h-screen p-6">
@@ -122,18 +137,24 @@
           </div>
           <p class="text-sm text-ohm-text">Ryan's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7</p>
         </div>
-        <div class="px-4 py-2 border-t border-ohm-border bg-ohm-bg/30">
-          <div class="flex items-center gap-2">
-            <div class="flex gap-1">
-              <div class="w-1.5 h-1.5 rounded-full bg-ohm-accent animate-bounce" style="animation-delay: 0s"></div>
-              <div class="w-1.5 h-1.5 rounded-full bg-ohm-accent animate-bounce" style="animation-delay: 0.15s"></div>
-              <div class="w-1.5 h-1.5 rounded-full bg-ohm-accent animate-bounce" style="animation-delay: 0.3s"></div>
+        <div class="px-4 py-3 border-t border-ohm-border bg-ohm-bg/30">
+          <div class="flex items-center gap-3">
+            <!-- Ohm spinning orbs indicator -->
+            <div class="relative w-7 h-7 flex items-center justify-center">
+              <!-- Center Ω symbol -->
+              <span class="text-[10px] font-bold text-ohm-accent/80">Ω</span>
+              <!-- Orbiting dots -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="orb-1 absolute w-[5px] h-[5px] rounded-full bg-ohm-accent/90"></div>
+                <div class="orb-2 absolute w-[5px] h-[5px] rounded-full bg-indigo-400/70"></div>
+                <div class="orb-3 absolute w-[5px] h-[5px] rounded-full bg-purple-400/60"></div>
+              </div>
             </div>
             <span class="text-[11px] text-ohm-muted">Ohm is thinking...</span>
           </div>
         </div>
       </div>
-      <p class="text-[11px] text-ohm-muted mt-2">Final transcription shown as user message. Typing indicator while AI processes.</p>
+      <p class="text-[11px] text-ohm-muted mt-2">Final transcription shown as user message. Branded Ω orbs spinner while AI processes (replaces generic bouncing dots).</p>
     </section>
 
     <!-- STATE 4: Text with Send button -->
@@ -142,7 +163,7 @@
       <div class="bg-ohm-surface border border-ohm-border rounded-2xl px-3 py-2 flex items-center gap-2">
         <input type="text" value="What circuit is the fridge on?" class="flex-1 bg-transparent text-sm text-ohm-text outline-none" disabled>
         <button class="w-10 h-10 rounded-full bg-ohm-accent border border-ohm-accent/50 flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white -rotate-90">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white rotate-90">
             <path d="M12 19V5M5 12l7-7 7 7"/>
           </svg>
         </button>
@@ -156,7 +177,7 @@
       <div class="bg-ohm-surface border border-ohm-border rounded-2xl px-3 py-2 flex items-center gap-2">
         <input type="text" placeholder="Ask Ohm anything..." class="flex-1 bg-transparent text-sm text-ohm-text placeholder:text-ohm-muted/50 outline-none" disabled>
         <button class="w-10 h-10 rounded-full bg-ohm-accent border border-ohm-accent/50 flex items-center justify-center opacity-30 cursor-not-allowed" disabled>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white -rotate-90">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white rotate-90">
             <path d="M12 19V5M5 12l7-7 7 7"/>
           </svg>
         </button>
