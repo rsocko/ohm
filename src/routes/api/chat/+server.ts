@@ -499,10 +499,13 @@ export const POST: RequestHandler = async ({ request }) => {
 			async start(controller) {
 				try {
 					for await (const part of fullStream) {
-						if (part.type === 'text-delta') {
-							controller.enqueue(encoder.encode(part.textDelta));
-						} else if (part.type === 'tool-result') {
-							const toolResult = part.result as Record<string, unknown>;
+						// AI SDK v7 stream part types vary; use loose access
+						const p = part as Record<string, unknown>;
+						if (p.type === 'text-delta') {
+							const text = (p.textDelta ?? p.text ?? '') as string;
+							if (text) controller.enqueue(encoder.encode(text));
+						} else if (p.type === 'tool-result') {
+							const toolResult = (p.result ?? p) as Record<string, unknown>;
 							if (toolResult?.status === 'batch_confirmation_required') {
 								confirmations.push({
 									type: 'batch-confirmation',
