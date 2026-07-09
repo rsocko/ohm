@@ -1220,6 +1220,7 @@
 									<Icon icon="mdi:printer" width={18} />
 								</button>
 							</div>
+						</div>
 					{#if panelStats.gfci || panelStats.afci || panelStats.twoForty}
 						<div class="flex gap-3 mt-2.5">
 							{#if panelStats.gfci}
