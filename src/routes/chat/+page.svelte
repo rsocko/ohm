@@ -5,12 +5,14 @@
 	import MessageBubble from '$lib/components/chat/MessageBubble.svelte';
 	import SuggestionChips from '$lib/components/chat/SuggestionChips.svelte';
 	import TypingIndicator from '$lib/components/chat/TypingIndicator.svelte';
+	import VoiceInput from '$lib/components/chat/VoiceInput.svelte';
 	import AskOhmIcon from '$lib/components/icons/AskOhmIcon.svelte';
 	import OhmLoader from '$lib/components/ui/OhmLoader.svelte';
 
 	let { data } = $props<{ data: { aiEnabled: boolean } }>();
 	let input = $state('');
 	let chatContainer: HTMLElement | undefined = $state(undefined);
+	let voiceListening = $state(false);
 
 	onMount(() => {
 		initChat();
@@ -51,6 +53,23 @@
 	function handleSuggestion(text: string) {
 		input = text;
 		handleSend();
+	}
+
+	function handleVoiceTranscript(text: string) {
+		input = text;
+		handleSend();
+	}
+
+	function handleVoiceInterim(text: string) {
+		input = text;
+	}
+
+	function handleVoiceListeningChange(isListening: boolean) {
+		voiceListening = isListening;
+		if (!isListening) {
+			// Clear interim text when voice stops without transcript
+			// (transcript handler will overwrite if there's actual text)
+		}
 	}
 </script>
 
@@ -120,26 +139,36 @@
 		<!-- Input -->
 		<div class="pb-4 pt-3 border-t border-slate-700/50 shrink-0">
 			<div class="flex gap-2">
-				<input
-					type="text"
-					bind:value={input}
-					onkeydown={handleKeydown}
-					placeholder="Ask about your electrical setup..."
+				{#if !voiceListening}
+					<input
+						type="text"
+						bind:value={input}
+						onkeydown={handleKeydown}
+						placeholder="Ask about your electrical setup..."
+						disabled={chatState.isLoading}
+						class="flex-1 bg-slate-900/80 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors disabled:opacity-60"
+					/>
+				{/if}
+				<VoiceInput
 					disabled={chatState.isLoading}
-					class="flex-1 bg-slate-900/80 border border-slate-600/50 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-colors disabled:opacity-60"
+					onTranscript={handleVoiceTranscript}
+					onInterim={handleVoiceInterim}
+					onListeningChange={handleVoiceListeningChange}
 				/>
-				<button
-					onclick={handleSend}
-					disabled={chatState.isLoading || !input.trim()}
-					class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px] min-h-[44px] flex items-center justify-center"
-					aria-label="Send message"
-				>
-					{#if chatState.isLoading}
-						<Icon icon="mdi:loading" width={18} class="animate-spin" />
-					{:else}
-						<Icon icon="mdi:send" width={18} />
-					{/if}
-				</button>
+				{#if !voiceListening}
+					<button
+						onclick={handleSend}
+						disabled={chatState.isLoading || !input.trim()}
+						class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px] min-h-[44px] flex items-center justify-center"
+						aria-label="Send message"
+					>
+						{#if chatState.isLoading}
+							<Icon icon="mdi:loading" width={18} class="animate-spin" />
+						{:else}
+							<Icon icon="mdi:send" width={18} />
+						{/if}
+					</button>
+				{/if}
 			</div>
 		</div>
 	</div>
