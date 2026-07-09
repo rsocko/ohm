@@ -260,6 +260,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		apiKey: config.openWebUiApiKey,
 	});
 
+	// Collect confirmations directly from tool execute functions (reliable, not stream-dependent)
+	const confirmations: Array<{ type: string; data: unknown }> = [];
+
 	try {
 		const result = streamText({
 			model: provider.chat(config.openWebUiModel),
@@ -309,11 +312,16 @@ export const POST: RequestHandler = async ({ request }) => {
 						})).describe('Array of proposed changes')
 					}),
 					execute: async ({ table: tableName, updates }) => {
-						return {
+						const result = {
 							status: 'confirmation_required',
 							table: tableName,
 							changes: updates
 						};
+						confirmations.push({
+							type: 'action-confirmation',
+							data: { table: tableName, changes: updates }
+						});
+						return result;
 					}
 				}),
 				// NOTE: create_records was removed. ALL mutations go through propose_batch
@@ -393,12 +401,17 @@ export const POST: RequestHandler = async ({ request }) => {
 							return { error: 'No loads or receptacles found matching the criteria' };
 						}
 
-						return {
+						const result = {
 							status: 'confirmation_required',
 							circuit: { id: circuit.id, fields: circuit.fields },
 							assignments: toAssign,
 							summary: `Assign ${toAssign.length} item(s) to Circuit ${circuit.fields['Number'] || circuit.id}`
 						};
+						confirmations.push({
+							type: 'action-confirmation',
+							data: { table: 'Circuit', changes: toAssign.map(a => ({ recordId: String(a.id), label: a.name, field: 'Circuit', oldValue: '', newValue: String(circuit.fields['Number'] || circuit.id) })) }
+						});
+						return result;
 					}
 				}),
 				propose_batch: tool({
@@ -420,11 +433,16 @@ export const POST: RequestHandler = async ({ request }) => {
 						}))
 					}),
 					execute: async ({ summary, operations }) => {
-						return {
+						const result = {
 							status: 'batch_confirmation_required',
 							summary,
 							operations
 						};
+						confirmations.push({
+							type: 'batch-confirmation',
+							data: { summary, operations }
+						});
+						return result;
 					}
 				}),
 				fuzzy_search: tool({
@@ -466,35 +484,15 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		});
 
-		// Build a streaming response that includes both text and tool results.
-		// Tool results with confirmation status are appended as tagged JSON
-		// so the client can render confirmation UI with action buttons.
-		const fullStream = result.fullStream;
+		// Stream text to client, then append confirmation markers from the closure.
+		// Confirmations are captured reliably in tool execute functions (not parsed from stream parts).
+		const textStream = result.textStream;
 		const encoder = new TextEncoder();
-		const confirmations: Array<{ type: string; data: unknown }> = [];
 		const readable = new ReadableStream({
 			async start(controller) {
 				try {
-					for await (const part of fullStream) {
-						// AI SDK v7 stream part types vary; use loose access
-						const p = part as Record<string, unknown>;
-						if (p.type === 'text-delta') {
-							const text = (p.textDelta ?? p.text ?? '') as string;
-							if (text) controller.enqueue(encoder.encode(text));
-						} else if (p.type === 'tool-result') {
-							const toolResult = (p.result ?? p) as Record<string, unknown>;
-							if (toolResult?.status === 'batch_confirmation_required') {
-								confirmations.push({
-									type: 'batch-confirmation',
-									data: { summary: toolResult.summary, operations: toolResult.operations }
-								});
-							} else if (toolResult?.status === 'confirmation_required' && toolResult?.changes) {
-								confirmations.push({
-									type: 'action-confirmation',
-									data: { table: toolResult.table, changes: toolResult.changes }
-								});
-							}
-						}
+					for await (const text of textStream) {
+						if (text) controller.enqueue(encoder.encode(text));
 					}
 					// Append confirmations as tagged JSON after the text stream
 					for (const conf of confirmations) {
