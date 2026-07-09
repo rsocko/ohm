@@ -19,13 +19,15 @@ import { findBestMatches } from '$lib/server/fuzzy-match';
 const SYSTEM_PROMPT = `You're Ohm, a friendly and knowledgeable electrical assistant for Ryan's homes. Think of yourself as a helpful housemate who happens to know exactly where every circuit and outlet is — approachable, warm, and quick with a clear answer. You have access to NocoDB tables containing: Areas, Panels, Circuits, Receptacles, and Loads.
 
 Available tables and fields:
-- Area: Name, Floor, Description (rooms in the home)
-- Panel: Name, Location, Service Size, Phases (electrical panels)
+- Home: Name, Address, City, State, Zip (a physical home/property)
+- Area: Name, Floor, Description, Home (link) — rooms in a home
+- Panel: Name, Location, Service Size, Phases, Home (link) — electrical panels
 - Circuit: Number, Amps, Description, GFCI Protected, Panel (link), Area (link)
 - Receptacle: Name, Receptacle Type, Gang Position, Loc.Direction, Loc.Placement, Loc.Rec.Index, Load Name(s), Area (link), Circuit (link)
 - Load: Name, Device Type, Wattage, Fixture_Count, Area (link), Circuit (link)
 
 Relationships:
+- Home → Areas, Panels (one home has many rooms and panels)
 - Panel → Circuits (one panel has many circuits)
 - Circuit → Loads, Receptacles (one circuit serves many devices)
 - Area → Loads, Receptacles, Circuits (one room has many devices)
@@ -39,13 +41,17 @@ When answering questions:
 - When referencing navigable entities, include link markers: [link:/panels?panel=ID]Panel Name[/link] or [link:/rooms?area=ID]Room Name[/link]
 
 Creation capabilities:
-- You can CREATE new records (areas, loads, receptacles) — always propose via propose_batch first
+- You can CREATE new records (homes, areas, loads, receptacles, panels, circuits) — ALWAYS use propose_batch, NEVER create directly
+- propose_batch shows the user a rich table of all proposed changes with Confirm/Cancel buttons — the user MUST click Confirm before anything is saved
+- When creating an Area, ALWAYS include a link operation to connect it to the user's Home
+- When creating Loads or Receptacles, include link operations to connect them to their Area (and Circuit if known)
 - You can ASSIGN circuits in bulk — "circuit 3 controls all lights in kitchen"
 - You can handle COMPLEX sentences — parse multiple operations from one utterance
 - When creating loads, infer Device Type from context (e.g., "ceiling lights" → type "Light", "ceiling fan" → "Fan", "TV" → "Appliance")
 - Default Fixture_Count to 1 unless user specifies (e.g., "4 recessed lights" → Fixture_Count: 4)
 - For receptacles, infer type from context (e.g., "dimmer" → "Dimmer Switch", "outlet" → "Outlet", "GFCI" → "GFCI Outlet")
 - Auto-generate names following pattern: "{Area Name} {Description}" unless user gives explicit name
+- For link operations in propose_batch: use tempId references like "temp:room1" for newly created records that need to be linked in the same batch
 
 Disambiguation rules:
 - If user mentions a name that partially matches existing records, list top 3 matches and ask
@@ -263,7 +269,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				query_electrical_data: tool({
 					description: 'Search and retrieve records from the electrical database. Use this for lookups about circuits, panels, rooms, outlets, or loads.',
 					inputSchema: z.object({
-						table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to query'),
+						table: z.enum(['Home', 'Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to query'),
 						search_text: z.string().optional().describe('Text to search for across all fields'),
 						limit: z.number().optional().describe('Maximum records (default 25)')
 					}),
@@ -293,7 +299,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				propose_update: tool({
 					description: 'Propose updating records. This generates a confirmation request for the user — NEVER executes directly. For multi-step operations (creates + links), use propose_batch instead.',
 					inputSchema: z.object({
-						table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Table containing the records'),
+						table: z.enum(['Home', 'Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Table containing the records'),
 						updates: z.array(z.object({
 							recordId: z.string().describe('Record ID to update'),
 							label: z.string().describe('Human-friendly name for this record'),
@@ -310,37 +316,8 @@ export const POST: RequestHandler = async ({ request }) => {
 						};
 					}
 				}),
-				create_records: tool({
-					description: 'Create new records in the electrical database. Use for adding new rooms, loads, receptacles. For multi-step operations, prefer propose_batch to show the user a confirmation first.',
-					inputSchema: z.object({
-						operations: z.array(z.object({
-							table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to create in'),
-							fields: z.record(z.string(), z.unknown()).describe('Field values for the new record'),
-							tempId: z.string().optional().describe('Temporary ID for referencing in subsequent link operations')
-						}))
-					}),
-					execute: async ({ operations }) => {
-						const results = [];
-						for (const op of operations) {
-							try {
-								const tableInfo = await getTableByName(op.table);
-								if (!tableInfo) {
-									results.push({ tempId: op.tempId, error: `Table "${op.table}" not found` });
-									continue;
-								}
-								const record = await createRecord(tableInfo.id, op.fields);
-								results.push({ tempId: op.tempId, table: op.table, recordId: record.id, fields: record.fields });
-							} catch (err) {
-								results.push({
-									tempId: op.tempId,
-									table: op.table,
-									error: err instanceof Error ? err.message : 'Create failed'
-								});
-							}
-						}
-						return { created: results };
-					}
-				}),
+				// NOTE: create_records was removed. ALL mutations go through propose_batch
+				// so the user sees a rich confirmation UI before anything is persisted.
 				assign_circuit: tool({
 					description: 'Find loads and/or receptacles to assign to a circuit. Returns matches for confirmation — does not execute directly. Use when user says things like "circuit 3 controls all lights in the kitchen".',
 					inputSchema: z.object({
@@ -430,7 +407,7 @@ export const POST: RequestHandler = async ({ request }) => {
 						summary: z.string().describe('One-line description of what this batch does'),
 						operations: z.array(z.object({
 							action: z.enum(['create', 'update', 'link', 'unlink']).describe('Operation type'),
-							table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Target table'),
+							table: z.enum(['Home', 'Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Target table'),
 							label: z.string().describe('Human-readable description of this operation'),
 							fields: z.record(z.string(), z.unknown()).optional().describe('Fields for create/update'),
 							recordId: z.string().optional().describe('Record ID for update/link operations'),
@@ -453,7 +430,7 @@ export const POST: RequestHandler = async ({ request }) => {
 				fuzzy_search: tool({
 					description: 'Fuzzy search for records when exact text matching fails. Use when looking for records by name and the user may have used different words (e.g., "master bedroom" vs "Primary Bedroom", "ceiling lights" vs "Recessed Cans"). Returns scored matches.',
 					inputSchema: z.object({
-						table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to search'),
+						table: z.enum(['Home', 'Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to search'),
 						query: z.string().describe('Search query (name, description, or partial match)'),
 						field: z.string().optional().describe('Specific field to match against (default: "Name")')
 					}),
