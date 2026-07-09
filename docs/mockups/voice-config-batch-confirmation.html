@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ohm — Batch Confirmation Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'ohm-bg': '#0f1219',
+            'ohm-surface': '#1a1f2e',
+            'ohm-border': '#2a3142',
+            'ohm-text': '#e2e8f0',
+            'ohm-muted': '#94a3b8',
+            'ohm-accent': '#6366f1',
+            'ohm-green': '#22c55e',
+            'ohm-amber': '#f59e0b',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+  </style>
+</head>
+<body class="bg-ohm-bg text-ohm-text min-h-screen p-4">
+
+  <!-- Viewport Toggle -->
+  <div class="max-w-4xl mx-auto mb-6">
+    <div class="flex items-center gap-3 mb-2">
+      <h1 class="text-lg font-bold text-white">Batch Confirmation — Interactive Mockup</h1>
+    </div>
+    <div class="flex gap-2 mb-4">
+      <button onclick="setWidth('375px')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-ohm-surface border border-ohm-border hover:border-ohm-accent transition-colors">📱 Phone (375px)</button>
+      <button onclick="setWidth('768px')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-ohm-surface border border-ohm-border hover:border-ohm-accent transition-colors">📱 Tablet (768px)</button>
+      <button onclick="setWidth('100%')" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-ohm-surface border border-ohm-border hover:border-ohm-accent transition-colors">🖥️ Full Width</button>
+    </div>
+  </div>
+
+  <!-- Chat Container -->
+  <div id="chat-container" class="mx-auto transition-all duration-300" style="max-width: 768px;">
+
+    <!-- Chat Messages -->
+    <div class="space-y-4 mb-4">
+
+      <!-- User Message (voice) -->
+      <div class="flex justify-end">
+        <div class="max-w-[85%] bg-indigo-600/30 border border-indigo-500/30 rounded-2xl rounded-br-md px-4 py-2.5">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-[10px] text-indigo-300/70">🎤 Voice</span>
+          </div>
+          <p class="text-sm text-ohm-text">Ryan's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7</p>
+        </div>
+      </div>
+
+      <!-- AI Response with Batch Confirmation -->
+      <div class="flex justify-start">
+        <div class="max-w-[92%] space-y-3">
+          <!-- AI text -->
+          <div class="bg-ohm-surface border border-ohm-border rounded-2xl rounded-bl-md px-4 py-2.5">
+            <p class="text-sm text-ohm-text">Got it! I'll set up Ryan's Office with ceiling lights and a dimmer. Here's what I'll create:</p>
+          </div>
+
+          <!-- Batch Confirmation Card — TABLET/DESKTOP VIEW -->
+          <div id="table-view" class="bg-ohm-surface border border-ohm-border rounded-xl overflow-hidden">
+            <!-- Header -->
+            <div class="px-4 py-2.5 bg-indigo-500/10 border-b border-ohm-border flex items-center gap-2">
+              <span class="text-sm">📋</span>
+              <span class="text-xs font-semibold text-indigo-300">Adding 3 items to Ryan's Office + Circuit 7 assignment</span>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="border-b border-ohm-border">
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Action</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Table</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Name</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-ohm-border/50 hover:bg-white/[0.02]">
+                    <td class="px-3 py-2.5">
+                      <span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span>
+                    </td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Load</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">Ceiling Lights</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">
+                      <span class="text-ohm-text">Qty: 4</span> · Type: Light · Recessed
+                    </td>
+                  </tr>
+                  <tr class="border-b border-ohm-border/50 hover:bg-white/[0.02]">
+                    <td class="px-3 py-2.5">
+                      <span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span>
+                    </td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Receptacle</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">N-Wall Dimmer</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">
+                      Type: Dimmer Switch · Controls: Ceiling Lights · Dir: North
+                    </td>
+                  </tr>
+                  <tr class="border-b border-ohm-border/50 hover:bg-white/[0.02]">
+                    <td class="px-3 py-2.5">
+                      <span class="badge bg-blue-500/20 text-blue-400 border border-blue-500/30">🔗 Link</span>
+                    </td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Circuit</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">Circuit 7</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">
+                      Assign: Ceiling Lights, N-Wall Dimmer
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-white/[0.02]">
+                    <td class="px-3 py-2.5">
+                      <span class="badge bg-blue-500/20 text-blue-400 border border-blue-500/30">🔗 Link</span>
+                    </td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Area</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">Ryan's Office</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">
+                      Assign: Ceiling Lights, N-Wall Dimmer
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Assumptions note -->
+            <div class="px-4 py-2 bg-amber-500/5 border-t border-ohm-border">
+              <p class="text-[11px] text-amber-400/80">
+                💡 <strong>Assumed:</strong> "Recessed" → Device Type: Light, Fixture_Count: 4. Dimmer placement: North wall (Loc.Direction: N, Loc.Placement: W).
+              </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="px-4 py-3 bg-ohm-bg/50 border-t border-ohm-border flex gap-2">
+              <button onclick="showSuccess()" class="flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 active:scale-[0.97] transition-all">
+                ✓ Confirm All
+              </button>
+              <button class="flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-700/70 active:scale-[0.97] transition-all">
+                ✕ Cancel
+              </button>
+            </div>
+          </div>
+
+          <!-- MOBILE CARD VIEW (hidden by default, toggle with viewport) -->
+          <div id="card-view" class="hidden space-y-2">
+            <!-- Header Card -->
+            <div class="px-3 py-2 bg-indigo-500/10 border border-ohm-border rounded-lg flex items-center gap-2">
+              <span class="text-sm">📋</span>
+              <span class="text-xs font-semibold text-indigo-300">Adding 3 items to Ryan's Office</span>
+            </div>
+
+            <!-- Card 1 -->
+            <div class="bg-ohm-surface border border-ohm-border rounded-lg p-3">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span>
+                <span class="text-[10px] text-ohm-muted">Load</span>
+              </div>
+              <p class="text-sm font-medium text-ohm-text mb-1">Ceiling Lights</p>
+              <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ohm-muted">
+                <span>Qty: <strong class="text-ohm-text">4</strong></span>
+                <span>Type: Light</span>
+                <span>Recessed</span>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bg-ohm-surface border border-ohm-border rounded-lg p-3">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span>
+                <span class="text-[10px] text-ohm-muted">Receptacle</span>
+              </div>
+              <p class="text-sm font-medium text-ohm-text mb-1">N-Wall Dimmer</p>
+              <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ohm-muted">
+                <span>Type: Dimmer Switch</span>
+                <span>Controls: Ceiling Lights</span>
+                <span>Wall: North</span>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="bg-ohm-surface border border-ohm-border rounded-lg p-3">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="badge bg-blue-500/20 text-blue-400 border border-blue-500/30">🔗 Link</span>
+                <span class="text-[10px] text-ohm-muted">Circuit</span>
+              </div>
+              <p class="text-sm font-medium text-ohm-text mb-1">Circuit 7</p>
+              <div class="text-[11px] text-ohm-muted">
+                <span>Assign: Ceiling Lights, N-Wall Dimmer</span>
+              </div>
+            </div>
+
+            <!-- Assumptions -->
+            <div class="px-3 py-2 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+              <p class="text-[11px] text-amber-400/80">
+                💡 <strong>Assumed:</strong> "Recessed" → Light type, Qty: 4. Dimmer on North wall.
+              </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2">
+              <button onclick="showSuccess()" class="flex-1 py-3 px-4 rounded-lg text-sm font-semibold bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 active:scale-[0.97] transition-all">
+                ✓ Confirm All
+              </button>
+              <button class="flex-1 py-3 px-4 rounded-lg text-sm font-semibold bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-700/70 active:scale-[0.97] transition-all">
+                ✕ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Message (hidden by default) -->
+      <div id="success-msg" class="hidden flex justify-start">
+        <div class="bg-green-500/10 border border-green-500/20 rounded-2xl rounded-bl-md px-4 py-2.5">
+          <p class="text-sm text-green-400">✓ Created 2 records and linked to Circuit 7 + Ryan's Office. <a href="#" class="text-indigo-400 underline">View in Room List →</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="sticky bottom-4 bg-ohm-surface border border-ohm-border rounded-2xl px-3 py-2 flex items-center gap-2 shadow-xl shadow-black/30">
+      <input type="text" placeholder="Ask Ohm anything..." class="flex-1 bg-transparent text-sm text-ohm-text placeholder:text-ohm-muted/50 outline-none">
+      <button id="mic-btn" onclick="toggleMic()" class="w-9 h-9 rounded-full bg-ohm-accent/20 border border-ohm-accent/30 flex items-center justify-center hover:bg-ohm-accent/30 transition-colors">
+        <span class="text-base" id="mic-icon">🎤</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Second Example: Multi-gang -->
+  <div class="max-w-4xl mx-auto mt-12 mb-6">
+    <h2 class="text-sm font-bold text-ohm-muted uppercase tracking-wider mb-4">Example 2: Multi-Gang Box + 3-Way Switch</h2>
+  </div>
+
+  <div class="mx-auto" style="max-width: 768px;">
+    <div class="space-y-4">
+      <!-- User voice -->
+      <div class="flex justify-end">
+        <div class="max-w-[85%] bg-indigo-600/30 border border-indigo-500/30 rounded-2xl rounded-br-md px-4 py-2.5">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-[10px] text-indigo-300/70">🎤 Voice</span>
+          </div>
+          <p class="text-sm text-ohm-text">There's a 3-gang box on the south wall — a dimmer for the ceiling lights, an on-off switch that's a 3-way for the hallway light, and a smart switch for the fan</p>
+        </div>
+      </div>
+
+      <!-- AI Batch -->
+      <div class="flex justify-start">
+        <div class="max-w-[92%] space-y-3">
+          <div class="bg-ohm-surface border border-ohm-border rounded-2xl rounded-bl-md px-4 py-2.5">
+            <p class="text-sm text-ohm-text">Nice — that's a busy box! Here's what I'll set up:</p>
+          </div>
+
+          <div class="bg-ohm-surface border border-ohm-border rounded-xl overflow-hidden">
+            <div class="px-4 py-2.5 bg-indigo-500/10 border-b border-ohm-border flex items-center gap-2">
+              <span class="text-sm">📋</span>
+              <span class="text-xs font-semibold text-indigo-300">3-gang box (South wall) — 3 receptacles + load links</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="border-b border-ohm-border">
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Action</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Type</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Name</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-ohm-border/50">
+                    <td class="px-3 py-2.5"><span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span></td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Receptacle</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">S-Wall Dimmer</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Dimmer Switch · Controls: Ceiling Lights · <span class="text-cyan-400">Gang 1</span></td>
+                  </tr>
+                  <tr class="border-b border-ohm-border/50">
+                    <td class="px-3 py-2.5"><span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span></td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Receptacle</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">S-Wall Hall Switch</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">On/Off Switch · Controls: Hallway Light · <span class="text-cyan-400">Gang 2</span> · <span class="text-amber-400">3-way</span></td>
+                  </tr>
+                  <tr class="border-b border-ohm-border/50">
+                    <td class="px-3 py-2.5"><span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span></td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Receptacle</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">S-Wall Fan Switch</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Smart Switch · Controls: Fan · <span class="text-cyan-400">Gang 3</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Clarification needed -->
+            <div class="px-4 py-2.5 bg-amber-500/5 border-t border-ohm-border">
+              <p class="text-[11px] text-amber-400/80 mb-2">
+                ⚠️ <strong>3-way detected:</strong> "Hallway Light" switch needs a second location. Where's the other switch for the hallway light?
+              </p>
+              <div class="flex gap-2">
+                <button class="px-3 py-1.5 rounded-md text-[11px] font-medium bg-ohm-surface border border-ohm-border text-ohm-text hover:border-ohm-accent transition-colors">
+                  I'll add it later
+                </button>
+                <button class="px-3 py-1.5 rounded-md text-[11px] font-medium bg-ohm-surface border border-ohm-border text-ohm-text hover:border-ohm-accent transition-colors">
+                  At the end of the hallway
+                </button>
+              </div>
+            </div>
+
+            <div class="px-4 py-3 bg-ohm-bg/50 border-t border-ohm-border flex gap-2">
+              <button class="flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 active:scale-[0.97] transition-all">
+                ✓ Confirm All
+              </button>
+              <button class="flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-700/70 active:scale-[0.97] transition-all">
+                ✕ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Third Example: Audit/Verify -->
+  <div class="max-w-4xl mx-auto mt-12 mb-6">
+    <h2 class="text-sm font-bold text-ohm-muted uppercase tracking-wider mb-4">Example 3: Audit — Verify Existing Data</h2>
+  </div>
+
+  <div class="mx-auto" style="max-width: 768px;">
+    <div class="space-y-4 mb-8">
+      <div class="flex justify-end">
+        <div class="max-w-[85%] bg-indigo-600/30 border border-indigo-500/30 rounded-2xl rounded-br-md px-4 py-2.5">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-[10px] text-indigo-300/70">🎤 Voice</span>
+          </div>
+          <p class="text-sm text-ohm-text">Make sure the kitchen has a garbage disposal on circuit 12</p>
+        </div>
+      </div>
+
+      <div class="flex justify-start">
+        <div class="max-w-[92%] space-y-3">
+          <div class="bg-ohm-surface border border-ohm-border rounded-2xl rounded-bl-md px-4 py-2.5">
+            <p class="text-sm text-ohm-text">I checked — there's no garbage disposal in the Kitchen yet. I'll add it on Circuit 12:</p>
+          </div>
+
+          <div class="bg-ohm-surface border border-ohm-border rounded-xl overflow-hidden">
+            <div class="px-4 py-2.5 bg-indigo-500/10 border-b border-ohm-border flex items-center gap-2">
+              <span class="text-sm">📋</span>
+              <span class="text-xs font-semibold text-indigo-300">Adding garbage disposal to Kitchen</span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="border-b border-ohm-border">
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Action</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Type</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Name</th>
+                    <th class="px-3 py-2 text-left text-ohm-muted font-medium">Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-ohm-border/50">
+                    <td class="px-3 py-2.5"><span class="badge bg-green-500/20 text-green-400 border border-green-500/30">+ Create</span></td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Load</td>
+                    <td class="px-3 py-2.5 text-ohm-text font-medium">Garbage Disposal</td>
+                    <td class="px-3 py-2.5 text-ohm-muted">Type: Appliance · Area: Kitchen · Circuit: 12</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="px-4 py-3 bg-ohm-bg/50 border-t border-ohm-border flex gap-2">
+              <button class="flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 active:scale-[0.97] transition-all">
+                ✓ Confirm
+              </button>
+              <button class="flex-1 py-2.5 px-4 rounded-lg text-xs font-semibold bg-slate-700/50 text-slate-400 border border-slate-600/30 hover:bg-slate-700/70 active:scale-[0.97] transition-all">
+                ✕ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fourth Example: Disambiguation -->
+  <div class="max-w-4xl mx-auto mt-12 mb-6">
+    <h2 class="text-sm font-bold text-ohm-muted uppercase tracking-wider mb-4">Example 4: Disambiguation — Fuzzy Match</h2>
+  </div>
+
+  <div class="mx-auto" style="max-width: 768px;">
+    <div class="space-y-4 mb-8">
+      <div class="flex justify-end">
+        <div class="max-w-[85%] bg-indigo-600/30 border border-indigo-500/30 rounded-2xl rounded-br-md px-4 py-2.5">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-[10px] text-indigo-300/70">🎤 Voice</span>
+          </div>
+          <p class="text-sm text-ohm-text">Put the ceiling lights on circuit 3</p>
+        </div>
+      </div>
+
+      <div class="flex justify-start">
+        <div class="max-w-[92%] space-y-3">
+          <div class="bg-ohm-surface border border-ohm-border rounded-2xl rounded-bl-md px-4 py-2.5">
+            <p class="text-sm text-ohm-text">I found a few "ceiling lights" — which one do you mean?</p>
+          </div>
+
+          <!-- Disambiguation choices -->
+          <div class="bg-ohm-surface border border-ohm-border rounded-xl p-3 space-y-2">
+            <button class="w-full text-left px-3 py-2.5 rounded-lg bg-ohm-bg/50 border border-ohm-border hover:border-ohm-accent hover:bg-ohm-accent/5 transition-colors">
+              <p class="text-sm font-medium text-ohm-text">Kitchen Ceiling Lights</p>
+              <p class="text-[11px] text-ohm-muted">4x recessed · Circuit 9 currently</p>
+            </button>
+            <button class="w-full text-left px-3 py-2.5 rounded-lg bg-ohm-bg/50 border border-ohm-border hover:border-ohm-accent hover:bg-ohm-accent/5 transition-colors">
+              <p class="text-sm font-medium text-ohm-text">Ryan's Office Ceiling Lights</p>
+              <p class="text-[11px] text-ohm-muted">4x recessed · Circuit 7 currently</p>
+            </button>
+            <button class="w-full text-left px-3 py-2.5 rounded-lg bg-ohm-bg/50 border border-ohm-border hover:border-ohm-accent hover:bg-ohm-accent/5 transition-colors">
+              <p class="text-sm font-medium text-ohm-text">Basement TV Room Ceiling Lights</p>
+              <p class="text-[11px] text-ohm-muted">6x recessed · No circuit assigned</p>
+            </button>
+            <button class="w-full text-left px-3 py-2.5 rounded-lg bg-ohm-bg/30 border border-dashed border-ohm-border hover:border-ohm-accent transition-colors">
+              <p class="text-sm text-ohm-muted">All of them</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setWidth(w) {
+      document.getElementById('chat-container').style.maxWidth = w;
+      // Toggle card vs table view based on width
+      if (w === '375px') {
+        document.getElementById('table-view').classList.add('hidden');
+        document.getElementById('card-view').classList.remove('hidden');
+      } else {
+        document.getElementById('table-view').classList.remove('hidden');
+        document.getElementById('card-view').classList.add('hidden');
+      }
+    }
+
+    function showSuccess() {
+      document.getElementById('success-msg').classList.remove('hidden');
+      document.getElementById('table-view').style.opacity = '0.5';
+      document.getElementById('table-view').style.pointerEvents = 'none';
+    }
+
+    let micActive = false;
+    function toggleMic() {
+      micActive = !micActive;
+      const btn = document.getElementById('mic-btn');
+      const icon = document.getElementById('mic-icon');
+      if (micActive) {
+        btn.classList.add('bg-red-500/30', 'border-red-500/50', 'animate-pulse');
+        btn.classList.remove('bg-ohm-accent/20', 'border-ohm-accent/30');
+        icon.textContent = '⏹️';
+      } else {
+        btn.classList.remove('bg-red-500/30', 'border-red-500/50', 'animate-pulse');
+        btn.classList.add('bg-ohm-accent/20', 'border-ohm-accent/30');
+        icon.textContent = '🎤';
+      }
+    }
+  </script>
+</body>
+</html>
