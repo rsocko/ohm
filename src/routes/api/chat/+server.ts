@@ -70,7 +70,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json();
 	const config = await getAiConfig();
 
-	// Handle action confirmation execution (legacy path, keep for now)
+	// Handle action confirmation execution (updates and link-by-name)
 	if (body.message === '__CONFIRM_ACTION__' && body.action) {
 		const { table: tableName, changes } = body.action;
 		const table = await getTableByName(tableName);
@@ -84,9 +84,40 @@ export const POST: RequestHandler = async ({ request }) => {
 
 		for (const change of changes) {
 			try {
-				await updateRecord(table.id, Number(change.recordId), {
-					[change.field]: change.newValue
-				});
+				// Resolve record ID by label/name if it's not a valid number
+				let recordId = Number(change.recordId);
+				if (!recordId || isNaN(recordId)) {
+					// Try to find record by label/name
+					const records = await getRecords(table.id, { pageSize: '200' });
+					const found = records.find(r =>
+						String(r.fields['Name'] || '').toLowerCase() === (change.label || '').toLowerCase()
+					);
+					if (found) {
+						recordId = found.id;
+					} else {
+						throw new Error(`Could not find record "${change.label}" in ${tableName}`);
+					}
+				}
+
+				// Check if this is a link field
+				const linkCols = await getLinkColumns(table.id);
+				const linkCol = linkCols.find(c => c.title === change.field);
+
+				if (linkCol) {
+					// This is a link operation — resolve target by name
+					const targetRecords = await getRecords(linkCol.fk_related_model_id, { pageSize: '200' });
+					const target = targetRecords.find(r =>
+						String(r.fields['Name'] || '').toLowerCase() === String(change.newValue || '').toLowerCase()
+					);
+					if (!target) {
+						throw new Error(`Could not find "${change.newValue}" to link to`);
+					}
+					await addLinks(table.id, linkCol.id, recordId, [target.id]);
+				} else {
+					await updateRecord(table.id, recordId, {
+						[change.field]: change.newValue
+					});
+				}
 				success++;
 			} catch (err) {
 				failed++;
@@ -130,7 +161,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			const links = operations.filter((op) => op.action === 'link');
 			const unlinks = operations.filter((op) => op.action === 'unlink');
 
-			// Phase 1: Creates
+			// Phase 1: Creates (with auto-linking for link fields)
 			for (const op of creates) {
 				const tableInfo = await getTableByName(op.table);
 				if (!tableInfo) {
@@ -138,10 +169,47 @@ export const POST: RequestHandler = async ({ request }) => {
 					continue;
 				}
 				try {
-					const record = await createRecord(tableInfo.id, op.fields || {});
+					// Separate link fields from regular fields
+					const linkCols = await getLinkColumns(tableInfo.id);
+					const linkColNames = new Set(linkCols.map(c => c.title));
+					const regularFields: Record<string, unknown> = {};
+					const linkFieldsToResolve: Array<{ colTitle: string; value: string }> = [];
+
+					for (const [key, value] of Object.entries(op.fields || {})) {
+						if (linkColNames.has(key) && typeof value === 'string') {
+							// This is a link column — resolve by name after create
+							linkFieldsToResolve.push({ colTitle: key, value });
+						} else {
+							regularFields[key] = value;
+						}
+					}
+
+					const record = await createRecord(tableInfo.id, regularFields);
 					if (op.tempId) tempIdMap.set(op.tempId, record.id);
 					createdRecords.push({ tableId: tableInfo.id, recordId: record.id });
 					results.push({ label: op.label, status: 'created' });
+
+					// Auto-resolve link fields: look up target by name and create link
+					for (const lf of linkFieldsToResolve) {
+						const linkCol = linkCols.find(c => c.title === lf.colTitle);
+						if (!linkCol) continue;
+						try {
+							// Find the target table and record by name
+							const targetTableId = linkCol.fk_related_model_id;
+							const targetRecords = await getRecords(targetTableId, { pageSize: '200' });
+							const target = targetRecords.find(r =>
+								String(r.fields['Name'] || '').toLowerCase() === lf.value.toLowerCase()
+							);
+							if (target) {
+								await addLinks(tableInfo.id, linkCol.id, record.id, [target.id]);
+								results.push({ label: `Link ${op.label} → ${lf.colTitle}: ${lf.value}`, status: 'linked' });
+							} else {
+								results.push({ label: `Link ${op.label} → ${lf.colTitle}: ${lf.value}`, status: 'failed', error: `No "${lf.value}" found in ${lf.colTitle} table` });
+							}
+						} catch (linkErr) {
+							results.push({ label: `Link ${op.label} → ${lf.colTitle}: ${lf.value}`, status: 'failed', error: linkErr instanceof Error ? linkErr.message : 'Auto-link failed' });
+						}
+					}
 				} catch (err) {
 					results.push({ label: op.label, status: 'failed', error: err instanceof Error ? err.message : 'Create failed' });
 				}
