@@ -489,18 +489,40 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		});
 
-		// Build a streaming response that catches errors gracefully
-		const textStream = result.textStream;
+		// Build a streaming response that includes both text and tool results.
+		// Tool results with confirmation status are appended as tagged JSON
+		// so the client can render confirmation UI with action buttons.
+		const fullStream = result.fullStream;
 		const encoder = new TextEncoder();
+		const confirmations: Array<{ type: string; data: unknown }> = [];
 		const readable = new ReadableStream({
 			async start(controller) {
 				try {
-					for await (const chunk of textStream) {
-						controller.enqueue(encoder.encode(chunk));
+					for await (const part of fullStream) {
+						if (part.type === 'text-delta') {
+							controller.enqueue(encoder.encode(part.textDelta));
+						} else if (part.type === 'tool-result') {
+							const toolResult = part.result as Record<string, unknown>;
+							if (toolResult?.status === 'batch_confirmation_required') {
+								confirmations.push({
+									type: 'batch-confirmation',
+									data: { summary: toolResult.summary, operations: toolResult.operations }
+								});
+							} else if (toolResult?.status === 'confirmation_required' && toolResult?.changes) {
+								confirmations.push({
+									type: 'action-confirmation',
+									data: { table: toolResult.table, changes: toolResult.changes }
+								});
+							}
+						}
+					}
+					// Append confirmations as tagged JSON after the text stream
+					for (const conf of confirmations) {
+						const marker = `\n<!--OHM_CONFIRMATION:${JSON.stringify(conf)}-->`;
+						controller.enqueue(encoder.encode(marker));
 					}
 					controller.close();
 				} catch (err) {
-					// If the stream errors (e.g., upstream failure), send the error as text
 					const errMsg = err instanceof Error ? err.message : 'AI service error';
 					console.error('[AI Chat] Stream consumption error:', errMsg);
 					controller.enqueue(encoder.encode(`\n\n[Error: ${errMsg}]`));
