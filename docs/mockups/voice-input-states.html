@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ohm — Voice Input States Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'ohm-bg': '#0f1219',
+            'ohm-surface': '#1a1f2e',
+            'ohm-border': '#2a3142',
+            'ohm-text': '#e2e8f0',
+            'ohm-muted': '#94a3b8',
+            'ohm-accent': '#6366f1',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 0.8; }
+    }
+    
+    @keyframes waveform {
+      0%, 100% { height: 4px; }
+      50% { height: 16px; }
+    }
+    
+    @keyframes orbit {
+      0% { transform: rotate(0deg) translateX(10px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(10px) rotate(-360deg); }
+    }
+
+    @keyframes orbit-reverse {
+      0% { transform: rotate(0deg) translateX(7px) rotate(0deg); }
+      100% { transform: rotate(-360deg) translateX(7px) rotate(360deg); }
+    }
+    
+    .pulse-ring { animation: pulse-ring 1.5s ease-in-out infinite; }
+    
+    .wave-bar {
+      animation: waveform 0.8s ease-in-out infinite;
+      animation-delay: var(--delay);
+    }
+
+    .orb-1 { animation: orbit 2s linear infinite; }
+    .orb-2 { animation: orbit 2s linear infinite; animation-delay: -0.66s; }
+    .orb-3 { animation: orbit 2s linear infinite; animation-delay: -1.33s; }
+    .orb-inner { animation: orbit-reverse 1.5s linear infinite; }
+  </style>
+</head>
+<body class="bg-ohm-bg text-ohm-text min-h-screen p-6">
+
+  <div class="max-w-md mx-auto space-y-12">
+
+    <h1 class="text-lg font-bold text-white">Voice Input — UI States</h1>
+
+    <!-- STATE 1: Idle (mic available) -->
+    <section>
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">State 1: Idle — Mic Available</h2>
+      <div class="bg-ohm-surface border border-ohm-border rounded-2xl px-3 py-2 flex items-center gap-2">
+        <input type="text" placeholder="Ask Ohm anything..." class="flex-1 bg-transparent text-sm text-ohm-text placeholder:text-ohm-muted/50 outline-none" disabled>
+        <button class="w-10 h-10 rounded-full bg-ohm-accent/20 border border-ohm-accent/30 flex items-center justify-center hover:bg-ohm-accent/30 transition-colors">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-ohm-accent">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
+      </div>
+      <p class="text-[11px] text-ohm-muted mt-2">Mic button appears when input is empty. When text is present, it becomes a Send button.</p>
+    </section>
+
+    <!-- STATE 2: Listening (active recording) -->
+    <section>
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">State 2: Listening — Active Recording</h2>
+      <div class="bg-ohm-surface border border-red-500/30 rounded-2xl overflow-hidden">
+        <!-- Listening indicator bar -->
+        <div class="px-4 py-3 bg-red-500/10 border-b border-red-500/20">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div class="absolute inset-0 w-3 h-3 bg-red-500 rounded-full pulse-ring"></div>
+              </div>
+              <span class="text-xs font-medium text-red-400">Listening...</span>
+            </div>
+            <!-- Waveform -->
+            <div class="flex items-center gap-[3px] h-5">
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.1s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.2s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.3s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.15s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.25s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.35s"></div>
+              <div class="w-[3px] rounded-full bg-red-400/60 wave-bar" style="--delay: 0.05s"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interim transcription -->
+        <div class="px-4 py-3">
+          <p class="text-sm text-ohm-text/70 italic">Ryan's office has 4 recessed ceiling lights on a dimmer...</p>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="px-4 py-2.5 border-t border-ohm-border flex gap-2">
+          <button class="flex-1 py-2 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30">
+            ✓ Done (send)
+          </button>
+          <button class="flex-1 py-2 rounded-lg text-xs font-semibold bg-slate-700/50 text-slate-400 border border-slate-600/30">
+            ✕ Cancel
+          </button>
+        </div>
+      </div>
+      <p class="text-[11px] text-ohm-muted mt-2">Shows live interim transcription. Auto-submits after 2s of silence, or user taps "Done".</p>
+    </section>
+
+    <!-- STATE 3: Processing (speech ended, sending to AI) -->
+    <section>
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">State 3: Processing — Sending to AI</h2>
+      <div class="bg-ohm-surface border border-ohm-border rounded-2xl overflow-hidden">
+        <div class="px-4 py-3">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-[10px] text-indigo-300/70">🎤 Voice</span>
+          </div>
+          <p class="text-sm text-ohm-text">Ryan's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7</p>
+        </div>
+        <div class="px-4 py-3 border-t border-ohm-border bg-ohm-bg/30">
+          <div class="flex items-center gap-3">
+            <!-- Ohm spinning orbs indicator -->
+            <div class="relative w-7 h-7 flex items-center justify-center">
+              <!-- Center Ω symbol -->
+              <span class="text-[10px] font-bold text-ohm-accent/80">Ω</span>
+              <!-- Orbiting dots -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="orb-1 absolute w-[5px] h-[5px] rounded-full bg-ohm-accent/90"></div>
+                <div class="orb-2 absolute w-[5px] h-[5px] rounded-full bg-indigo-400/70"></div>
+                <div class="orb-3 absolute w-[5px] h-[5px] rounded-full bg-purple-400/60"></div>
+              </div>
+            </div>
+            <span class="text-[11px] text-ohm-muted">Ohm is thinking...</span>
+          </div>
+        </div>
+      </div>
+      <p class="text-[11px] text-ohm-muted mt-2">Final transcription shown as user message. Branded Ω orbs spinner while AI processes (replaces generic bouncing dots).</p>
+    </section>
+
+    <!-- STATE 4: Text with Send button -->
+    <section>
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">State 4: Text Entered — Send Button Replaces Mic</h2>
+      <div class="bg-ohm-surface border border-ohm-border rounded-2xl px-3 py-2 flex items-center gap-2">
+        <input type="text" value="What circuit is the fridge on?" class="flex-1 bg-transparent text-sm text-ohm-text outline-none" disabled>
+        <button class="w-10 h-10 rounded-full bg-ohm-accent border border-ohm-accent/50 flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white rotate-90">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+        </button>
+      </div>
+      <p class="text-[11px] text-ohm-muted mt-2">When text is present, mic → send button. Clears after submit → mic returns.</p>
+    </section>
+
+    <!-- STATE 5: Mic not supported -->
+    <section>
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">State 5: Voice Not Supported (Fallback)</h2>
+      <div class="bg-ohm-surface border border-ohm-border rounded-2xl px-3 py-2 flex items-center gap-2">
+        <input type="text" placeholder="Ask Ohm anything..." class="flex-1 bg-transparent text-sm text-ohm-text placeholder:text-ohm-muted/50 outline-none" disabled>
+        <button class="w-10 h-10 rounded-full bg-ohm-accent border border-ohm-accent/50 flex items-center justify-center opacity-30 cursor-not-allowed" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white rotate-90">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+          </svg>
+        </button>
+      </div>
+      <p class="text-[11px] text-ohm-muted mt-2">If SpeechRecognition API unavailable, mic button hidden entirely. Text-only input with permanent send button.</p>
+    </section>
+
+    <!-- INTERACTION DIAGRAM -->
+    <section class="pb-8">
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">Interaction Flow Diagram</h2>
+      <div class="bg-ohm-surface border border-ohm-border rounded-xl p-4">
+        <pre class="text-[11px] text-ohm-text/80 leading-relaxed overflow-x-auto">
+┌─────────────┐     tap mic      ┌──────────────┐
+│   IDLE      │ ───────────────▶ │  LISTENING   │
+│ (mic shown) │                  │ (red pulse)  │
+└─────────────┘                  └──────┬───────┘
+       ▲                                │
+       │ clear text                     │ 2s silence OR
+       │                                │ tap "Done"
+┌──────┴──────┐                         ▼
+│ TEXT ENTRY  │                  ┌──────────────┐
+│(send shown) │                  │ PROCESSING   │
+└─────────────┘                  │ (AI thinking)│
+       │                         └──────┬───────┘
+       │ tap send                       │
+       │                                │ AI responds
+       ▼                                ▼
+┌─────────────────────────────────────────────┐
+│          RESPONSE (batch confirm, text,     │
+│          disambiguation, data card)         │
+└─────────────────────────────────────────────┘
+
+Cancel at any point returns to IDLE.
+        </pre>
+      </div>
+    </section>
+
+    <!-- MOBILE CONSIDERATIONS -->
+    <section class="pb-8">
+      <h2 class="text-xs font-bold text-ohm-muted uppercase tracking-wider mb-3">Mobile Layout Considerations</h2>
+      <div class="bg-ohm-surface border border-ohm-border rounded-xl p-4 space-y-3">
+        <div class="flex items-start gap-3">
+          <span class="text-sm">📐</span>
+          <div>
+            <p class="text-xs font-medium text-ohm-text">Mic button: 44×44px minimum tap target</p>
+            <p class="text-[11px] text-ohm-muted">Apple HIG minimum. We use 40px (10px rounded-full) which is close — bump to 44.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-sm">📱</span>
+          <div>
+            <p class="text-xs font-medium text-ohm-text">Input bar sticks above keyboard</p>
+            <p class="text-[11px] text-ohm-muted">Use <code>position: sticky; bottom: env(safe-area-inset-bottom)</code> for iOS.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-sm">🔊</span>
+          <div>
+            <p class="text-xs font-medium text-ohm-text">Haptic feedback on mic activation</p>
+            <p class="text-[11px] text-ohm-muted"><code>navigator.vibrate(50)</code> on tap — subtle confirmation that recording started.</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <span class="text-sm">🎤</span>
+          <div>
+            <p class="text-xs font-medium text-ohm-text">Keep listening indicator above soft keyboard</p>
+            <p class="text-[11px] text-ohm-muted">Interim text and waveform must be visible even when virtual keyboard is open (relevant if user started via text then switches to voice).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
