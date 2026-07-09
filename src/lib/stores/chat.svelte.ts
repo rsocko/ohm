@@ -135,11 +135,60 @@ export async function sendMessage(content: string) {
 			accumulated += chunk;
 			chatState.streamingContent = accumulated;
 
+			// Strip confirmation markers from display text
+			const displayText = accumulated.replace(/\n<!--OHM_CONFIRMATION:.*?-->/g, '');
+
 			if (!hasAssistantMessage) {
-				addMessage({ role: 'assistant', content: accumulated, contentType: 'text' });
+				addMessage({ role: 'assistant', content: displayText, contentType: 'text' });
 				hasAssistantMessage = true;
 			} else {
-				updateLastAssistantMessage(accumulated);
+				updateLastAssistantMessage(displayText);
+			}
+		}
+
+		// Parse confirmation markers from the complete stream
+		const confirmationRegex = /<!--OHM_CONFIRMATION:(.*?)-->/g;
+		let match;
+		while ((match = confirmationRegex.exec(accumulated)) !== null) {
+			try {
+				const conf = JSON.parse(match[1]) as { type: string; data: Record<string, unknown> };
+				if (conf.type === 'batch-confirmation') {
+					chatState.pendingBatch = conf.data as unknown as import('$lib/types/chat').BatchConfirmationContent;
+					// Add the batch confirmation to the last message for rendering
+					const msgs = chatState.messages;
+					const lastIdx = msgs.length - 1;
+					if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
+						chatState.messages = [
+							...msgs.slice(0, lastIdx),
+							{ ...msgs[lastIdx], contentType: 'batch-confirmation' as const, batchConfirmation: chatState.pendingBatch }
+						];
+					}
+				} else if (conf.type === 'action-confirmation') {
+					chatState.pendingAction = conf.data as unknown as import('$lib/types/chat').ActionConfirmationContent;
+					const msgs = chatState.messages;
+					const lastIdx = msgs.length - 1;
+					if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
+						chatState.messages = [
+							...msgs.slice(0, lastIdx),
+							{ ...msgs[lastIdx], contentType: 'action-confirmation' as const, actionConfirmation: chatState.pendingAction }
+						];
+					}
+				}
+			} catch {
+				console.error('Failed to parse confirmation marker');
+			}
+		}
+
+		// Clean the final stored message content (strip markers)
+		if (hasAssistantMessage) {
+			const msgs = chatState.messages;
+			const lastIdx = msgs.length - 1;
+			if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
+				const cleanContent = msgs[lastIdx].content.replace(/\n<!--OHM_CONFIRMATION:.*?-->/g, '').trim();
+				chatState.messages = [
+					...msgs.slice(0, lastIdx),
+					{ ...msgs[lastIdx], content: cleanContent }
+				];
 			}
 		}
 
