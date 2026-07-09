@@ -16,6 +16,7 @@ Extend the Ask Ohm AI chat to support **voice-driven electrical configuration an
 ### Non-Goals (Future Phases)
 
 - Whisper API backend STT (Phase 2 — better accuracy)
+- Voice OUT / TTS responses (Phase 2 — browser `SpeechSynthesis` for short confirmations; toggle-able "hands-free mode"; skip reading data cards/tables aloud)
 - Offline/queued commands
 - Photo/OCR panel scanning
 - Undo/rollback system
