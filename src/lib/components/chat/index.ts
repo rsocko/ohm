@@ -20,6 +20,7 @@ export { default as ChainOfThought } from './ChainOfThought.svelte';
 // Domain-specific (existing, refreshed)
 export { default as DataCard } from './DataCard.svelte';
 export { default as ActionConfirmation } from './ActionConfirmation.svelte';
+export { default as BatchConfirmation } from './BatchConfirmation.svelte';
 export { default as SuggestionChips } from './SuggestionChips.svelte';
 
 // Voice
