@@ -315,7 +315,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					inputSchema: z.object({
 						operations: z.array(z.object({
 							table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to create in'),
-							fields: z.record(z.unknown()).describe('Field values for the new record'),
+							fields: z.record(z.string(), z.unknown()).describe('Field values for the new record'),
 							tempId: z.string().optional().describe('Temporary ID for referencing in subsequent link operations')
 						}))
 					}),
@@ -432,7 +432,7 @@ export const POST: RequestHandler = async ({ request }) => {
 							action: z.enum(['create', 'update', 'link', 'unlink']).describe('Operation type'),
 							table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Target table'),
 							label: z.string().describe('Human-readable description of this operation'),
-							fields: z.record(z.unknown()).optional().describe('Fields for create/update'),
+							fields: z.record(z.string(), z.unknown()).optional().describe('Fields for create/update'),
 							recordId: z.string().optional().describe('Record ID for update/link operations'),
 							tempId: z.string().optional().describe('Temporary ID for referencing new records in subsequent operations'),
 							linkField: z.string().optional().describe('Link column title for link/unlink operations (e.g., "Circuit", "Area")'),
