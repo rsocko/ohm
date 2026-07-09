@@ -3,7 +3,7 @@
  * Uses @ai-sdk/svelte for streaming and Svelte 5 runes for state.
  */
 
-import type { ChatMessage, ChatContext, ActionConfirmationContent } from '$lib/types/chat';
+import type { ChatMessage, ChatContext, ActionConfirmationContent, BatchConfirmationContent } from '$lib/types/chat';
 
 const STORAGE_KEY = 'electrical-ai-chat-messages';
 const MAX_MESSAGES = 200;
@@ -38,6 +38,7 @@ export const chatState = $state({
 	isOpen: false,
 	streamingContent: '',
 	pendingAction: null as ActionConfirmationContent | null,
+	pendingBatch: null as BatchConfirmationContent | null,
 	context: {
 		currentRoute: '/',
 	} as ChatContext
@@ -202,5 +203,47 @@ export async function confirmAction() {
 export function cancelAction() {
 	chatState.pendingAction = null;
 	addMessage({ role: 'assistant', content: 'Action cancelled.', contentType: 'text' });
+	saveMessages(chatState.messages);
+}
+
+export async function confirmBatch() {
+	const batch = chatState.pendingBatch;
+	if (!batch) return;
+
+	chatState.isLoading = true;
+	try {
+		const response = await fetch('/api/chat', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				message: '__CONFIRM_BATCH__',
+				batch,
+				context: chatState.context
+			})
+		});
+
+		if (!response.ok) throw new Error('Batch execution failed');
+		const result = await response.json();
+		addMessage({
+			role: 'assistant',
+			content: result.message || `✓ Completed ${batch.operations.length} operation(s).`,
+			contentType: 'text'
+		});
+	} catch (error) {
+		addMessage({
+			role: 'assistant',
+			content: error instanceof Error ? error.message : 'Batch execution failed',
+			contentType: 'error'
+		});
+	} finally {
+		chatState.pendingBatch = null;
+		chatState.isLoading = false;
+		saveMessages(chatState.messages);
+	}
+}
+
+export function cancelBatch() {
+	chatState.pendingBatch = null;
+	addMessage({ role: 'assistant', content: 'Batch cancelled. What would you like to change?', contentType: 'text' });
 	saveMessages(chatState.messages);
 }

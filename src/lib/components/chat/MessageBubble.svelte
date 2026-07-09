@@ -2,6 +2,7 @@
 	import type { ChatMessage } from '$lib/types/chat';
 	import DataCard from './DataCard.svelte';
 	import ActionConfirmation from './ActionConfirmation.svelte';
+	import BatchConfirmation from './BatchConfirmation.svelte';
 	import Icon from '@iconify/svelte';
 	import { closeChat } from '$lib/stores/chat.svelte';
 	import { marked } from 'marked';
@@ -93,6 +94,11 @@
 		<!-- Action Confirmation -->
 		{#if message.actionConfirmation}
 			<ActionConfirmation action={message.actionConfirmation} />
+		{/if}
+
+		<!-- Batch Confirmation -->
+		{#if message.batchConfirmation}
+			<BatchConfirmation batch={message.batchConfirmation} />
 		{/if}
 	</div>
 </div>
