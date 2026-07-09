@@ -14,6 +14,7 @@ import {
 	getLinkColumns,
 	addLinks
 } from '$lib/server/nocodb';
+import { findBestMatches } from '$lib/server/fuzzy-match';
 
 const SYSTEM_PROMPT = `You're Ohm, a friendly and knowledgeable electrical assistant for Ryan's homes. Think of yourself as a helpful housemate who happens to know exactly where every circuit and outlet is — approachable, warm, and quick with a clear answer. You have access to NocoDB tables containing: Areas, Panels, Circuits, Receptacles, and Loads.
 
@@ -446,6 +447,38 @@ export const POST: RequestHandler = async ({ request }) => {
 							status: 'batch_confirmation_required',
 							summary,
 							operations
+						};
+					}
+				}),
+				fuzzy_search: tool({
+					description: 'Fuzzy search for records when exact text matching fails. Use when looking for records by name and the user may have used different words (e.g., "master bedroom" vs "Primary Bedroom", "ceiling lights" vs "Recessed Cans"). Returns scored matches.',
+					inputSchema: z.object({
+						table: z.enum(['Area', 'Panel', 'Circuit', 'Receptacle', 'Load']).describe('Which table to search'),
+						query: z.string().describe('Search query (name, description, or partial match)'),
+						field: z.string().optional().describe('Specific field to match against (default: "Name")')
+					}),
+					execute: async ({ table: tableName, query, field }) => {
+						const tableInfo = await getTableByName(tableName);
+						if (!tableInfo) return { error: `Table "${tableName}" not found` };
+
+						const records = await getRecords(tableInfo.id, { pageSize: '200' });
+						const matchField = field || 'Name';
+
+						const matches = findBestMatches(
+							query,
+							records,
+							(r) => String(r.fields[matchField] || ''),
+							{ threshold: 0.25, maxResults: 5 }
+						);
+
+						return {
+							matches: matches.map((m) => ({
+								id: m.item.id,
+								name: m.label,
+								score: Math.round(m.score * 100),
+								fields: m.item.fields
+							})),
+							total: matches.length
 						};
 					}
 				})
