@@ -186,6 +186,53 @@ export async function replaceLinks(
 	}
 }
 
+export interface LinkColumn {
+	id: string;
+	title: string;
+	fk_related_model_id: string;
+}
+
+/**
+ * Get link/LTAR columns for a table. Used to resolve column IDs
+ * for linking records (e.g., Circuit → Load).
+ */
+export async function getLinkColumns(tableId: string): Promise<LinkColumn[]> {
+	const meta = await getTableMeta(tableId);
+	const columns = (meta.columns || []) as Array<Record<string, unknown>>;
+	return columns
+		.filter((c) => c.uidt === 'LinkToAnotherRecord' || c.uidt === 'Links')
+		.map((c) => ({
+			id: c.id as string,
+			title: c.title as string,
+			fk_related_model_id: c.fk_related_model_id as string
+		}));
+}
+
+/**
+ * Add links without removing existing ones (unlike replaceLinks which clears first).
+ */
+export async function addLinks(
+	tableId: string,
+	columnId: string,
+	recordId: number,
+	linkedIds: number[]
+): Promise<void> {
+	if (linkedIds.length === 0) return;
+	const url = new URL(`/api/v2/tables/${tableId}/links/${columnId}/records/${recordId}`, NOCODB_URL);
+	const resp = await fetch(url.toString(), {
+		method: 'POST',
+		headers: {
+			'xc-token': NOCODB_TOKEN,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify(linkedIds.map((id) => ({ Id: id })))
+	});
+	if (!resp.ok) {
+		const text = await resp.text();
+		throw new Error(`NocoDB link add failed: ${resp.status} ${text}`);
+	}
+}
+
 /**
  * Upload a file to NocoDB storage and return the attachment metadata.
  * Uses the v2 storage upload endpoint.

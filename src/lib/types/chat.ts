@@ -3,6 +3,7 @@ export type MessageRole = 'user' | 'assistant' | 'system';
 export type MessageContentType =
 	| 'text'
 	| 'action-confirmation'
+	| 'batch-confirmation'
 	| 'data-card'
 	| 'error';
 
@@ -37,6 +38,22 @@ export interface ActionConfirmationContent {
 	table: string;
 }
 
+export interface BatchOperation {
+	action: 'create' | 'update' | 'link' | 'unlink';
+	table: string;
+	label: string;
+	fields?: Record<string, unknown>;
+	recordId?: string;
+	tempId?: string;
+	linkField?: string;
+	linkTarget?: { table: string; recordId: string };
+}
+
+export interface BatchConfirmationContent {
+	summary: string;
+	operations: BatchOperation[];
+}
+
 export interface ChatMessage {
 	id: string;
 	role: MessageRole;
@@ -46,6 +63,7 @@ export interface ChatMessage {
 	dataCard?: DataCardContent;
 	deepLinks?: DeepLink[];
 	actionConfirmation?: ActionConfirmationContent;
+	batchConfirmation?: BatchConfirmationContent;
 }
 
 export interface ChatContext {
