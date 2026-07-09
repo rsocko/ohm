@@ -2,47 +2,34 @@
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import { chatState, initChat, sendMessage, clearMessages, toggleChat, closeChat } from '$lib/stores/chat.svelte';
-	import MessageBubble from './chat/MessageBubble.svelte';
-	import SuggestionChips from './chat/SuggestionChips.svelte';
-	import TypingIndicator from './chat/TypingIndicator.svelte';
+	import {
+		ChatBubble,
+		ChatMessageList,
+		ChatInput,
+		ThinkingBar,
+		FeedbackBar,
+		SuggestionChips
+	} from './chat/index';
 
 	let input = $state('');
-	let chatContainer: HTMLElement | undefined = $state(undefined);
 
 	onMount(() => {
 		initChat();
 	});
 
-	function scrollToBottom() {
-		setTimeout(() => {
-			if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
-		}, 50);
-	}
+	const scrollTrigger = $derived(chatState.messages.length + (chatState.isLoading ? 1 : 0));
 
-	// Scroll when messages or loading changes
-	$effect(() => {
-		void chatState.messages.length;
-		void chatState.isLoading;
-		scrollToBottom();
-	});
-
-	async function handleSend() {
-		const q = input.trim();
-		if (!q || chatState.isLoading) return;
-		input = '';
-		await sendMessage(q);
-	}
-
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			handleSend();
-		}
+	async function handleSend(text: string) {
+		if (!text || chatState.isLoading) return;
+		await sendMessage(text);
 	}
 
 	function handleSuggestion(text: string) {
-		input = text;
-		handleSend();
+		handleSend(text);
+	}
+
+	function handleCopyMessage(content: string) {
+		navigator.clipboard.writeText(content);
 	}
 </script>
 
@@ -103,14 +90,7 @@
 		</div>
 
 		<!-- Messages -->
-		<div class="relative flex-1 min-h-0">
-			<!-- Fade overlays -->
-			<div class="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-slate-800 to-transparent z-10 pointer-events-none"></div>
-			<div class="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-800 to-transparent z-10 pointer-events-none"></div>
-			<div
-				bind:this={chatContainer}
-				class="h-full overflow-y-auto px-4 py-3 space-y-3"
-			>
+		<ChatMessageList {scrollTrigger}>
 			{#if chatState.messages.length === 0}
 				<div class="text-center text-slate-500 text-sm py-6 space-y-3">
 					<div class="w-12 h-12 mx-auto rounded-xl bg-slate-700/60 flex items-center justify-center">
@@ -123,15 +103,27 @@
 				</div>
 			{/if}
 
-			{#each chatState.messages as msg (msg.id)}
-				<MessageBubble message={msg} />
+			{#each chatState.messages as msg, i (msg.id)}
+				<ChatBubble message={msg}>
+					{#snippet actions()}
+						{#if msg.role === 'assistant' && msg.contentType !== 'error'}
+							<FeedbackBar
+								onCopy={() => handleCopyMessage(msg.content)}
+								showRegenerate={i === chatState.messages.length - 1}
+								onRegenerate={() => {
+									const lastUser = chatState.messages.filter(m => m.role === 'user').pop();
+									if (lastUser) handleSend(lastUser.content);
+								}}
+							/>
+						{/if}
+					{/snippet}
+				</ChatBubble>
 			{/each}
 
 			{#if chatState.isLoading}
-				<TypingIndicator />
+				<ThinkingBar text="Thinking..." showStop={true} onstop={() => {}} />
 			{/if}
-			</div>
-		</div>
+		</ChatMessageList>
 
 		<!-- Suggestion chips (show when empty or few messages) -->
 		{#if chatState.messages.length < 3 && !chatState.isLoading}
@@ -141,25 +133,13 @@
 		{/if}
 
 		<!-- Input -->
-		<div class="px-4 pb-4 pt-2 border-t border-slate-700 shrink-0">
-			<div class="flex gap-2">
-				<input
-					type="text"
-					bind:value={input}
-					onkeydown={handleKeydown}
-					placeholder="Ask about your electrical setup..."
-					disabled={chatState.isLoading}
-					class="flex-1 bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-60"
-				/>
-				<button
-					onclick={handleSend}
-					disabled={chatState.isLoading || !input.trim()}
-					class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-4 py-3 rounded-xl font-medium text-sm active:scale-[0.96] transition-transform,background-color min-w-[44px]"
-					aria-label="Send message"
-				>
-					<Icon icon="mdi:send" width={18} />
-				</button>
-			</div>
-		</div>
+		<ChatInput
+			bind:value={input}
+			placeholder="Ask about your electrical setup..."
+			disabled={false}
+			isLoading={chatState.isLoading}
+			onSend={handleSend}
+			showStop={true}
+		/>
 	</div>
 {/if}
