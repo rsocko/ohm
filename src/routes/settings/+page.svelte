@@ -715,12 +715,14 @@
 	let newHomeAddress = $state('');
 	let newHomeCity = $state('');
 	let newHomeState = $state('');
+	let newHomeZip = $state('');
 	let creatingHome = $state(false);
 	let editingHomeId: number | null = $state(null);
 	let editHomeName = $state('');
 	let editHomeAddress = $state('');
 	let editHomeCity = $state('');
 	let editHomeState = $state('');
+	let editHomeZip = $state('');
 	let savingHome = $state(false);
 	let expandedHomeId: number | null = $state(null);
 
@@ -732,6 +734,7 @@
 			if (newHomeAddress.trim()) fields.Address = newHomeAddress.trim();
 			if (newHomeCity.trim()) fields.City = newHomeCity.trim();
 			if (newHomeState.trim()) fields.State = newHomeState.trim();
+			if (newHomeZip.trim()) fields.Zip = newHomeZip.trim();
 
 			const resp = await fetch('/api/nocodb', {
 				method: 'POST',
@@ -745,6 +748,7 @@
 			newHomeAddress = '';
 			newHomeCity = '';
 			newHomeState = '';
+			newHomeZip = '';
 			invalidate();
 			await ensureLoaded();
 		} catch {
@@ -760,6 +764,7 @@
 		editHomeAddress = (home.fields.Address as string) || '';
 		editHomeCity = (home.fields.City as string) || '';
 		editHomeState = (home.fields.State as string) || '';
+		editHomeZip = (home.fields.Zip as string) || '';
 	}
 
 	async function saveHome() {
@@ -770,7 +775,8 @@
 				Name: editHomeName.trim(),
 				Address: editHomeAddress.trim(),
 				City: editHomeCity.trim(),
-				State: editHomeState.trim()
+				State: editHomeState.trim(),
+				Zip: editHomeZip.trim()
 			};
 			const resp = await fetch('/api/nocodb', {
 				method: 'PATCH',
@@ -1670,8 +1676,8 @@
 							<label class="text-xs text-slate-400 block mb-1">Name</label>
 							<input type="text" bind:value={editHomeName} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 						</div>
-						<div class="grid grid-cols-3 gap-2">
-							<div class="col-span-3 sm:col-span-1">
+						<div class="grid grid-cols-4 gap-2">
+							<div class="col-span-4 sm:col-span-1">
 								<label class="text-xs text-slate-400 block mb-1">Address</label>
 								<input type="text" bind:value={editHomeAddress} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 							</div>
@@ -1682,6 +1688,10 @@
 							<div>
 								<label class="text-xs text-slate-400 block mb-1">State</label>
 								<input type="text" bind:value={editHomeState} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
+							</div>
+							<div>
+								<label class="text-xs text-slate-400 block mb-1">Zip</label>
+								<input type="text" bind:value={editHomeZip} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 							</div>
 						</div>
 						<div class="flex gap-2">
@@ -1986,8 +1996,8 @@
 					<label class="text-xs text-slate-400 block mb-1">Name</label>
 					<input type="text" bind:value={newHomeName} placeholder="e.g. Beach House" class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 transition-border-color" onkeydown={(e) => { if (e.key === 'Enter' && newHomeName.trim()) createHome(); }} />
 				</div>
-				<div class="grid grid-cols-3 gap-2">
-					<div class="col-span-3 sm:col-span-1">
+				<div class="grid grid-cols-4 gap-2">
+					<div class="col-span-4 sm:col-span-1">
 						<label class="text-xs text-slate-400 block mb-1">Address (optional)</label>
 						<input type="text" bind:value={newHomeAddress} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 					</div>
@@ -1998,6 +2008,10 @@
 					<div>
 						<label class="text-xs text-slate-400 block mb-1">State</label>
 						<input type="text" bind:value={newHomeState} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
+					</div>
+					<div>
+						<label class="text-xs text-slate-400 block mb-1">Zip</label>
+						<input type="text" bind:value={newHomeZip} class="w-full bg-slate-800 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-border-color" />
 					</div>
 				</div>
 				<div class="flex gap-2">
