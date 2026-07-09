@@ -25,13 +25,14 @@
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let recognition: any = $state(null);
 	let silenceTimer: ReturnType<typeof setTimeout> | null = null;
+	let audioStarted = $state(false);
 
 	/** Whether the component is currently recording. Exposed for parent layout control. */
 	export function isListening() {
 		return listening;
 	}
 
-	const SILENCE_TIMEOUT_MS = 2000;
+	const SILENCE_TIMEOUT_MS = 3000;
 
 	onMount(() => {
 		const SpeechRecognition =
@@ -44,6 +45,11 @@
 		rec.interimResults = true;
 		rec.lang = 'en-US';
 		rec.maxAlternatives = 1;
+
+		// Track when audio actually starts to avoid premature silence detection
+		rec.onaudiostart = () => {
+			audioStarted = true;
+		};
 
 		rec.onresult = (event: SpeechRecognitionEvent) => {
 			clearSilenceTimer();
@@ -63,7 +69,7 @@
 			interimText = interim;
 			onInterim?.(final + interim);
 
-			// Restart silence timer
+			// Only start silence timer after we've received at least one result
 			silenceTimer = setTimeout(() => {
 				stopListening();
 			}, SILENCE_TIMEOUT_MS);
@@ -81,7 +87,7 @@
 
 		rec.onend = () => {
 			if (listening) {
-				// Submit whatever we have
+				// Browser stopped recognition (e.g. timeout) — submit what we have
 				submit();
 			}
 		};
@@ -100,6 +106,7 @@
 		if (!recognition || disabled) return;
 		finalText = '';
 		interimText = '';
+		audioStarted = false;
 		listening = true;
 		onListeningChange?.(true);
 		try {
@@ -137,6 +144,7 @@
 		}
 		finalText = '';
 		interimText = '';
+		audioStarted = false;
 		onInterim?.('');
 	}
 
@@ -147,6 +155,7 @@
 		}
 		finalText = '';
 		interimText = '';
+		audioStarted = false;
 		listening = false;
 	}
 
@@ -158,15 +167,15 @@
 {#if supported}
 	{#if listening}
 		<!-- Listening overlay -->
-		<div class="flex items-center gap-2 w-full">
-			<div class="flex-1 relative bg-slate-900/80 border border-red-500/40 rounded-xl px-4 py-3 min-h-[44px]">
+		<div class="flex items-center gap-2 w-full min-w-0">
+			<div class="flex-1 min-w-0 bg-slate-900/80 border border-red-500/40 rounded-xl px-4 py-3 min-h-[44px] overflow-hidden">
 				<!-- Pulsing indicator -->
-				<div class="flex items-center gap-2">
-					<span class="relative flex h-3 w-3 shrink-0">
+				<div class="flex items-start gap-2">
+					<span class="relative flex h-3 w-3 shrink-0 mt-0.5">
 						<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
 						<span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
 					</span>
-					<span class="text-sm text-slate-300 truncate">
+					<span class="text-sm text-slate-300 break-words whitespace-pre-wrap min-w-0">
 						{#if finalText || interimText}
 							{finalText}<span class="text-slate-500">{interimText}</span>
 						{:else}
