@@ -9,7 +9,7 @@
 
 	let { action }: Props = $props();
 
-	const isPending = $derived(chatState.pendingConfirmation !== null);
+	const isPending = $derived(chatState.pendingConfirmations.length > 0);
 </script>
 
 <div class="mt-2 p-3 rounded-xl space-y-2 bg-indigo-500/[0.08] border border-indigo-500/20">

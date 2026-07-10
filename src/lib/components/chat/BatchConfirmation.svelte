@@ -14,7 +14,7 @@
 
 	let { batch }: Props = $props();
 
-	const isPending = $derived(chatState.pendingConfirmation !== null || chatState.pendingBatch !== null);
+	const isPending = $derived(chatState.pendingConfirmations.length > 0 || chatState.pendingBatch !== null);
 
 	/** Action badge config: icon, label, and color class per action type. */
 	const actionConfig: Record<string, { icon: string; label: string; bg: string; text: string; border: string }> = {

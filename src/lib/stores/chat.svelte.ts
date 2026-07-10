@@ -38,7 +38,7 @@ export const chatState = $state({
 	isLoading: false,
 	isOpen: false,
 	streamingContent: '',
-	pendingConfirmation: null as ConfirmationPayload | null,
+	pendingConfirmations: [] as ConfirmationPayload[],
 	pendingBatch: null as BatchConfirmationContent | null,
 	context: {
 		currentRoute: '/',
@@ -160,7 +160,7 @@ export async function sendMessage(content: string) {
 
 		let accumulated = '';
 		let hasAssistantMessage = false;
-		let confirmation: ConfirmationPayload | null = null;
+		let confirmations: ConfirmationPayload[] = [];
 
 		for await (const { event, data } of parseSSE(reader)) {
 			if (event === 'text') {
@@ -178,7 +178,7 @@ export async function sendMessage(content: string) {
 				} catch { /* skip malformed */ }
 			} else if (event === 'confirmation') {
 				try {
-					confirmation = JSON.parse(data) as ConfirmationPayload;
+					confirmations.push(JSON.parse(data) as ConfirmationPayload);
 				} catch { /* skip */ }
 			} else if (event === 'error') {
 				try {
@@ -192,20 +192,24 @@ export async function sendMessage(content: string) {
 			// 'done' event just ends the loop naturally
 		}
 
-		// If we got a confirmation, attach it to the last message
-		if (confirmation) {
-			chatState.pendingConfirmation = confirmation;
+		// If we got confirmations, merge them all into one batch and attach to message
+		if (confirmations.length > 0) {
+			chatState.pendingConfirmations = confirmations;
 			const msgs = chatState.messages;
 			const lastIdx = msgs.length - 1;
 			if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
+				// Merge all confirmations into one batch view
+				const allOperations = confirmations.flatMap(c => c.operations.map(op => ({
+					action: op.action as BatchConfirmationContent['operations'][number]['action'],
+					table: op.table,
+					label: op.label,
+					fields: op.details
+				})));
 				const batchConfirmation: BatchConfirmationContent = {
-					summary: confirmation.summary,
-					operations: confirmation.operations.map(op => ({
-						action: op.action as BatchConfirmationContent['operations'][number]['action'],
-						table: op.table,
-						label: op.label,
-						fields: op.details
-					}))
+					summary: confirmations.length === 1
+						? confirmations[0].summary
+						: `${confirmations.length} actions: ${confirmations.map(c => c.summary).join('; ')}`,
+					operations: allOperations
 				};
 				chatState.messages = [
 					...msgs.slice(0, lastIdx),
@@ -215,7 +219,7 @@ export async function sendMessage(content: string) {
 		}
 
 		// If nothing came back
-		if (!hasAssistantMessage && !confirmation) {
+		if (!hasAssistantMessage && confirmations.length === 0) {
 			addMessage({
 				role: 'assistant',
 				content: 'No response received. Check AI connection in Settings.',
@@ -236,26 +240,30 @@ export async function sendMessage(content: string) {
 }
 
 export async function confirmBatch() {
-	const confirmation = chatState.pendingConfirmation;
-	if (!confirmation) return;
+	const confirmations = chatState.pendingConfirmations;
+	if (confirmations.length === 0) return;
 
 	chatState.isLoading = true;
 	try {
-		const response = await fetch('/api/chat', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				message: '__CONFIRM__',
-				confirmation,
-				context: chatState.context
-			})
-		});
+		const results: string[] = [];
+		for (const confirmation of confirmations) {
+			const response = await fetch('/api/chat', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					message: '__CONFIRM__',
+					confirmation,
+					context: chatState.context
+				})
+			});
 
-		if (!response.ok) throw new Error('Execution failed');
-		const result = await response.json();
+			if (!response.ok) throw new Error(`Execution failed for: ${confirmation.summary}`);
+			const result = await response.json();
+			results.push(result.message || `✓ ${confirmation.summary}`);
+		}
 		addMessage({
 			role: 'assistant',
-			content: result.message || `✓ Done!`,
+			content: results.join('\n'),
 			contentType: 'text'
 		});
 	} catch (error) {
@@ -265,14 +273,14 @@ export async function confirmBatch() {
 			contentType: 'error'
 		});
 	} finally {
-		chatState.pendingConfirmation = null;
+		chatState.pendingConfirmations = [];
 		chatState.isLoading = false;
 		saveMessages(chatState.messages);
 	}
 }
 
 export function cancelBatch() {
-	chatState.pendingConfirmation = null;
+	chatState.pendingConfirmations = [];
 	addMessage({ role: 'assistant', content: 'Cancelled. What would you like to change?', contentType: 'text' });
 	saveMessages(chatState.messages);
 }
