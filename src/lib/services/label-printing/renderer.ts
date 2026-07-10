@@ -330,37 +330,41 @@ export function renderCircuitLabel(
 
 	if (format === 'compact') {
 		// Single-line: maximize text size, centered vertically
+		// Compensate for D30 tape bias: content prints ~1.25mm too high,
+		// so shift down by ~10px (1.25mm × 8px/mm) on the source canvas
 		const fontSize = Math.round(height * 0.38);
 		ctx.font = `bold ${fontSize}px sans-serif`;
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
+		const verticalOffset = Math.round(height * 0.06); // ~6px downward shift (empirically tuned)
 		const line = `${slot} · ${panelName} · ${amps || '?'}A${typeStr ? ' ' + typeStr : ''}`;
-		ctx.fillText(line, widthPx / 2, height / 2, widthPx - padding * 2);
+		ctx.fillText(line, widthPx / 2, height / 2 + verticalOffset, widthPx - padding * 2);
 	} else {
 		// Two-line layout: circuit name large on top, details below
+		// Vertically center the two-line block within the label height
+		const lineGap = Math.round(height * 0.04);
+		const totalTextHeight = primarySize + secondarySize + lineGap;
+		const startY = (height - totalTextHeight) / 2 + primarySize; // baseline of line 1
+
 		// Line 1: Circuit name (bold, large — this is the most important info)
 		ctx.font = `bold ${primarySize}px sans-serif`;
 		ctx.textBaseline = 'alphabetic';
-		const nameY = padding + primarySize;
 		let displayName = name;
 		const maxTextWidth = widthPx - padding * 2;
 		while (ctx.measureText(displayName).width > maxTextWidth && displayName.length > 3) {
 			displayName = displayName.slice(0, -1);
 		}
 		if (displayName.length < name.length) displayName += '…';
-		ctx.fillText(displayName, padding, nameY, maxTextWidth);
+		ctx.fillText(displayName, padding, startY, maxTextWidth);
 
 		// Line 2: Panel · Ckt # · Amps · Type (secondary info)
 		ctx.font = `${secondarySize}px sans-serif`;
-		const detailY = nameY + secondarySize + Math.round(height * 0.06);
+		const detailY = startY + secondarySize + lineGap;
 		const detail = `${panelName} · Ckt ${slot} · ${amps || '?'}A${typeStr ? ' · ' + typeStr : ''}`;
 		ctx.fillText(detail, padding, detailY, maxTextWidth);
 	}
 
-	// Border
-	ctx.strokeStyle = '#000000';
-	ctx.lineWidth = 1;
-	ctx.strokeRect(0.5, 0.5, widthPx - 1, height - 1);
+	// No border — the D30's printable area doesn't reliably fit a full-bleed box
 
 	const { raster, bytesPerLine } = canvasToRaster(canvas);
 	return { canvas, width: widthPx, height, rasterData: raster, bytesPerLine };

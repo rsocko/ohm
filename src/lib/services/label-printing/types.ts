@@ -97,20 +97,22 @@ export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
 };
 
 /**
- * D30 resolution constants (empirically determined).
- * The D30 has asymmetric resolution:
- * - Across the print head (tape width direction): 8 px/mm (203 DPI)
- * - Feed direction (label length): 6.375 px/mm (~162 DPI)
- *   Calibrated so 40mm label = exactly 255 feed lines (single GS v 0 block).
- *   Measurement: 160 lines = 25mm → 6.4 px/mm; rounded to 6.375 to avoid
- *   the 255-line block boundary (256 lines causes garbled output from the
- *   split GS v 0 marker confusing the D30 firmware).
+ * D30 resolution constants.
+ * Both directions are 8 px/mm (203 DPI) confirmed by catdogmaus/D30printerPWA.
+ * For die-cut labels, ESC d 0 triggers the gap sensor to stop at the next gap,
+ * so the exact feed line count doesn't need to match mm precisely.
+ *
+ * Physical label usable area (measured on 12×40mm die-cut):
+ * - Tape width (12mm): ~3mm top margin, ~5.5mm bottom margin from text center.
+ *   Effective centered content area is offset ~1.25mm toward the top.
+ *   Usable height for content: ~8-9mm (but vertically biased upward by ~1mm).
+ * - Label length (40mm): ~0.5-1mm margin on each end.
+ *   Usable width for content: ~38-39mm.
+ *
+ * These margins affect layout decisions for QR codes and multi-line labels.
  */
 export const D30_HEAD_PPMM = 8;   // pixels per mm across print head (203 DPI)
 export const D30_FEED_PPMM = 8;   // pixels per mm in feed direction (203 DPI uniform)
-// Note: catdogmaus/D30printerPWA confirms 8 px/mm in both directions.
-// For die-cut labels, ESC d 0 triggers the gap sensor to stop at the next gap,
-// so the exact feed line count doesn't need to match mm precisely.
 
 /** Get label dimensions in mm from config (width = length, height = tape width) */
 export function getLabelDimensions(config: PrinterConfig): { widthMm: number; heightMm: number } {
