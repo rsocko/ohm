@@ -329,13 +329,21 @@ class BluetoothPrinterService {
 	}
 
 	/**
-	 * D30-specific print flow:
-	 * 1. Send header (speed, density, media type)
-	 * 2. For each block (max 255 lines): send GS v 0 marker, then raster data in chunks
-	 * 3. Send footer to finalize the print
+	 * D30-specific print flow matching catdogmaus/D30printerPWA (proven stable):
+	 * - Concatenate: ESC @ + GS v 0 header + raw raster + ESC d 0 → single buffer
+	 * - Send entire buffer in 128-byte chunks with writeValueWithResponse
+	 * - 20ms delay between chunks for reliable streaming
+	 *
+	 * Key insights from research:
+	 * - DPI is 8 px/mm in BOTH directions (203 DPI uniform)
+	 * - Canvas must be 96px wide (12mm tape) × N px tall (feed direction)
+	 * - ESC @ before GS v 0 resets printer state (critical)
+	 * - ESC d 0 footer triggers gap sensor to stop feed
+	 * - No Phomemo-specific speed/density/media header needed
+	 * - No 255-line block limit — 320+ lines work as single block
 	 */
 	private async printLabelD30(label: RenderedLabel, onProgress?: (sent: number, total: number) => void): Promise<void> {
-		// Scale and rotate for D30: asymmetric DPI (8px/mm head, 4px/mm feed)
+		// Scale and rotate for D30
 		const labelLengthMm = this.config.labelLengthMm === 'continuous' ? 0 : this.config.labelLengthMm;
 		const rotated = prepareCanvasForD30(label.canvas, this.config.tapeWidthMm, labelLengthMm);
 		const { raster, bytesPerLine } = canvasToRaster(rotated);
@@ -344,43 +352,44 @@ class BluetoothPrinterService {
 		const mediaType: D30MediaType = this.config.labelLengthMm === 'continuous' ? 'continuous' : 'gaps';
 
 		const job = buildD30PrintJob(raster, bytesPerLine, rotated.height, mediaType);
-		const totalBytes = raster.length;
+
+		console.log('[D30 Print]', {
+			canvasSize: `${rotated.width}x${rotated.height}`,
+			bytesPerLine,
+			feedLines: rotated.height,
+			totalRasterBytes: raster.length,
+			mediaType,
+			tapeWidthMm: this.config.tapeWidthMm,
+			labelLengthMm,
+		});
+
+		// Concatenate entire print job into a single buffer
+		// (matches catdogmaus approach: header+marker+data+footer as one stream)
+		const block = job.blocks[0]; // Single block (no splitting)
+		const totalSize = job.header.length + block.marker.length + block.data.length + job.footer.length;
+		const printBuffer = new Uint8Array(totalSize);
+		let pos = 0;
+		printBuffer.set(job.header, pos); pos += job.header.length;
+		printBuffer.set(block.marker, pos); pos += block.marker.length;
+		printBuffer.set(block.data, pos); pos += block.data.length;
+		printBuffer.set(job.footer, pos);
+
+		// Send in 128-byte chunks with 20ms delay (proven stable by catdogmaus)
+		const PACKET_SIZE = 128;
+		const CHUNK_DELAY = 20; // ms — matches catdogmaus D30printerPWA
 		let sentBytes = 0;
 
-		// 1. Send header
-		await this.writeCommand(job.header);
-		await this.delay(50);
+		for (let offset = 0; offset < printBuffer.length; offset += PACKET_SIZE) {
+			const chunk = printBuffer.slice(offset, Math.min(offset + PACKET_SIZE, printBuffer.length));
+			await this.characteristic!.writeValueWithResponse(chunk);
+			sentBytes += chunk.length;
+			onProgress?.(sentBytes, totalSize);
 
-		// 2. Send each block
-		for (let i = 0; i < job.blocks.length; i++) {
-			const block = job.blocks[i];
-
-			// Delay between blocks (not before the first one — header delay covers it)
-			if (i > 0) await this.delay(50);
-
-			await this.writeCommand(block.marker);
-			await this.delay(30);
-
-			// Send block data in small chunks with throttling.
-			// The D30's internal buffer is small (~500 bytes); sending too fast
-			// causes the print head to stall and feed blank lines (gaps in text).
-			const D30_CHUNK = 64; // Smaller chunks for reliable D30 streaming
-			const D30_CHUNK_DELAY = 10; // ms between chunks — lets printer process
-			for (let offset = 0; offset < block.data.length; offset += D30_CHUNK) {
-				const chunk = block.data.slice(offset, Math.min(offset + D30_CHUNK, block.data.length));
-				await this.writeCommand(chunk);
-				sentBytes += chunk.length;
-				onProgress?.(sentBytes, totalBytes);
-				// Throttle: small delay between chunks to avoid buffer overflow
-				if (offset + D30_CHUNK < block.data.length) {
-					await this.delay(D30_CHUNK_DELAY);
-				}
+			// 20ms delay between chunks — belt-and-suspenders flow control
+			if (offset + PACKET_SIZE < printBuffer.length) {
+				await this.delay(CHUNK_DELAY);
 			}
 		}
-
-		// 3. Send footer
-		await this.delay(50);
-		await this.writeCommand(job.footer);
 	}
 
 	/**
