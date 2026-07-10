@@ -108,8 +108,8 @@ export function prepareCanvasForD30(
 	tapeWidthMm: number,
 	labelLengthMm: number = 0
 ): HTMLCanvasElement {
-	const headPPMM = 8;   // D30_HEAD_PPMM
-	const feedPPMM = 6.4; // D30_FEED_PPMM
+	const headPPMM = 8;     // D30_HEAD_PPMM
+	const feedPPMM = 6.375; // D30_FEED_PPMM
 
 	// Raster line width: tape width at head DPI, byte-aligned
 	const tapeWidthPx = Math.ceil(tapeWidthMm * headPPMM / 8) * 8;

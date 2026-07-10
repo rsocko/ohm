@@ -100,11 +100,14 @@ export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
  * D30 resolution constants (empirically determined).
  * The D30 has asymmetric resolution:
  * - Across the print head (tape width direction): 8 px/mm (203 DPI)
- * - Feed direction (label length): ~6.4 px/mm (~163 DPI)
- *   Measured: 160 feed lines = 25mm physical → 6.4 px/mm
+ * - Feed direction (label length): 6.375 px/mm (~162 DPI)
+ *   Calibrated so 40mm label = exactly 255 feed lines (single GS v 0 block).
+ *   Measurement: 160 lines = 25mm → 6.4 px/mm; rounded to 6.375 to avoid
+ *   the 255-line block boundary (256 lines causes garbled output from the
+ *   split GS v 0 marker confusing the D30 firmware).
  */
-export const D30_HEAD_PPMM = 8;    // pixels per mm across print head
-export const D30_FEED_PPMM = 6.4;  // pixels per mm in feed direction
+export const D30_HEAD_PPMM = 8;      // pixels per mm across print head
+export const D30_FEED_PPMM = 6.375;  // pixels per mm in feed direction
 
 /** Get label dimensions in mm from config (width = length, height = tape width) */
 export function getLabelDimensions(config: PrinterConfig): { widthMm: number; heightMm: number } {

@@ -352,7 +352,12 @@ class BluetoothPrinterService {
 		await this.delay(50);
 
 		// 2. Send each block
-		for (const block of job.blocks) {
+		for (let i = 0; i < job.blocks.length; i++) {
+			const block = job.blocks[i];
+
+			// Delay between blocks (not before the first one — header delay covers it)
+			if (i > 0) await this.delay(50);
+
 			await this.writeCommand(block.marker);
 			await this.delay(30);
 
