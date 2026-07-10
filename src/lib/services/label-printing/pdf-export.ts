@@ -271,11 +271,28 @@ function getBadges(c: DirectoryCircuit): string {
 }
 
 function getRecTypeIcon(type: string): string {
-	const t = type.toLowerCase();
-	if (t.includes('switch') || t.includes('dimmer')) return '⏻';
-	if (t.includes('light') || t.includes('lamp') || t.includes('ceiling')) return '💡';
-	if (t.includes('gfci')) return '🛡';
-	return '🔌';
+	// Match the labels used in the app's receptacleTypeConfig
+	const typeMap: Record<string, string> = {
+		'Outlet': '🔌',
+		'GFCI Outlet': '🛡',
+		'Smart Switch': '🏠',
+		'Dimmer Switch': '🔆',
+		'On/Off Switch': '⏻',
+		'On/Off Relay': '⚡',
+		'Timer Switch': '⏱',
+		'Networking': '🌐',
+		'Coax': '📡',
+		'Light - Ceiling': '💡',
+		'Light - Wall Mounted': '💡',
+		'Lamp/Other Light': '💡',
+		'Ceiling Fan/Light': '💡',
+		'Camera': '📷',
+		'Camera/Light Combo': '📷',
+		'Appliance': '🏭',
+		'Electronics': '🖥',
+		'Vent Fan': '🌀',
+	};
+	return typeMap[type] || '🔌';
 }
 
 /** Open system print dialog with labels laid out for printing */
