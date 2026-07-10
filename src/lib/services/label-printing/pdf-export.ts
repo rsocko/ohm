@@ -139,16 +139,10 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 		for (const c of sorted) {
 			const recs = recsByCircuit.get(c.number);
 			if (!recs || recs.length === 0) continue;
-			const byArea = new Map<string, string[]>();
-			for (const r of recs) {
-				const area = r.area || 'Other';
-				const arr = byArea.get(area) || [];
-				arr.push(r.name);
-				byArea.set(area, arr);
-			}
 			receptaclesHtml += `<p class="rec-circuit"><strong>${c.number} · ${escapeHtml(c.name)}</strong></p>`;
-			for (const [area, names] of byArea) {
-				receptaclesHtml += `<p class="rec-area">&nbsp;&nbsp;${escapeHtml(area)}: ${names.map(n => escapeHtml(n)).join(', ')}</p>`;
+			for (const r of recs) {
+				const area = r.area ? `<span class="rec-area-label">${escapeHtml(r.area)}</span> ` : '';
+				receptaclesHtml += `<p class="rec-item">${area}${escapeHtml(r.name)}</p>`;
 			}
 		}
 		receptaclesHtml += '</div>';
@@ -194,10 +188,11 @@ tr:nth-child(even) { background: #fafafa; }
 .afci { background: #dbeafe; color: #1e40af; }
 .v240 { background: #fef3c7; color: #92400e; }
 .monitored { background: #fff7ed; color: #9a3412; }
-.receptacles-section { margin-top: 16px; font-size: 10px; }
-.receptacles-section h3 { font-size: 12px; margin: 0 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-.rec-circuit { margin: 4px 0 2px; }
-.rec-area { margin: 1px 0; color: #555; }
+.receptacles-section { margin-top: 16px; font-size: 8px; }
+.receptacles-section h3 { font-size: 10px; margin: 0 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+.rec-circuit { margin: 6px 0 1px; font-size: 9px; }
+.rec-item { margin: 0; padding-left: 12px; line-height: 1.4; color: #444; }
+.rec-area-label { color: #888; font-style: italic; }
 .footer { margin-top: 12px; font-size: 10px; color: #888; text-align: center; }
 </style>
 </head>
