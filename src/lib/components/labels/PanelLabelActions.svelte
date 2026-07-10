@@ -122,8 +122,9 @@
 				recData.push({
 						name: String(r.fields.Name || 'Unnamed'),
 						area: extractFieldName(r.fields.Room) || extractFieldName(r.fields.Area) || '',
-					circuitNumber: (circuit.fields.Number as number) || 0,
-				});
+						type: String(r.fields['Receptacle Type'] || r.fields.Type || 'outlet'),
+						circuitNumber: (circuit.fields.Number as number) || 0,
+					});
 			}
 		}
 

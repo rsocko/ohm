@@ -26,6 +26,7 @@ interface DirectoryCircuit {
 interface DirectoryReceptacle {
 	name: string;
 	area: string;
+	type: string;
 	circuitNumber: number;
 }
 
@@ -65,6 +66,37 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 	let slotsUsed = 0;
 	for (const c of sorted) slotsUsed += (c.poles || 1);
 
+	// Build receptacle summary per circuit number: "Room 🔌3 🔲2 | Room2 🔌1"
+	const recSummaryBySlot = new Map<number, string>();
+	if (receptacles && receptacles.length > 0) {
+		const recsByNum = new Map<number, DirectoryReceptacle[]>();
+		for (const r of receptacles) {
+			const arr = recsByNum.get(r.circuitNumber) || [];
+			arr.push(r);
+			recsByNum.set(r.circuitNumber, arr);
+		}
+		for (const [num, recs] of recsByNum) {
+			// Group by area, then count by type
+			const byArea = new Map<string, Map<string, number>>();
+			for (const r of recs) {
+				const area = r.area || 'Other';
+				if (!byArea.has(area)) byArea.set(area, new Map());
+				const typeMap = byArea.get(area)!;
+				const t = r.type || 'outlet';
+				typeMap.set(t, (typeMap.get(t) || 0) + 1);
+			}
+			const parts: string[] = [];
+			for (const [area, types] of byArea) {
+				const typeParts: string[] = [];
+				for (const [type, count] of types) {
+					typeParts.push(`${getRecTypeIcon(type)}${count}`);
+				}
+				parts.push(`${escapeHtml(area)} ${typeParts.join(' ')}`);
+			}
+			recSummaryBySlot.set(num, parts.join(' | '));
+		}
+	}
+
 	let tableRows = '';
 	for (let row = 0; row < totalRows; row++) {
 		const oddSlot = row * 2 + 1;
@@ -87,7 +119,9 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 			const badges = getBadges(left) + (left.monitored ? '<span class="badge monitored">⚡</span>' : '');
 			const rowspan = leftIs2P ? ' rowspan="2"' : '';
 			const cls = leftIs2P ? ' class="name twopole"' : ' class="name"';
-			leftNameCell = `<td${cls}${rowspan}>${escapeHtml(left.name || 'Unnamed')} ${badges}</td>`;
+			const recSum = recSummaryBySlot.get(oddSlot);
+			const recLine = recSum ? `<br><span class="rec-summary">${recSum}</span>` : '';
+			leftNameCell = `<td${cls}${rowspan}>${escapeHtml(left.name || 'Unnamed')} ${badges}${recLine}</td>`;
 			leftAmpsCell = `<td class="amps"${rowspan}>${left.amps}A</td>`;
 		} else {
 			leftNameCell = `<td class="name"></td>`;
@@ -104,7 +138,9 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 			const badges = getBadges(right) + (right.monitored ? '<span class="badge monitored">⚡</span>' : '');
 			const rowspan = rightIs2P ? ' rowspan="2"' : '';
 			const cls = rightIs2P ? ' class="name r twopole"' : ' class="name r"';
-			rightNameCell = `<td${cls}${rowspan}>${escapeHtml(right.name || 'Unnamed')} ${badges}</td>`;
+			const recSum = recSummaryBySlot.get(evenSlot);
+			const recLine = recSum ? `<br><span class="rec-summary">${recSum}</span>` : '';
+			rightNameCell = `<td${cls}${rowspan}>${escapeHtml(right.name || 'Unnamed')} ${badges}${recLine}</td>`;
 			rightAmpsCell = `<td class="amps r"${rowspan}>${right.amps}A</td>`;
 		} else {
 			rightNameCell = `<td class="name r"></td>`;
@@ -176,8 +212,9 @@ th { background: #f0f0f0; padding: 6px 8px; font-weight: 600; text-align: left; 
 td { padding: 5px 8px; border: 1px solid #ddd; vertical-align: middle; }
 tr:nth-child(even) { background: #fafafa; }
 .num { width: 28px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
-.name { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 .name.r { text-align: right; }
+.rec-summary { font-size: 8px; color: #666; white-space: nowrap; }
 .name.twopole { background: #f8f4ff; }
 .name.secondary { color: #999; font-size: 9px; }
 .amps { width: 36px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: center; }
@@ -231,6 +268,14 @@ function getBadges(c: DirectoryCircuit): string {
 	if (c.afci) badges += '<span class="badge afci">AFCI</span>';
 	if (c.poles && c.poles > 1) badges += '<span class="badge v240">240V</span>';
 	return badges;
+}
+
+function getRecTypeIcon(type: string): string {
+	const t = type.toLowerCase();
+	if (t.includes('switch') || t.includes('dimmer')) return '⏻';
+	if (t.includes('light') || t.includes('lamp') || t.includes('ceiling')) return '💡';
+	if (t.includes('gfci')) return '🛡';
+	return '🔌';
 }
 
 /** Open system print dialog with labels laid out for printing */
