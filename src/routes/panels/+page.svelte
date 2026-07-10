@@ -1294,7 +1294,7 @@
 						{/if}
 						{#if showLabelPrint}
 							<div class="mt-3 pt-3 border-t border-white/10">
-								<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
+								<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} receptacles={allReceptacles} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
 							</div>
 						{/if}
 					</div>
@@ -1350,7 +1350,7 @@
 					{/if}
 					{#if showLabelPrint}
 						<div class="mt-3 pt-3 border-t border-slate-700/50">
-							<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
+							<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} receptacles={allReceptacles} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
 						</div>
 					{/if}
 				</div>

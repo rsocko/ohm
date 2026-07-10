@@ -28,10 +28,12 @@
 	let {
 		panel,
 		circuits,
+		receptacles = [],
 		onpreview,
 	}: {
 		panel: V3Record;
 		circuits: V3Record[];
+		receptacles?: V3Record[];
 		onpreview?: (label: RenderedLabel, title: string, widthMm?: number, heightMm?: number) => void;
 	} = $props();
 
@@ -52,6 +54,8 @@
 	let batchTotal = $state(0);
 	let batchError: string | null = $state(null);
 	let connecting = $state(false);
+	let catalogWidthMm = $state('');
+	let showDetailed = $state(false);
 
 	const panelName = $derived((panel.fields.Name as string) || 'Panel');
 
@@ -67,20 +71,49 @@
 		}
 	}
 
+	function inferPoles(circuit: V3Record): number {
+		const slot = (circuit.fields['Panel Slot'] as string) || '';
+		if (slot.includes(',')) return 2;
+		const amps = (circuit.fields.Amps as number) || 0;
+		if (amps >= 30) return 2;
+		return 1;
+	}
+
 	function previewPanelDirectory() {
+		// Build receptacle info for detailed mode
+		const recData: { name: string; area: string; circuitNumber: number }[] = [];
+		if (showDetailed && receptacles.length > 0) {
+			for (const r of receptacles) {
+				const circuitLink = r.fields.Circuit as { id: number } | undefined;
+				const circuitId = circuitLink?.id ?? (r.fields.Circuit_id as number | undefined);
+				if (!circuitId) continue;
+				const circuit = circuits.find(c => c.id === circuitId);
+				if (!circuit) continue;
+				recData.push({
+					name: (r.fields.Name as string) || 'Unnamed',
+					area: (r.fields.Room as string) || (r.fields.Area as string) || '',
+					circuitNumber: (circuit.fields.Number as number) || 0,
+				});
+			}
+		}
+
 		printPanelDirectoryPdf({
 			panelName,
 			location: (panel.fields.Location as string) || undefined,
 			capacity: (panel.fields.Capacity as number) || undefined,
 			serviceSize: (panel.fields['Service Size'] as string) || undefined,
+			generatorBacked: Boolean(panel.fields['Generator Power']),
 			circuits: circuits.map(c => ({
 				number: (c.fields.Number as number) || 0,
 				name: (c.fields.Name as string) || '',
 				amps: (c.fields.Amps as number) || 0,
 				gfci: !!(c.fields['GFCI Protected'] || c.fields.GFCI_Protected),
 				afci: !!(c.fields['AFCI Protected'] || c.fields.AFCI_Protected),
-				poles: (c.fields.Poles as number) || 1,
+				poles: inferPoles(c),
+				monitored: Boolean(c.fields['Energy Monitored']),
 			})),
+			receptacles: recData.length > 0 ? recData : undefined,
+			catalogWidthMm: catalogWidthMm ? Number(catalogWidthMm) : undefined,
 		});
 	}
 
@@ -244,17 +277,38 @@
 	{/if}
 
 	<!-- Print Panel Directory (letter-size paper) -->
-	<button
-		onclick={previewPanelDirectory}
-		class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800
-			hover:bg-slate-700 active:scale-[0.97] transition-transform duration-100"
-	>
-		<Icon icon="mdi:format-list-numbered" class="w-5 h-5 text-indigo-400" />
-		<div class="text-left">
-			<p class="text-sm font-medium text-white">Print Panel Directory</p>
-			<p class="text-xs text-slate-400">Letter-size schedule for panel door</p>
+	<div class="space-y-2">
+		<button
+			onclick={previewPanelDirectory}
+			class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800
+				hover:bg-slate-700 active:scale-[0.97] transition-transform duration-100"
+		>
+			<Icon icon="mdi:format-list-numbered" class="w-5 h-5 text-indigo-400" />
+			<div class="text-left">
+				<p class="text-sm font-medium text-white">Print Panel Directory</p>
+				<p class="text-xs text-slate-400">Letter-size schedule for panel door</p>
+			</div>
+		</button>
+		<!-- Directory options -->
+		<div class="flex items-center gap-2 px-3">
+			<label class="flex items-center gap-1.5 text-[11px] text-slate-400">
+				<input type="checkbox" bind:checked={showDetailed} class="w-3 h-3 rounded border-slate-600 bg-slate-800 text-indigo-500" />
+				Detailed (receptacles)
+			</label>
+			<label class="flex items-center gap-1.5 text-[11px] text-slate-400 ml-auto">
+				Width:
+				<input
+					type="number"
+					bind:value={catalogWidthMm}
+					placeholder="auto"
+					class="w-12 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-[11px] text-white text-center"
+					min="80"
+					max="300"
+				/>
+				<span class="text-[10px]">mm</span>
+			</label>
 		</div>
-	</button>
+	</div>
 
 	<!-- Print All Circuit Labels via BLE -->
 	{#if printer.isAvailable}

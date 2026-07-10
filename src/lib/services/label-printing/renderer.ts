@@ -4,7 +4,7 @@
  * Output is used for both preview display and thermal printer bitmap.
  */
 
-import type { RenderedLabel, PanelDirectoryTemplate, CircuitLabelTemplate } from './types';
+import type { RenderedLabel, PanelDirectoryTemplate, CircuitLabelTemplate, ReceptacleInfo } from './types';
 
 interface V3Record {
 	id: number;
@@ -27,6 +27,18 @@ function getBreakerType(circuit: V3Record): 'gfci' | 'afci' | 'dual' | 'standard
 	if (gfci) return 'gfci';
 	if (afci) return 'afci';
 	return 'standard';
+}
+
+function inferPoles(circuit: V3Record): number {
+	const slot = (circuit.fields['Panel Slot'] as string) || '';
+	if (slot.includes(',')) return 2;
+	const amps = (circuit.fields.Amps as number) || 0;
+	if (amps >= 30) return 2;
+	return 1;
+}
+
+function isEnergyMonitored(circuit: V3Record): boolean {
+	return Boolean(circuit.fields['Energy Monitored']);
 }
 
 function breakerTypeLabel(type: 'gfci' | 'afci' | 'dual' | 'standard'): string {
@@ -150,26 +162,70 @@ export function prepareCanvasForD30(
 export function renderPanelDirectory(
 	panel: V3Record,
 	circuits: V3Record[],
-	template: PanelDirectoryTemplate
+	template: PanelDirectoryTemplate,
+	receptacles?: ReceptacleInfo[]
 ): RenderedLabel {
-	const { widthPx, fontSize, showAmps, showBreakerType, showDate } = template;
+	const { widthPx, fontSize, showAmps, showBreakerType, showDate, showMonitored, showReceptacles } = template;
 
 	const panelName = (panel.fields.Name as string) || 'Panel';
 	const capacity = (panel.fields.Capacity as number) || 0;
 	const location = (panel.fields['Home Name'] as string) || '';
+	const serviceSize = (panel.fields['Service Size'] as string) || '';
+	const isGeneratorBacked = Boolean(panel.fields['Generator Power']);
 
 	// Sort circuits by slot number
 	const sorted = [...circuits].sort(
 		(a, b) => ((a.fields.Number as number) || 99) - ((b.fields.Number as number) || 99)
 	);
 
-	// Calculate height based on circuit count
-	const headerHeight = 48;
+	// Count occupied slots
+	let slotsUsed = 0;
+	for (const c of sorted) {
+		slotsUsed += inferPoles(c);
+	}
+
+	// Build circuit lookup by slot number and detect 2-pole spans
+	const circuitBySlot = new Map<number, V3Record>();
+	const twoPoleSlots = new Set<number>(); // slots that are the START of a 2-pole
+	const twoPoleSecondary = new Set<number>(); // slots consumed by the second pole
+	for (const circuit of sorted) {
+		const slot = circuit.fields.Number as number;
+		if (!slot) continue;
+		circuitBySlot.set(slot, circuit);
+		if (inferPoles(circuit) === 2) {
+			twoPoleSlots.add(slot);
+			// 2-pole spans the next odd/even slot (same side, +2)
+			twoPoleSecondary.add(slot + 2);
+		}
+	}
+
+	// Calculate row layout
+	const headerHeight = 54;
 	const rowHeight = fontSize + 10;
 	const maxSlot = Math.max(...sorted.map(c => (c.fields.Number as number) || 0), 0);
 	const totalRows = Math.ceil(maxSlot / 2);
+
+	// Calculate receptacle section height if needed
+	let receptacleHeight = 0;
+	const recsByCircuit = new Map<number, ReceptacleInfo[]>();
+	if (showReceptacles && receptacles && receptacles.length > 0) {
+		for (const r of receptacles) {
+			const arr = recsByCircuit.get(r.circuitId) || [];
+			arr.push(r);
+			recsByCircuit.set(r.circuitId, arr);
+		}
+		// Each circuit with receptacles gets a sub-section
+		for (const circuit of sorted) {
+			const recs = recsByCircuit.get(circuit.id);
+			if (recs && recs.length > 0) {
+				receptacleHeight += (fontSize + 4) + Math.ceil(recs.length / 2) * (fontSize + 2);
+			}
+		}
+		receptacleHeight += 16; // section header
+	}
+
 	const footerHeight = showDate ? 28 : 8;
-	const height = headerHeight + (totalRows * rowHeight) + footerHeight;
+	const height = headerHeight + (totalRows * rowHeight) + receptacleHeight + footerHeight;
 
 	const canvas = createCanvas(widthPx, height);
 	const ctx = canvas.getContext('2d')!;
@@ -182,17 +238,32 @@ export function renderPanelDirectory(
 	ctx.fillStyle = '#000000';
 	ctx.font = `bold ${fontSize + 4}px "SF Mono", "Cascadia Code", "Courier New", monospace`;
 	ctx.textAlign = 'center';
-	ctx.fillText(panelName, widthPx / 2, 20);
+
+	// Panel name with generator indicator
+	let headerText = panelName;
+	if (isGeneratorBacked) headerText = `⚡ ${panelName} ⚡`;
+	ctx.fillText(headerText, widthPx / 2, 20);
+
+	// Subtitle: service size · slots used/total · location
 	ctx.font = `${fontSize}px "SF Mono", "Courier New", monospace`;
-	const subtitle = capacity ? `${capacity}A • ${location}` : location;
-	ctx.fillText(subtitle, widthPx / 2, 36);
+	const slotsLabel = capacity ? `${slotsUsed}/${capacity} slots` : `${slotsUsed} slots`;
+	const subtitleParts = [serviceSize, slotsLabel, location].filter(Boolean);
+	ctx.fillText(subtitleParts.join(' · '), widthPx / 2, 36);
+
+	// Generator indicator line
+	if (isGeneratorBacked) {
+		ctx.font = `bold ${fontSize - 1}px sans-serif`;
+		ctx.fillStyle = '#666666';
+		ctx.fillText('GENERATOR BACKED', widthPx / 2, 48);
+		ctx.fillStyle = '#000000';
+	}
 
 	// Divider line
 	ctx.strokeStyle = '#000000';
 	ctx.lineWidth = 1;
 	ctx.beginPath();
-	ctx.moveTo(4, headerHeight - 4);
-	ctx.lineTo(widthPx - 4, headerHeight - 4);
+	ctx.moveTo(4, headerHeight - 2);
+	ctx.lineTo(widthPx - 4, headerHeight - 2);
 	ctx.stroke();
 
 	// Center vertical divider
@@ -202,14 +273,7 @@ export function renderPanelDirectory(
 	ctx.lineTo(centerX, headerHeight + totalRows * rowHeight);
 	ctx.stroke();
 
-	// Build circuit lookup by slot number
-	const circuitBySlot = new Map<number, V3Record>();
-	for (const circuit of sorted) {
-		const slot = circuit.fields.Number as number;
-		if (slot) circuitBySlot.set(slot, circuit);
-	}
-
-	// Render rows (odd=left, even=right)
+	// Render rows (odd=left, even=right) with 2-pole merged cells
 	ctx.textAlign = 'left';
 	const colWidth = (widthPx - 12) / 2;
 	const leftX = 6;
@@ -220,14 +284,92 @@ export function renderPanelDirectory(
 		const evenSlot = row * 2 + 2;
 		const y = headerHeight + row * rowHeight + rowHeight - 2;
 
-		const leftCircuit = circuitBySlot.get(oddSlot);
-		if (leftCircuit) {
-			drawCircuitRow(ctx, leftCircuit, leftX, y, colWidth - 8, fontSize, showAmps, showBreakerType);
+		// Left side (odd slots)
+		if (twoPoleSecondary.has(oddSlot)) {
+			// This slot is consumed by a 2-pole breaker from slot-2; draw continuation
+			ctx.fillStyle = '#f0f0f0';
+			ctx.fillRect(leftX, y - fontSize + 2, colWidth - 8, fontSize + 2);
+			ctx.fillStyle = '#666666';
+			ctx.font = `${fontSize - 1}px "SF Mono", "Courier New", monospace`;
+			ctx.fillText(`  ${oddSlot}`, leftX + 4, y);
+		} else {
+			const leftCircuit = circuitBySlot.get(oddSlot);
+			if (leftCircuit) {
+				const is2Pole = twoPoleSlots.has(oddSlot);
+				if (is2Pole) {
+					// Draw merged background spanning 2 rows
+					ctx.fillStyle = '#f8f8f8';
+					ctx.fillRect(leftX, y - fontSize + 2, colWidth - 8, rowHeight * 2 - 2);
+					ctx.fillStyle = '#000000';
+				}
+				drawCircuitRowEnhanced(ctx, leftCircuit, leftX, y, colWidth - 8, fontSize, showAmps, showBreakerType, showMonitored, is2Pole);
+			}
 		}
 
-		const rightCircuit = circuitBySlot.get(evenSlot);
-		if (rightCircuit) {
-			drawCircuitRow(ctx, rightCircuit, rightX, y, colWidth - 8, fontSize, showAmps, showBreakerType);
+		// Right side (even slots)
+		if (twoPoleSecondary.has(evenSlot)) {
+			ctx.fillStyle = '#f0f0f0';
+			ctx.fillRect(rightX, y - fontSize + 2, colWidth - 8, fontSize + 2);
+			ctx.fillStyle = '#666666';
+			ctx.font = `${fontSize - 1}px "SF Mono", "Courier New", monospace`;
+			ctx.fillText(`  ${evenSlot}`, rightX + 4, y);
+		} else {
+			const rightCircuit = circuitBySlot.get(evenSlot);
+			if (rightCircuit) {
+				const is2Pole = twoPoleSlots.has(evenSlot);
+				if (is2Pole) {
+					ctx.fillStyle = '#f8f8f8';
+					ctx.fillRect(rightX, y - fontSize + 2, colWidth - 8, rowHeight * 2 - 2);
+					ctx.fillStyle = '#000000';
+				}
+				drawCircuitRowEnhanced(ctx, rightCircuit, rightX, y, colWidth - 8, fontSize, showAmps, showBreakerType, showMonitored, is2Pole);
+			}
+		}
+	}
+
+	// Receptacles section (detailed mode)
+	if (showReceptacles && recsByCircuit.size > 0) {
+		let recY = headerHeight + totalRows * rowHeight + 12;
+		ctx.strokeStyle = '#000000';
+		ctx.lineWidth = 0.5;
+		ctx.beginPath();
+		ctx.moveTo(4, recY - 6);
+		ctx.lineTo(widthPx - 4, recY - 6);
+		ctx.stroke();
+
+		ctx.font = `bold ${fontSize}px sans-serif`;
+		ctx.fillStyle = '#000000';
+		ctx.textAlign = 'center';
+		ctx.fillText('RECEPTACLES BY CIRCUIT', widthPx / 2, recY + 2);
+		recY += fontSize + 8;
+
+		ctx.textAlign = 'left';
+		for (const circuit of sorted) {
+			const recs = recsByCircuit.get(circuit.id);
+			if (!recs || recs.length === 0) continue;
+
+			const slot = circuit.fields.Number as number;
+			const name = (circuit.fields.Name as string) || '';
+			ctx.font = `bold ${fontSize}px sans-serif`;
+			ctx.fillStyle = '#000000';
+			ctx.fillText(`${slot} · ${name}`, leftX, recY);
+			recY += fontSize + 2;
+
+			ctx.font = `${fontSize - 1}px sans-serif`;
+			ctx.fillStyle = '#444444';
+			// Group by area
+			const byArea = new Map<string, string[]>();
+			for (const r of recs) {
+				const area = r.area || 'Other';
+				const arr = byArea.get(area) || [];
+				arr.push(r.name);
+				byArea.set(area, arr);
+			}
+			for (const [area, names] of byArea) {
+				ctx.fillText(`  ${area}: ${names.join(', ')}`, leftX, recY);
+				recY += fontSize + 2;
+			}
+			recY += 2;
 		}
 	}
 
@@ -249,7 +391,7 @@ export function renderPanelDirectory(
 	return { canvas, width: widthPx, height, rasterData: raster, bytesPerLine };
 }
 
-function drawCircuitRow(
+function drawCircuitRowEnhanced(
 	ctx: CanvasRenderingContext2D,
 	circuit: V3Record,
 	x: number,
@@ -257,17 +399,21 @@ function drawCircuitRow(
 	maxWidth: number,
 	fontSize: number,
 	showAmps: boolean,
-	showBreakerType: boolean
+	showBreakerType: boolean,
+	showMonitored: boolean,
+	is2Pole: boolean
 ): void {
 	const type = getBreakerType(circuit);
 	const color = breakerTypeColor(type);
 	const slot = circuit.fields.Number as number;
 	const name = (circuit.fields.Name as string) || '';
 	const amps = circuit.fields.Amps as number | undefined;
+	const monitored = isEnergyMonitored(circuit);
 
-	// Color indicator bar
+	// Color indicator bar (taller for 2-pole)
 	ctx.fillStyle = color;
-	ctx.fillRect(x, y - fontSize + 2, 3, fontSize);
+	const barHeight = is2Pole ? fontSize + 10 : fontSize;
+	ctx.fillRect(x, y - fontSize + 2, 3, barHeight);
 
 	// Slot number
 	ctx.fillStyle = '#000000';
@@ -283,6 +429,8 @@ function drawCircuitRow(
 	let suffix = '';
 	if (showAmps && amps) suffix += ` ${amps}A`;
 	if (showBreakerType && type !== 'standard') suffix += ` ${breakerTypeLabel(type)}`;
+	if (showMonitored && monitored) suffix += ' ⚡';
+	if (is2Pole) suffix += ' [2P]';
 
 	let displayName = name;
 	const fullText = displayName + suffix;
