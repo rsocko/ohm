@@ -277,15 +277,18 @@
 
 	// Panel summary stats
 	const panelStats = $derived.by(() => {
-		let gfci = 0, afci = 0, twoForty = 0;
+		let gfci = 0, afci = 0, twoForty = 0, slotsUsed = 0;
 		for (const c of panelCircuits) {
 			if (c.fields['GFCI Protected'] || c.fields.GFCI_Protected) gfci++;
 			if (c.fields['AFCI Protected'] || c.fields.AFCI_Protected) afci++;
 			const voltage = c.fields.Voltage as string | undefined;
 			const amps = c.fields.Amps as number | undefined;
 			if (voltage === '240V' || (amps && amps >= 30)) twoForty++;
+			slotsUsed += inferPoles(c);
 		}
-		return { gfci, afci, twoForty };
+		const capacity = (selectedPanel?.fields.Capacity as number) || 0;
+		const slotsFree = capacity ? capacity - slotsUsed : 0;
+		return { gfci, afci, twoForty, slotsUsed, slotsFree };
 	});
 
 	// Type → badge config maps (same as rooms page)
@@ -1224,7 +1227,7 @@
 							<div>
 								<h2 class="text-lg font-bold text-white drop-shadow-sm">{selectedPanel.fields.Name}</h2>
 								<p class="text-xs text-slate-300 mt-0.5">
-									{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size'] || selectedPanel.fields.Capacity} <span class="text-slate-500 mx-1">|</span> {selectedPanel.fields['Service Size'] || `${selectedPanel.fields.Capacity} spaces`}{/if}
+									{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size']} <span class="text-slate-500 mx-1">|</span> {selectedPanel.fields['Service Size']}A{/if}{#if selectedPanel.fields.Capacity} <span class="text-slate-500 mx-1">|</span> {selectedPanel.fields.Capacity} slots{#if panelStats.slotsFree > 0} · {panelStats.slotsFree} free{/if}{/if}
 								</p>
 							</div>
 							<div class="flex items-center gap-2">
@@ -1306,7 +1309,7 @@
 						<div>
 							<h2 class="text-lg font-bold text-white">{selectedPanel.fields.Name}</h2>
 							<p class="text-xs text-slate-400 mt-0.5">
-								{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size'] || selectedPanel.fields.Capacity} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields['Service Size'] || `${selectedPanel.fields.Capacity} spaces`}{/if}
+								{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size']} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields['Service Size']}A{/if}{#if selectedPanel.fields.Capacity} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields.Capacity} slots{#if panelStats.slotsFree > 0} · {panelStats.slotsFree} free{/if}{/if}
 							</p>
 						</div>
 							<div class="flex items-center gap-1.5">

@@ -11,7 +11,6 @@
 		renderQrLabel,
 		buildCircuitUrl,
 		printPanelDirectoryPdf,
-		downloadAllLabelsAsPng,
 		getLabelDimensions,
 		circuitTemplateFromConfig,
 		CIRCUIT_LABEL_COMPACT,
@@ -56,8 +55,27 @@
 	let connecting = $state(false);
 	let catalogWidthMm = $state('');
 	let showDetailed = $state(false);
+	let selectedCircuitIds: Set<number> = $state(new Set());
+	let showCircuitPicker = $state(false);
+	let printMode: 'labels' | 'qr' = $state('labels');
 
 	const panelName = $derived((panel.fields.Name as string) || 'Panel');
+	const homeName = $derived((panel.fields['Home Name'] as string) || 'Home');
+	const selectedCircuits = $derived(
+		selectedCircuitIds.size > 0
+			? circuits.filter(c => selectedCircuitIds.has(c.id))
+			: circuits
+	);
+
+	function toggleCircuit(id: number) {
+		const next = new Set(selectedCircuitIds);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		selectedCircuitIds = next;
+	}
+
+	function selectAll() { selectedCircuitIds = new Set(); }
+	function selectNone() { selectedCircuitIds = new Set(circuits.map(c => c.id)); /* all selected = use selectedCircuits which filters */ }
 
 	function showPreview(label: RenderedLabel, title: string, widthMm?: number, heightMm?: number) {
 		if (onpreview) {
@@ -126,25 +144,25 @@
 		showPreview(label, `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`, dims.widthMm, dims.heightMm);
 	}
 
-	async function printAllCircuitLabels() {
-		// Prompt connection if not connected
+	async function printCircuitLabels() {
 		if (!printer.isConnected) {
 			try {
 				await printer.connect();
 			} catch {
-				return; // User cancelled or BLE unavailable
+				return;
 			}
 		}
 
+		const toPrint = selectedCircuits;
 		batchPrinting = true;
 		batchProgress = 0;
-		batchTotal = circuits.length;
+		batchTotal = toPrint.length;
 
 		const config = await fetchPrinterConfig();
 		printer.updateConfig(config);
 		const format = (config as any).defaultCircuitFormat || 'compact';
 		const template = circuitTemplateFromConfig(config, format);
-		const labels = circuits.map(circuit =>
+		const labels = toPrint.map(circuit =>
 			renderCircuitLabel(circuit, panelName, template)
 		);
 
@@ -174,13 +192,24 @@
 	async function downloadAllLabels() {
 		const config = await fetchPrinterConfig();
 		const template = circuitTemplateFromConfig(config, 'compact');
-		const labels = circuits.map(circuit =>
+		const toPrint = selectedCircuits;
+		const labels = toPrint.map(circuit =>
 			renderCircuitLabel(circuit, panelName, template)
 		);
-		downloadAllLabelsAsPng(labels, `${panelName.toLowerCase().replace(/\s+/g, '-')}-ckt`);
+		const prefix = `${homeName}-${panelName}`.toLowerCase().replace(/\s+/g, '-');
+		// Download each with house-panel-number naming
+		labels.forEach((label, i) => {
+			const num = (toPrint[i].fields.Number as number) || (i + 1);
+			const filename = `${prefix}-${num}.png`;
+			const dataUrl = label.canvas.toDataURL('image/png');
+			const link = document.createElement('a');
+			link.download = filename;
+			link.href = dataUrl;
+			setTimeout(() => link.click(), i * 200);
+		});
 	}
 
-	async function printAllQrLabels() {
+	async function printQrLabels() {
 		if (!printer.isConnected) {
 			try {
 				await printer.connect();
@@ -189,9 +218,10 @@
 			}
 		}
 
+		const toPrint = selectedCircuits;
 		batchPrinting = true;
 		batchProgress = 0;
-		batchTotal = circuits.length;
+		batchTotal = toPrint.length;
 		batchError = null;
 
 		try {
@@ -200,8 +230,8 @@
 			printer.updateConfig(config);
 			const dims = getLabelDimensions(config);
 
-			for (let i = 0; i < circuits.length; i++) {
-				const circuit = circuits[i];
+			for (let i = 0; i < toPrint.length; i++) {
+				const circuit = toPrint[i];
 				const f = circuit.fields;
 				const label = await renderQrLabel({
 					url: buildCircuitUrl(baseUrl, panel.id, circuit.id),
@@ -212,7 +242,7 @@
 				});
 				await printer.printLabel(label);
 				batchProgress = i + 1;
-				if (i < circuits.length - 1) {
+				if (i < toPrint.length - 1) {
 					await new Promise(resolve => setTimeout(resolve, 100));
 				}
 			}
@@ -238,11 +268,11 @@
 		<div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700/50">
 			<span class="w-2 h-2 rounded-full {printer.isConnected || printer.isPrinting ? 'bg-emerald-500' : 'bg-slate-500'} {printer.isPrinting ? 'animate-pulse' : ''}"></span>
 			{#if printer.isPrinting}
-				<span class="text-xs text-indigo-300 flex-1">{printer.deviceName || 'Phomemo'} printing…</span>
+				<span class="text-xs text-indigo-300 flex-1">{printer.deviceName || 'Label printer'} printing…</span>
 			{:else if printer.isConnected}
-				<span class="text-xs text-emerald-300 flex-1">{printer.deviceName || 'Phomemo'} connected</span>
+				<span class="text-xs text-emerald-300 flex-1">{printer.deviceName || 'Label printer'} connected</span>
 			{:else}
-				<span class="text-xs text-slate-400 flex-1">Printer not connected</span>
+				<span class="text-xs text-slate-400 flex-1">Label printer not connected</span>
 				<button
 					type="button"
 					onclick={connectPrinter}
@@ -310,28 +340,64 @@
 		</div>
 	</div>
 
-	<!-- Print All Circuit Labels via BLE -->
+	<!-- Circuit Selection -->
 	{#if printer.isAvailable}
+	<div class="space-y-1.5">
+		<button
+			type="button"
+			onclick={() => { showCircuitPicker = !showCircuitPicker; }}
+			class="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/80 border border-slate-700/50 hover:bg-slate-700/80 transition-colors"
+		>
+			<Icon icon="mdi:checkbox-multiple-marked" class="w-4 h-4 text-slate-400" />
+			<span class="text-[11px] text-slate-300 flex-1 text-left">
+				{selectedCircuitIds.size === 0 ? `All ${circuits.length} circuits` : `${selectedCircuitIds.size} of ${circuits.length} selected`}
+			</span>
+			<Icon icon={showCircuitPicker ? 'mdi:chevron-up' : 'mdi:chevron-down'} class="w-4 h-4 text-slate-500" />
+		</button>
+
+		{#if showCircuitPicker}
+			<div class="max-h-40 overflow-y-auto rounded-lg bg-slate-900/80 border border-slate-700/50 px-2 py-1.5 space-y-0.5">
+				<div class="flex gap-2 mb-1 pb-1 border-b border-slate-700/50">
+					<button type="button" onclick={selectAll} class="text-[10px] text-indigo-400 hover:text-indigo-300">All</button>
+					<button type="button" onclick={() => { selectedCircuitIds = new Set(); }} class="text-[10px] text-indigo-400 hover:text-indigo-300">Clear</button>
+				</div>
+				{#each circuits as circuit}
+					<label class="flex items-center gap-2 py-0.5 cursor-pointer hover:bg-slate-800/50 rounded px-1">
+						<input
+							type="checkbox"
+							checked={selectedCircuitIds.size === 0 || selectedCircuitIds.has(circuit.id)}
+							onchange={() => toggleCircuit(circuit.id)}
+							class="w-3 h-3 rounded border-slate-600 bg-slate-800 text-indigo-500"
+						/>
+						<span class="text-[11px] text-slate-300 flex-1">{circuit.fields.Number} · {circuit.fields.Name || 'Unnamed'}</span>
+						<span class="text-[10px] text-slate-500">{circuit.fields.Amps}A</span>
+					</label>
+				{/each}
+			</div>
+		{/if}
+	</div>
+
+	<!-- Print Circuit Labels -->
 	<button
-		onclick={printAllCircuitLabels}
+		onclick={printCircuitLabels}
 		disabled={batchPrinting}
 		class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800
 			hover:bg-slate-700 active:scale-[0.97] transition-transform duration-100
 			disabled:opacity-50"
 	>
-		<Icon icon="mdi:bluetooth" class="w-5 h-5 text-emerald-400" />
+		<Icon icon="mdi:label-outline" class="w-5 h-5 text-emerald-400" />
 		<div class="text-left flex-1">
-			<p class="text-sm font-medium text-white">Print All Circuit Labels</p>
-			<p class="text-xs text-slate-400">{circuits.length} stickers via Phomemo</p>
+			<p class="text-sm font-medium text-white">Print Circuit Labels</p>
+			<p class="text-xs text-slate-400">{selectedCircuitIds.size === 0 ? circuits.length : selectedCircuitIds.size} labels via label printer</p>
 		</div>
-		{#if batchPrinting}
+		{#if batchPrinting && printMode === 'labels'}
 			<span class="text-xs text-indigo-400 font-mono" style="font-variant-numeric: tabular-nums">{batchProgress}/{batchTotal}</span>
 		{/if}
 	</button>
 
-	<!-- Print All QR Labels via BLE -->
+	<!-- Print QR Labels -->
 	<button
-		onclick={printAllQrLabels}
+		onclick={printQrLabels}
 		disabled={batchPrinting}
 		class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800
 			hover:bg-slate-700 active:scale-[0.97] transition-transform duration-100
@@ -339,10 +405,10 @@
 	>
 		<Icon icon="mdi:qrcode" class="w-5 h-5 text-indigo-400" />
 		<div class="text-left flex-1">
-			<p class="text-sm font-medium text-white">Print All QR Labels</p>
-			<p class="text-xs text-slate-400">{circuits.length} QR stickers with deep-links</p>
+			<p class="text-sm font-medium text-white">Print QR Labels</p>
+			<p class="text-xs text-slate-400">{selectedCircuitIds.size === 0 ? circuits.length : selectedCircuitIds.size} QR labels with deep-links</p>
 		</div>
-		{#if batchPrinting}
+		{#if batchPrinting && printMode === 'qr'}
 			<span class="text-xs text-indigo-400 font-mono" style="font-variant-numeric: tabular-nums">{batchProgress}/{batchTotal}</span>
 		{/if}
 	</button>
@@ -365,8 +431,8 @@
 	>
 		<Icon icon="mdi:download-multiple" class="w-5 h-5 text-slate-400" />
 		<div class="text-left">
-			<p class="text-sm font-medium text-white">Download All as PNG</p>
-			<p class="text-xs text-slate-400">Save label images for manual printing</p>
+			<p class="text-sm font-medium text-white">Download as PNG</p>
+			<p class="text-xs text-slate-400">{selectedCircuitIds.size === 0 ? circuits.length : selectedCircuitIds.size} label images</p>
 		</div>
 	</button>
 </div>

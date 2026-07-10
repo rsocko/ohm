@@ -154,8 +154,9 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 		receptaclesHtml += '</div>';
 	}
 
-	const slotsLabel = capacity ? `${slotsUsed}/${capacity} slots` : `${slotsUsed} slots`;
-	const subtitle = [serviceSize, slotsLabel, location].filter(Boolean).join(' · ');
+	const slotsLabel = capacity ? `${slotsUsed}/${capacity} slots · ${Math.max(0, capacity - slotsUsed)} free` : `${slotsUsed} slots`;
+	const serviceSizeLabel = serviceSize ? `${serviceSize}A` : '';
+	const subtitle = [serviceSizeLabel, `${sorted.length} circuits`, slotsLabel, location].filter(Boolean).join(' · ');
 	const date = new Date().toLocaleDateString();
 	const generatorBanner = generatorBacked ? '<p class="generator-badge">⚡ GENERATOR BACKED ⚡</p>' : '';
 

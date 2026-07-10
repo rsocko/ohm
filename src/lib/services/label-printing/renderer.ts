@@ -244,10 +244,11 @@ export function renderPanelDirectory(
 	if (isGeneratorBacked) headerText = `⚡ ${panelName} ⚡`;
 	ctx.fillText(headerText, widthPx / 2, 20);
 
-	// Subtitle: service size · slots used/total · location
+	// Subtitle: service size · circuits | slots · free · location
 	ctx.font = `${fontSize}px "SF Mono", "Courier New", monospace`;
-	const slotsLabel = capacity ? `${slotsUsed}/${capacity} slots` : `${slotsUsed} slots`;
-	const subtitleParts = [serviceSize, slotsLabel, location].filter(Boolean);
+	const serviceSizeLabel = serviceSize ? `${serviceSize}A` : '';
+	const slotsLabel = capacity ? `${slotsUsed}/${capacity} slots · ${Math.max(0, capacity - slotsUsed)} free` : `${slotsUsed} slots`;
+	const subtitleParts = [serviceSizeLabel, `${sorted.length} ckts`, slotsLabel, location].filter(Boolean);
 	ctx.fillText(subtitleParts.join(' · '), widthPx / 2, 36);
 
 	// Generator indicator line
