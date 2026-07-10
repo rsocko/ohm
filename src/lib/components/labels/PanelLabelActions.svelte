@@ -203,6 +203,11 @@
 				</button>
 			{/if}
 		</div>
+	{:else}
+		<div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700/50">
+			<Icon icon="mdi:bluetooth-off" class="w-4 h-4 text-slate-500" />
+			<span class="text-xs text-slate-400 flex-1">Bluetooth not supported on this browser. Use Chrome/Edge on desktop, or print via system dialog.</span>
+		</div>
 	{/if}
 
 	<!-- Error -->
@@ -226,6 +231,7 @@
 	</button>
 
 	<!-- Print All Circuit Labels via BLE -->
+	{#if printer.isAvailable}
 	<button
 		onclick={printAllCircuitLabels}
 		disabled={batchPrinting}
@@ -268,6 +274,7 @@
 				<div class="h-full bg-indigo-500 transition-[width] duration-200" style="width: {batchTotal ? (batchProgress / batchTotal) * 100 : 0}%"></div>
 			</div>
 		</div>
+	{/if}
 	{/if}
 
 	<!-- Download PNGs (fallback) -->

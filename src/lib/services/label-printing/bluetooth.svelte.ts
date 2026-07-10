@@ -4,7 +4,7 @@
  */
 
 import type { PrinterConfig, PrinterState, BluetoothState, RenderedLabel } from './types';
-import { DEFAULT_PRINTER_CONFIG } from './types';
+import { DEFAULT_PRINTER_CONFIG, KNOWN_PRINTER_PROFILES } from './types';
 import { buildPrintJob } from './escpos';
 
 class BluetoothPrinterService {
@@ -26,6 +26,41 @@ class BluetoothPrinterService {
 	get deviceName(): string | null { return this._deviceName; }
 	get isAvailable(): boolean { return this._state !== 'unavailable'; }
 	get isConnected(): boolean { return this._state === 'connected' && this.characteristic !== null; }
+
+	/**
+	 * Try known BLE service/characteristic UUID pairs until one works.
+	 * Updates config with the working pair so subsequent prints use it directly.
+	 */
+	private async discoverService(server: BluetoothRemoteGATTServer): Promise<{
+		service: BluetoothRemoteGATTService;
+		characteristic: BluetoothRemoteGATTCharacteristic;
+	}> {
+		// Build list: configured UUID first, then all known profiles
+		const profiles = [
+			{ serviceUuid: this.config.serviceUuid, writeCharUuid: this.config.writeCharUuid },
+			...KNOWN_PRINTER_PROFILES.filter(p => p.serviceUuid !== this.config.serviceUuid),
+		];
+
+		const errors: string[] = [];
+		for (const profile of profiles) {
+			try {
+				const service = await server.getPrimaryService(profile.serviceUuid);
+				const char = await service.getCharacteristic(profile.writeCharUuid);
+				// Remember the working UUIDs
+				this.config.serviceUuid = profile.serviceUuid;
+				this.config.writeCharUuid = profile.writeCharUuid;
+				return { service, characteristic: char };
+			} catch {
+				errors.push(profile.serviceUuid);
+			}
+		}
+
+		throw new Error(
+			`Could not find a compatible print service on this device. ` +
+			`Tried ${errors.length} known service UUIDs. ` +
+			`Make sure your printer model is supported (Phomemo M110, M120, D30, T02).`
+		);
+	}
 
 	/**
 	 * Try to auto-reconnect to a previously paired device.
@@ -56,8 +91,8 @@ class BluetoothPrinterService {
 			});
 
 			const server = await device.gatt.connect();
-			const service = await server.getPrimaryService(this.config.serviceUuid);
-			this.characteristic = await service.getCharacteristic(this.config.writeCharUuid);
+			const result = await this.discoverService(server);
+			this.characteristic = result.characteristic;
 
 			this._deviceName = device.name ?? null;
 			this._state = 'connected';
@@ -82,7 +117,7 @@ class BluetoothPrinterService {
 					{ namePrefix: 'T02' },
 					{ namePrefix: 'D30' },
 				],
-				optionalServices: [this.config.serviceUuid],
+				optionalServices: KNOWN_PRINTER_PROFILES.map(p => p.serviceUuid),
 			});
 
 			this.device.addEventListener('gattserverdisconnected', () => {
@@ -91,8 +126,8 @@ class BluetoothPrinterService {
 			});
 
 			const server = await this.device.gatt!.connect();
-			const service = await server.getPrimaryService(this.config.serviceUuid);
-			this.characteristic = await service.getCharacteristic(this.config.writeCharUuid);
+			const result = await this.discoverService(server);
+			this.characteristic = result.characteristic;
 
 			this._deviceName = this.device.name ?? null;
 			this._state = 'connected';

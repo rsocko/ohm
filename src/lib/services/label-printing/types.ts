@@ -117,6 +117,17 @@ export interface RenderedLabel {
 	bytesPerLine?: number;
 }
 
+/**
+ * Known BLE service/characteristic UUID pairs for Phomemo printers.
+ * Different models expose different services; we try each in order.
+ */
+export const KNOWN_PRINTER_PROFILES: { serviceUuid: string; writeCharUuid: string }[] = [
+	{ serviceUuid: '0000ffe0-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ffe1-0000-1000-8000-00805f9b34fb' },
+	{ serviceUuid: '0000ff00-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ff02-0000-1000-8000-00805f9b34fb' },
+	{ serviceUuid: '0000ae30-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ae01-0000-1000-8000-00805f9b34fb' },
+	{ serviceUuid: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', writeCharUuid: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f' },
+];
+
 // --- Bluetooth State ---
 
 export type BluetoothState =

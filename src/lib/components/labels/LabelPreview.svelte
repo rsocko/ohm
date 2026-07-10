@@ -151,6 +151,16 @@
 							Connect Printer
 						</button>
 					{/if}
+				{:else}
+					<div class="w-full py-3 px-4 rounded-xl bg-slate-700/50 text-center">
+						<p class="text-slate-400 text-sm">
+							<Icon icon="mdi:bluetooth-off" class="w-4 h-4 inline mr-1" />
+							Bluetooth printing not available on this device
+						</p>
+						<p class="text-slate-500 text-xs mt-1">
+							Use Chrome or Edge on a desktop for Bluetooth printing, or use the options below.
+						</p>
+					</div>
 				{/if}
 
 				<button
