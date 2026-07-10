@@ -613,11 +613,12 @@
 		const panelName = (selectedPanel?.fields.Name as string) || 'Panel';
 		try {
 			const configRes = await fetch('/api/settings/printer');
-			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 15, labelLengthMm: 'continuous', dpi: 203 } as any;
-			const template = circuitTemplateFromConfig(config, 'compact');
+			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 12, labelLengthMm: 40, dpi: 203 } as any;
+			const format = (config as any).defaultCircuitFormat || 'compact';
+			const template = circuitTemplateFromConfig(config, format);
 			const dims = getLabelDimensions(config);
 			labelPreviewLabel = renderCircuitLabel(circuit, panelName, template);
-			labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
+			labelPreviewTitle = `${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
 			labelPreviewWidthMm = dims.widthMm;
 			labelPreviewHeightMm = dims.heightMm;
 			labelPreviewOpen = true;
@@ -625,7 +626,7 @@
 			// Fallback if config fetch fails
 			const template = circuitTemplateFromConfig({ tapeWidthMm: 12, labelLengthMm: 40, dpi: 203 } as any, 'compact');
 			labelPreviewLabel = renderCircuitLabel(circuit, panelName, template);
-			labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
+			labelPreviewTitle = `${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
 			labelPreviewWidthMm = 40;
 			labelPreviewHeightMm = 12;
 			labelPreviewOpen = true;
@@ -633,22 +634,20 @@
 	}
 
 	async function previewQrLabel(circuit: V3Record) {
-		const panelName = (selectedPanel?.fields.Name as string) || 'Panel';
 		const f = circuit.fields;
 		try {
 			const configRes = await fetch('/api/settings/printer');
-			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 15, labelLengthMm: 'continuous' } as any;
+			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 12, labelLengthMm: 40 } as any;
 			const dims = getLabelDimensions(config);
 			const label = await renderQrLabel({
 				url: buildCircuitUrl(window.location.origin, selectedPanel!.id, circuit.id),
-				line1: `Ckt ${f.Number} · ${panelName}`,
-				line2: (f.Name as string) || 'Circuit',
-				line3: f.Amps ? `${f.Amps}A${f['GFCI Protected'] || f.GFCI_Protected ? ' GFCI' : ''}` : undefined,
+				line1: (f.Name as string) || 'Circuit',
+				line2: `${f.Number} · ${f.Amps || '?'}A${f['GFCI Protected'] || f.GFCI_Protected ? ' · GFCI' : ''}`,
 				widthMm: dims.widthMm,
 				heightMm: dims.heightMm,
 			});
 			labelPreviewLabel = label;
-			labelPreviewTitle = `QR: Ckt ${f.Number} — ${f.Name || 'Circuit'}`;
+			labelPreviewTitle = `QR: ${f.Number} — ${f.Name || 'Circuit'}`;
 			labelPreviewOpen = true;
 		} catch (e) {
 			console.error('QR label render failed:', e);

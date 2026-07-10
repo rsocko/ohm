@@ -86,7 +86,8 @@
 
 	async function previewCircuitLabel(circuit: V3Record) {
 		const config = await fetchPrinterConfig();
-		const template = circuitTemplateFromConfig(config, 'compact');
+		const format = (config as any).defaultCircuitFormat || 'compact';
+		const template = circuitTemplateFromConfig(config, format);
 		const label = renderCircuitLabel(circuit, panelName, template);
 		const dims = getLabelDimensions(config);
 		showPreview(label, `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`, dims.widthMm, dims.heightMm);
@@ -108,7 +109,8 @@
 
 		const config = await fetchPrinterConfig();
 		printer.updateConfig(config);
-		const template = circuitTemplateFromConfig(config, 'compact');
+		const format = (config as any).defaultCircuitFormat || 'compact';
+		const template = circuitTemplateFromConfig(config, format);
 		const labels = circuits.map(circuit =>
 			renderCircuitLabel(circuit, panelName, template)
 		);
@@ -170,9 +172,8 @@
 				const f = circuit.fields;
 				const label = await renderQrLabel({
 					url: buildCircuitUrl(baseUrl, panel.id, circuit.id),
-					line1: `Ckt ${f.Number} · ${panelName}`,
-					line2: (f.Name as string) || 'Circuit',
-					line3: f.Amps ? `${f.Amps}A${f['GFCI Protected'] || f.GFCI_Protected ? ' GFCI' : ''}` : undefined,
+					line1: (f.Name as string) || 'Circuit',
+					line2: `${f.Number} · ${f.Amps || '?'}A${f['GFCI Protected'] || f.GFCI_Protected ? ' · GFCI' : ''}`,
 					widthMm: dims.widthMm,
 					heightMm: dims.heightMm,
 				});

@@ -329,24 +329,24 @@ export function renderCircuitLabel(
 	ctx.textAlign = 'left';
 
 	if (format === 'compact') {
-		// Single-line: maximize text size, centered vertically
-		// Compensate for D30 tape bias: content prints ~1.25mm too high,
-		// so shift down by ~10px (1.25mm × 8px/mm) on the source canvas
+		// Single-line: number · name · amps (no panel, no "Ckt" prefix)
+		// Compensate for D30 tape bias (~6px downward shift)
 		const fontSize = Math.round(height * 0.38);
 		ctx.font = `bold ${fontSize}px sans-serif`;
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
-		const verticalOffset = Math.round(height * 0.06); // ~6px downward shift (empirically tuned)
-		const line = `${slot} · ${panelName} · ${amps || '?'}A${typeStr ? ' ' + typeStr : ''}`;
+		const verticalOffset = Math.round(height * 0.06);
+		const line = `${slot} · ${name} · ${amps || '?'}A${typeStr ? ' ' + typeStr : ''}`;
 		ctx.fillText(line, widthPx / 2, height / 2 + verticalOffset, widthPx - padding * 2);
 	} else {
-		// Two-line layout: circuit name large on top, details below
-		// Vertically center the two-line block within the label height
+		// Two-line layout: name prominent on top, circuit details below
+		// Vertically center with D30 offset
+		const verticalOffset = Math.round(height * 0.06);
 		const lineGap = Math.round(height * 0.04);
 		const totalTextHeight = primarySize + secondarySize + lineGap;
-		const startY = (height - totalTextHeight) / 2 + primarySize; // baseline of line 1
+		const startY = (height - totalTextHeight) / 2 + primarySize + verticalOffset;
 
-		// Line 1: Circuit name (bold, large — this is the most important info)
+		// Line 1: Circuit name (bold, large — most important info)
 		ctx.font = `bold ${primarySize}px sans-serif`;
 		ctx.textBaseline = 'alphabetic';
 		let displayName = name;
@@ -357,10 +357,10 @@ export function renderCircuitLabel(
 		if (displayName.length < name.length) displayName += '…';
 		ctx.fillText(displayName, padding, startY, maxTextWidth);
 
-		// Line 2: Panel · Ckt # · Amps · Type (secondary info)
+		// Line 2: slot · amps · breaker type (no panel name, no "Ckt" prefix)
 		ctx.font = `${secondarySize}px sans-serif`;
 		const detailY = startY + secondarySize + lineGap;
-		const detail = `${panelName} · Ckt ${slot} · ${amps || '?'}A${typeStr ? ' · ' + typeStr : ''}`;
+		const detail = `${slot} · ${amps || '?'}A${typeStr ? ' · ' + typeStr : ''}`;
 		ctx.fillText(detail, padding, detailY, maxTextWidth);
 	}
 
