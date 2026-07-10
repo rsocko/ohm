@@ -162,7 +162,7 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 		</tr>`;
 	}
 
-	// Receptacles section
+	// Receptacles section — 2-column layout matching panel left/right (odd/even)
 	let receptaclesHtml = '';
 	if (receptacles && receptacles.length > 0) {
 		const recsByCircuit = new Map<number, DirectoryReceptacle[]>();
@@ -171,17 +171,31 @@ export function printPanelDirectoryPdf(data: DirectoryData): void {
 			arr.push(r);
 			recsByCircuit.set(r.circuitNumber, arr);
 		}
-		receptaclesHtml = '<div class="receptacles-section"><h3>Receptacles by Circuit</h3>';
-		for (const c of sorted) {
-			const recs = recsByCircuit.get(c.number);
-			if (!recs || recs.length === 0) continue;
-			receptaclesHtml += `<p class="rec-circuit"><strong>${c.number} · ${escapeHtml(c.name)}</strong></p>`;
-			for (const r of recs) {
-				const area = r.area ? `<span class="rec-area-label">${escapeHtml(r.area)}</span> ` : '';
-				receptaclesHtml += `<p class="rec-item">${area}${escapeHtml(r.name)}</p>`;
+
+		// Split circuits into odd (left) and even (right) columns
+		const oddCircuits = sorted.filter(c => c.number % 2 === 1 && recsByCircuit.has(c.number));
+		const evenCircuits = sorted.filter(c => c.number % 2 === 0 && recsByCircuit.has(c.number));
+
+		const buildColumnHtml = (circuits: DirectoryCircuit[]): string => {
+			let html = '';
+			for (const c of circuits) {
+				const recs = recsByCircuit.get(c.number)!;
+				html += `<p class="rec-circuit"><strong>${c.number} · ${escapeHtml(c.name)}</strong></p>`;
+				for (const r of recs) {
+					const area = r.area ? `<span class="rec-area-label">${escapeHtml(r.area)}</span> ` : '';
+					html += `<p class="rec-item">${area}${escapeHtml(r.name)}</p>`;
+				}
 			}
-		}
-		receptaclesHtml += '</div>';
+			return html;
+		};
+
+		receptaclesHtml = `<div class="receptacles-section">
+			<h3>Receptacles by Circuit</h3>
+			<div class="rec-columns">
+				<div class="rec-col rec-col-left">${buildColumnHtml(oddCircuits)}</div>
+				<div class="rec-col rec-col-right">${buildColumnHtml(evenCircuits)}</div>
+			</div>
+		</div>`;
 	}
 
 	const slotsLabel = capacity ? `${slotsUsed}/${capacity} slots · ${Math.max(0, capacity - slotsUsed)} free` : `${slotsUsed} slots`;
@@ -227,6 +241,10 @@ tr:nth-child(even) { background: #fafafa; }
 .monitored { background: #fff7ed; color: #9a3412; }
 .receptacles-section { margin-top: 16px; font-size: 8px; page-break-before: always; }
 .receptacles-section h3 { font-size: 10px; margin: 0 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+.rec-columns { display: flex; gap: 16px; }
+.rec-col { flex: 1; min-width: 0; }
+.rec-col-left { border-right: 1px solid #ddd; padding-right: 12px; }
+.rec-col-right { padding-left: 4px; }
 .rec-circuit { margin: 6px 0 1px; font-size: 9px; }
 .rec-item { margin: 0; padding-left: 12px; line-height: 1.4; color: #444; }
 .rec-area-label { color: #888; font-style: italic; }

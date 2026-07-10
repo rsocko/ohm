@@ -205,7 +205,7 @@ export function renderPanelDirectory(
 	const maxSlot = Math.max(...sorted.map(c => (c.fields.Number as number) || 0), 0);
 	const totalRows = Math.ceil(maxSlot / 2);
 
-	// Calculate receptacle section height if needed
+	// Calculate receptacle section height if needed (2-column layout: odd left, even right)
 	let receptacleHeight = 0;
 	const recsByCircuit = new Map<number, ReceptacleInfo[]>();
 	if (showReceptacles && receptacles && receptacles.length > 0) {
@@ -214,13 +214,21 @@ export function renderPanelDirectory(
 			arr.push(r);
 			recsByCircuit.set(r.circuitId, arr);
 		}
-		// Each circuit with receptacles gets a sub-section
+		// Calculate height for each column independently, take the max
+		let leftColHeight = 0;
+		let rightColHeight = 0;
 		for (const circuit of sorted) {
 			const recs = recsByCircuit.get(circuit.id);
-			if (recs && recs.length > 0) {
-				receptacleHeight += (fontSize + 4) + Math.ceil(recs.length / 2) * (fontSize + 2);
+			if (!recs || recs.length === 0) continue;
+			const slot = (circuit.fields.Number as number) || 0;
+			const circuitHeight = (fontSize + 4) + Math.ceil(recs.length / 2) * (fontSize + 2);
+			if (slot % 2 === 1) {
+				leftColHeight += circuitHeight;
+			} else {
+				rightColHeight += circuitHeight;
 			}
 		}
+		receptacleHeight = Math.max(leftColHeight, rightColHeight);
 		receptacleHeight += 16; // section header
 	}
 
@@ -328,7 +336,7 @@ export function renderPanelDirectory(
 		}
 	}
 
-	// Receptacles section (detailed mode)
+	// Receptacles section (detailed mode) — 2-column layout matching panel left/right
 	if (showReceptacles && recsByCircuit.size > 0) {
 		let recY = headerHeight + totalRows * rowHeight + 12;
 		ctx.strokeStyle = '#000000';
@@ -344,21 +352,38 @@ export function renderPanelDirectory(
 		ctx.fillText('RECEPTACLES BY CIRCUIT', widthPx / 2, recY + 2);
 		recY += fontSize + 8;
 
-		ctx.textAlign = 'left';
-		for (const circuit of sorted) {
-			const recs = recsByCircuit.get(circuit.id);
-			if (!recs || recs.length === 0) continue;
+		// Split circuits into odd (left col) and even (right col)
+		const oddCircuits = sorted.filter(c => {
+			const slot = c.fields.Number as number;
+			return slot && slot % 2 === 1 && recsByCircuit.has(c.id);
+		});
+		const evenCircuits = sorted.filter(c => {
+			const slot = c.fields.Number as number;
+			return slot && slot % 2 === 0 && recsByCircuit.has(c.id);
+		});
 
+		// Draw center divider for receptacle section
+		ctx.strokeStyle = '#000000';
+		ctx.lineWidth = 0.5;
+
+		const colStartY = recY;
+		let leftY = recY;
+		let rightY = recY;
+
+		ctx.textAlign = 'left';
+
+		// Left column (odd circuits)
+		for (const circuit of oddCircuits) {
+			const recs = recsByCircuit.get(circuit.id)!;
 			const slot = circuit.fields.Number as number;
 			const name = (circuit.fields.Name as string) || '';
 			ctx.font = `bold ${fontSize}px sans-serif`;
 			ctx.fillStyle = '#000000';
-			ctx.fillText(`${slot} · ${name}`, leftX, recY);
-			recY += fontSize + 2;
+			ctx.fillText(`${slot} · ${name}`, leftX, leftY);
+			leftY += fontSize + 2;
 
 			ctx.font = `${fontSize - 1}px sans-serif`;
 			ctx.fillStyle = '#444444';
-			// Group by area
 			const byArea = new Map<string, string[]>();
 			for (const r of recs) {
 				const area = r.area || 'Other';
@@ -367,11 +392,44 @@ export function renderPanelDirectory(
 				byArea.set(area, arr);
 			}
 			for (const [area, names] of byArea) {
-				ctx.fillText(`  ${area}: ${names.join(', ')}`, leftX, recY);
-				recY += fontSize + 2;
+				ctx.fillText(`  ${area}: ${names.join(', ')}`, leftX, leftY, centerX - leftX - 8);
+				leftY += fontSize + 2;
 			}
-			recY += 2;
+			leftY += 2;
 		}
+
+		// Right column (even circuits)
+		for (const circuit of evenCircuits) {
+			const recs = recsByCircuit.get(circuit.id)!;
+			const slot = circuit.fields.Number as number;
+			const name = (circuit.fields.Name as string) || '';
+			ctx.font = `bold ${fontSize}px sans-serif`;
+			ctx.fillStyle = '#000000';
+			ctx.fillText(`${slot} · ${name}`, rightX, rightY);
+			rightY += fontSize + 2;
+
+			ctx.font = `${fontSize - 1}px sans-serif`;
+			ctx.fillStyle = '#444444';
+			const byArea = new Map<string, string[]>();
+			for (const r of recs) {
+				const area = r.area || 'Other';
+				const arr = byArea.get(area) || [];
+				arr.push(r.name);
+				byArea.set(area, arr);
+			}
+			for (const [area, names] of byArea) {
+				ctx.fillText(`  ${area}: ${names.join(', ')}`, rightX, rightY, widthPx - rightX - 8);
+				rightY += fontSize + 2;
+			}
+			rightY += 2;
+		}
+
+		// Draw center divider spanning the receptacle section
+		const maxRecY = Math.max(leftY, rightY);
+		ctx.beginPath();
+		ctx.moveTo(centerX, colStartY - 4);
+		ctx.lineTo(centerX, maxRecY);
+		ctx.stroke();
 	}
 
 	// Footer with date
