@@ -1,4 +1,6 @@
 import { env } from '$env/dynamic/private';
+import { isDemoMode } from './demo';
+import { getDemoTables, getDemoRecords, getDemoRecordById, getDemoTableMeta } from './demo/nocodb-data';
 
 const NOCODB_URL = env.NOCODB_URL || 'http://nocodb.example.com';
 const NOCODB_TOKEN = env.NOCODB_API_TOKEN || '';
@@ -41,6 +43,8 @@ async function nocodbFetch(path: string, params?: Record<string, string>): Promi
 }
 
 export async function listTables(): Promise<Table[]> {
+	if (isDemoMode()) return getDemoTables();
+
 	const data = (await nocodbFetch(`/api/v3/meta/bases/${BASE_ID}/tables`)) as {
 		list?: Table[];
 	};
@@ -51,6 +55,8 @@ export async function getRecords(
 	tableId: string,
 	params?: Record<string, string>
 ): Promise<V3Record[]> {
+	if (isDemoMode()) return getDemoRecords(tableId, params);
+
 	const data = (await nocodbFetch(
 		`/api/v3/data/${BASE_ID}/${tableId}/records`,
 		params
@@ -62,6 +68,8 @@ export async function getRecordById(
 	tableId: string,
 	recordId: number
 ): Promise<V3Record | null> {
+	if (isDemoMode()) return getDemoRecordById(tableId, recordId);
+
 	try {
 		const data = (await nocodbFetch(
 			`/api/v3/data/${BASE_ID}/${tableId}/records/${recordId}`
@@ -78,6 +86,8 @@ export async function getTableByName(name: string): Promise<Table | undefined> {
 }
 
 export async function getTableMeta(tableId: string): Promise<Record<string, unknown>> {
+	if (isDemoMode()) return getDemoTableMeta(tableId);
+
 	return (await nocodbFetch(`/api/v2/meta/tables/${tableId}`)) as Record<string, unknown>;
 }
 
@@ -106,6 +116,8 @@ export async function updateRecord(
 	recordId: number,
 	fields: Record<string, unknown>
 ): Promise<void> {
+	if (isDemoMode()) return; // No-op in demo mode
+
 	const url = new URL(`/api/v2/tables/${tableId}/records`, NOCODB_URL);
 	const resp = await fetch(url.toString(), {
 		method: 'PATCH',
@@ -125,6 +137,8 @@ export async function deleteRecord(
 	tableId: string,
 	recordId: number
 ): Promise<void> {
+	if (isDemoMode()) return; // No-op in demo mode
+
 	const url = new URL(`/api/v2/tables/${tableId}/records`, NOCODB_URL);
 	const resp = await fetch(url.toString(), {
 		method: 'DELETE',
@@ -146,6 +160,8 @@ export async function replaceLinks(
 	recordId: number,
 	linkedIds: number[]
 ): Promise<void> {
+	if (isDemoMode()) return; // No-op in demo mode
+
 	const url = new URL(`/api/v2/tables/${tableId}/links/${columnId}/records/${recordId}`, NOCODB_URL);
 	const headers = {
 		'xc-token': NOCODB_TOKEN,

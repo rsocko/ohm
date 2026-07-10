@@ -1,4 +1,6 @@
 import { getUnifiConfig } from './unifi-config';
+import { isDemoMode } from './demo';
+import { getDemoUnifiDevices, getDemoUnifiClients, DEMO_UNIFI_SITES } from './demo/unifi-data';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -182,6 +184,17 @@ export async function testConnection(homeId?: number | null): Promise<{
 	controllerVersion: string;
 	message: string;
 }> {
+	if (isDemoMode()) {
+		const devices = getDemoUnifiDevices();
+		return {
+			success: true,
+			deviceCount: devices.length,
+			siteName: 'default',
+			controllerVersion: devices[0]?.version || '4.0.6',
+			message: `Connected (demo). Found ${devices.length} device(s).`
+		};
+	}
+
 	try {
 		const devices = await getDevices(homeId);
 		const config = await getUnifiConfig(homeId);
@@ -206,17 +219,22 @@ export async function testConnection(homeId?: number | null): Promise<{
 
 /** Fetch all adopted UniFi devices (APs, switches, gateways). */
 export async function getDevices(homeId?: number | null): Promise<UnifiDevice[]> {
+	if (isDemoMode()) return getDemoUnifiDevices();
 	return unifiFetch<UnifiDevice[]>('/stat/device', homeId);
 }
 
 /** Fetch a single device by MAC address. */
 export async function getDevice(mac: string, homeId?: number | null): Promise<UnifiDevice | null> {
+	if (isDemoMode()) {
+		return getDemoUnifiDevices().find((d) => d.mac === mac.toLowerCase()) || null;
+	}
 	const devices = await unifiFetch<UnifiDevice[]>(`/stat/device/${mac.toLowerCase()}`, homeId);
 	return devices[0] || null;
 }
 
 /** Fetch all connected clients (wired + wireless). */
 export async function getClients(homeId?: number | null): Promise<UnifiClient[]> {
+	if (isDemoMode()) return getDemoUnifiClients();
 	return unifiFetch<UnifiClient[]>('/stat/sta', homeId);
 }
 
@@ -266,6 +284,8 @@ export async function getPoeBudget(switchMac: string, homeId?: number | null): P
 
 /** List available sites (for site selector in settings). */
 export async function getSites(homeId?: number | null): Promise<Array<{ name: string; desc: string }>> {
+	if (isDemoMode()) return DEMO_UNIFI_SITES;
+
 	const config = await getUnifiConfig(homeId);
 	if (!config.url || !config.username || !config.password) return [];
 

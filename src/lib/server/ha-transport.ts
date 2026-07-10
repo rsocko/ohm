@@ -5,6 +5,8 @@
  */
 
 import { getHAConfig, type HAConfig } from './ha-config';
+import { isDemoMode } from './demo';
+import { getDemoHAStates, getDemoEntityState, getDemoHistory, DEMO_HA_API_INFO } from './demo/ha-data';
 
 // --- Types ---
 
@@ -36,6 +38,26 @@ export async function haFetch<T = unknown>(path: string, options?: {
 	params?: Record<string, string>;
 	homeId?: number | null;
 }): Promise<T> {
+	if (isDemoMode()) {
+		// Route demo requests based on path
+		if (path === '/api/states') return getDemoHAStates() as T;
+		if (path.startsWith('/api/states/')) {
+			const entityId = path.replace('/api/states/', '');
+			const state = getDemoEntityState(entityId);
+			if (state) return state as T;
+			throw new Error(`Demo: entity not found: ${entityId}`);
+		}
+		if (path === '/api/') return DEMO_HA_API_INFO as T;
+		if (path.startsWith('/api/history/period')) {
+			const entityId = options?.params?.filter_entity_id;
+			if (entityId) return getDemoHistory(entityId) as T;
+			return [[]] as T;
+		}
+		// Service calls in demo mode are no-ops
+		if (path.startsWith('/api/services/')) return {} as T;
+		return {} as T;
+	}
+
 	const config = await getHAConfig(options?.homeId);
 	assertConfigured(config);
 
@@ -71,6 +93,8 @@ export async function haFetch<T = unknown>(path: string, options?: {
  * Does NOT test connectivity — use `testConnection()` for that.
  */
 export async function isConfigured(homeId?: number | null): Promise<boolean> {
+	if (isDemoMode()) return true;
+
 	const config = await getHAConfig(homeId);
 	return Boolean(config.url && config.token && config.enabled);
 }
@@ -79,6 +103,8 @@ export async function isConfigured(homeId?: number | null): Promise<boolean> {
  * Test actual connectivity to HA. Returns API info on success, null on failure.
  */
 export async function testConnection(homeId?: number | null): Promise<HAApiInfo | null> {
+	if (isDemoMode()) return DEMO_HA_API_INFO;
+
 	try {
 		const config = await getHAConfig(homeId);
 		if (!config.url || !config.token) return null;
