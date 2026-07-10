@@ -97,6 +97,18 @@
 		return 1;
 	}
 
+	/** Extract display name from a NocoDB field that may be a string, linked record, or array */
+	function extractFieldName(field: unknown): string {
+		if (!field) return '';
+		if (typeof field === 'string') return field;
+		if (Array.isArray(field)) return field.map(extractFieldName).filter(Boolean).join(', ');
+		if (typeof field === 'object' && field !== null) {
+			const obj = field as Record<string, unknown>;
+			return String(obj.Name || obj.name || obj.Title || obj.title || '');
+		}
+		return String(field);
+	}
+
 	function previewPanelDirectory() {
 		// Build receptacle info for detailed mode
 		const recData: { name: string; area: string; circuitNumber: number }[] = [];
@@ -108,8 +120,8 @@
 				const circuit = circuits.find(c => c.id === circuitId);
 				if (!circuit) continue;
 				recData.push({
-					name: (r.fields.Name as string) || 'Unnamed',
-					area: (r.fields.Room as string) || (r.fields.Area as string) || '',
+						name: String(r.fields.Name || 'Unnamed'),
+						area: extractFieldName(r.fields.Room) || extractFieldName(r.fields.Area) || '',
 					circuitNumber: (circuit.fields.Number as number) || 0,
 				});
 			}
