@@ -46,6 +46,9 @@ export const GET: RequestHandler = async ({ url }) => {
 			if (table.toLowerCase() === 'load') {
 				await supplementSystemLinks(t.id, records, 'Network_Upstream');
 			}
+			if (table.toLowerCase() === 'floorplan') {
+				await supplementSystemLinks(t.id, records, 'Home');
+			}
 			return json({ records });
 		}
 

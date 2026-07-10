@@ -724,6 +724,17 @@
 			const resp = await fetch('/api/upload', { method: 'POST', body: formData });
 			if (resp.ok) {
 				const data = await resp.json();
+				// Link the new floorplan to the current home
+				if (data.record && homeContext.selectedHomeId) {
+					const newId = data.record.Id ?? data.record.id;
+					if (newId) {
+						await fetch('/api/nocodb', {
+							method: 'PATCH',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ table: 'Floorplan', id: newId, linkUpdates: [{ title: 'Home', ids: [homeContext.selectedHomeId] }] })
+						});
+					}
+				}
 				await reloadSharedData();
 				// Select the newly created floorplan
 				if (data.record) {

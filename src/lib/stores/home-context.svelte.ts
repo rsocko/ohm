@@ -147,7 +147,7 @@ const _homeFiltered = $derived.by((): HomeFilteredData => {
 	const circuits = dataStore.circuits.filter(c => panelIds.has((c.fields.Panel as { id: number } | undefined)?.id ?? -1));
 	const loads = dataStore.loads.filter(l => areaIds.has((l.fields.Area as { id: number } | undefined)?.id ?? -1));
 	const receptacles = dataStore.receptacles.filter(r => areaIds.has((r.fields.Area as { id: number } | undefined)?.id ?? -1));
-	const floorplans = dataStore.floorplans.filter(f => areaIds.has((f.fields.Area as { id: number } | undefined)?.id ?? -1));
+	const floorplans = dataStore.floorplans.filter(f => (f.fields.Home as { id: number } | undefined)?.id === _selectedHomeId);
 
 	return { areas, panels, circuits, loads, receptacles, floorplans };
 });

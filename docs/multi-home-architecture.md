@@ -56,7 +56,7 @@ Home → Areas (via Area.Home link)
      → Circuits (via Circuit.Panel → Panel.Area → Area.Home)
      → Loads (via Load.Area → Area.Home)
      → Receptacles (via Receptacle.Area → Area.Home)
-     → Floorplans (via Floorplan.Area → Area.Home)
+     → Floorplans (via Floorplan.Home)
 ```
 
 **Implementation:** Add a `homeFiltered` derived export to `data.svelte.ts`:
