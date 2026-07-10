@@ -649,6 +649,34 @@
 		photoInputEl?.click();
 	}
 
+	/**
+	 * Compress an image file to JPEG, resizing if needed to stay under maxBytes.
+	 * Handles HEIC and other formats by drawing through a canvas.
+	 */
+	async function compressImage(file: File, maxBytes = 490_000): Promise<Blob> {
+		const bitmap = await createImageBitmap(file);
+		// Cap the longest edge at 1600px to reduce size
+		const MAX_DIM = 1600;
+		let { width, height } = bitmap;
+		if (width > MAX_DIM || height > MAX_DIM) {
+			const scale = MAX_DIM / Math.max(width, height);
+			width = Math.round(width * scale);
+			height = Math.round(height * scale);
+		}
+		const canvas = new OffscreenCanvas(width, height);
+		const ctx = canvas.getContext('2d')!;
+		ctx.drawImage(bitmap, 0, 0, width, height);
+		bitmap.close();
+
+		// Try decreasing quality until under limit
+		for (const quality of [0.85, 0.7, 0.5, 0.3]) {
+			const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+			if (blob.size <= maxBytes) return blob;
+		}
+		// Last resort: return lowest quality
+		return canvas.convertToBlob({ type: 'image/jpeg', quality: 0.2 });
+	}
+
 	async function handlePhotoFile(e: Event) {
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -656,8 +684,11 @@
 
 		uploadingPhoto = true;
 		try {
+			const compressed = await compressImage(file);
+			const filename = file.name.replace(/\.\w+$/, '.jpg') || 'panel-photo.jpg';
+
 			const formData = new FormData();
-			formData.append('file', file);
+			formData.append('file', compressed, filename);
 			formData.append('table', 'Panel');
 			formData.append('field', 'Attachment');
 			formData.append('recordId', String(selectedPanelId));
