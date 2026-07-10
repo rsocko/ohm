@@ -225,8 +225,9 @@ ${receptaclesHtml}
 	};
 }
 
-function escapeHtml(str: string): string {
-	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function escapeHtml(str: string | unknown): string {
+	const s = String(str ?? '');
+	return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function getBadges(c: DirectoryCircuit): string {

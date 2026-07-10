@@ -119,7 +119,7 @@
 			panelName,
 			location: (panel.fields.Location as string) || undefined,
 			capacity: (panel.fields.Capacity as number) || undefined,
-			serviceSize: (panel.fields['Service Size'] as string) || undefined,
+			serviceSize: String(panel.fields['Service Size'] || '') || undefined,
 			generatorBacked: Boolean(panel.fields['Generator Power']),
 			circuits: circuits.map(c => ({
 				number: (c.fields.Number as number) || 0,
