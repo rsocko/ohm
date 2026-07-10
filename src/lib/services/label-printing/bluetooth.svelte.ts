@@ -5,8 +5,9 @@
 
 import type { PrinterConfig, PrinterState, BluetoothState, RenderedLabel, PrinterStatus, PrinterStatusEvent } from './types';
 import { DEFAULT_PRINTER_CONFIG, KNOWN_PRINTER_PROFILES } from './types';
-import { buildPrintJob } from './escpos';
-import { canvasToRaster, transposeCanvas } from './renderer';
+import { buildPrintJob, buildD30PrintJob } from './escpos';
+import type { D30MediaType } from './escpos';
+import { canvasToRaster, rotateCanvas90CW } from './renderer';
 
 class BluetoothPrinterService {
 	private config: PrinterConfig;
@@ -283,43 +284,91 @@ class BluetoothPrinterService {
 			}
 			onProgress?.(offset + chunk.length, total);
 			if (offset + chunkSize < total) {
-				// writeValueWithResponse has built-in flow control via ack,
-				// but a small delay still helps slower printers; without-response
-				// needs the full delay to avoid overwhelming the BLE buffer
 				const delay = this.useWriteWithResponse ? Math.min(chunkDelayMs, 5) : chunkDelayMs;
 				await new Promise(resolve => setTimeout(resolve, delay));
 			}
 		}
 	}
 
-	/** Print a rendered label, transposing the image for label printers (D30) */
+	/** Write a single command/packet to the characteristic */
+	private async writeCommand(data: Uint8Array): Promise<void> {
+		if (!this.characteristic) throw new Error('Printer not connected');
+		if (this.useWriteWithResponse) {
+			await this.characteristic.writeValueWithResponse(data);
+		} else {
+			await this.characteristic.writeValueWithoutResponse(data);
+		}
+	}
+
+	private delay(ms: number): Promise<void> {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	/**
+	 * Print a rendered label.
+	 * D-series (D30/D35) uses a multi-step protocol with rotation.
+	 * M-series/T-series uses standard ESC/POS in a single blob.
+	 */
 	async printLabel(label: RenderedLabel, onProgress?: (sent: number, total: number) => void): Promise<void> {
 		if (!label.rasterData || !label.bytesPerLine) {
 			throw new Error('Label has no raster data');
 		}
 
-		let { rasterData, bytesPerLine, height } = label;
-
-		// Label printers (D30 etc.) have a narrow print head matching the tape
-		// width. Transpose the image so the tape width dimension becomes the
-		// raster line width and the label length becomes the feed direction.
-		if (this._isLabelPrinter && label.canvas) {
-			const transposed = transposeCanvas(label.canvas);
-			const raster = canvasToRaster(transposed);
-			rasterData = raster.raster;
-			bytesPerLine = raster.bytesPerLine;
-			height = transposed.height;
-		}
-
 		this._state = 'printing';
 		try {
-			const printData = buildPrintJob(rasterData, bytesPerLine, height, this.config.density);
-			await this.sendData(printData, onProgress);
-			// Wait for printer to finish processing (if notifications are active)
+			if (this._isLabelPrinter && label.canvas) {
+				await this.printLabelD30(label, onProgress);
+			} else {
+				const printData = buildPrintJob(label.rasterData, label.bytesPerLine, label.height, this.config.density);
+				await this.sendData(printData, onProgress);
+			}
 			await this.waitForPrintComplete();
 		} finally {
 			if (this._state === 'printing') this._state = 'connected';
 		}
+	}
+
+	/**
+	 * D30-specific print flow:
+	 * 1. Send header (speed, density, media type)
+	 * 2. For each block (max 255 lines): send GS v 0 marker, then raster data in chunks
+	 * 3. Send footer to finalize the print
+	 */
+	private async printLabelD30(label: RenderedLabel, onProgress?: (sent: number, total: number) => void): Promise<void> {
+		// Rotate 90° clockwise — D30 print head is narrow (tape width),
+		// image must be rotated so the short dimension becomes raster line width
+		const rotated = rotateCanvas90CW(label.canvas);
+		const { raster, bytesPerLine } = canvasToRaster(rotated);
+
+		// Determine media type from tape config
+		const mediaType: D30MediaType = this.config.labelLengthMm === 'continuous' ? 'continuous' : 'gaps';
+
+		const job = buildD30PrintJob(raster, bytesPerLine, rotated.height, mediaType);
+		const totalBytes = raster.length;
+		let sentBytes = 0;
+
+		// 1. Send header
+		await this.writeCommand(job.header);
+		await this.delay(50);
+
+		// 2. Send each block
+		for (const block of job.blocks) {
+			await this.writeCommand(block.marker);
+			await this.delay(30);
+
+			// Send block data in chunks
+			const { chunkSize } = this.config;
+			for (let offset = 0; offset < block.data.length; offset += chunkSize) {
+				const chunk = block.data.slice(offset, Math.min(offset + chunkSize, block.data.length));
+				await this.writeCommand(chunk);
+				sentBytes += chunk.length;
+				onProgress?.(sentBytes, totalBytes);
+			}
+		}
+
+		// 3. Send footer
+		await this.delay(50);
+		await this.writeCommand(job.footer);
 	}
 
 	/**

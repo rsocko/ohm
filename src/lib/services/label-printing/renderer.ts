@@ -72,22 +72,19 @@ export function canvasToRaster(canvas: HTMLCanvasElement): { raster: Uint8Array;
 }
 
 /**
- * Transpose a canvas: swap width↔height so the image feeds correctly
- * on label printers (D30 etc.) where the narrow tape width is the
- * raster line width and the label length is the feed direction.
- *
- * Uses a matrix transpose (not a rotation) so text remains right-side-up
- * on the physical tape: pixel (x, y) → (y, x).
+ * Rotate a canvas 90° clockwise for D-series label printers.
+ * The D30 print head feeds vertically, so a landscape label must be
+ * rotated so the short edge (tape width) becomes the raster line width.
  */
-export function transposeCanvas(canvas: HTMLCanvasElement): HTMLCanvasElement {
-	const transposed = document.createElement('canvas');
-	transposed.width = canvas.height;
-	transposed.height = canvas.width;
-	const ctx = transposed.getContext('2d')!;
-	// Matrix transpose: maps draw coordinate (x, y) to canvas pixel (y, x)
-	ctx.transform(0, 1, 1, 0, 0, 0);
-	ctx.drawImage(canvas, 0, 0);
-	return transposed;
+export function rotateCanvas90CW(canvas: HTMLCanvasElement): HTMLCanvasElement {
+	const rotated = document.createElement('canvas');
+	rotated.width = canvas.height;
+	rotated.height = canvas.width;
+	const ctx = rotated.getContext('2d')!;
+	ctx.translate(rotated.width / 2, rotated.height / 2);
+	ctx.rotate(Math.PI / 2);
+	ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+	return rotated;
 }
 
 // --- Panel Directory Renderer ---
