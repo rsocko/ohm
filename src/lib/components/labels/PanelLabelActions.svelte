@@ -111,7 +111,7 @@
 
 	function previewPanelDirectory() {
 		// Build receptacle info for detailed mode
-		const recData: { name: string; area: string; circuitNumber: number }[] = [];
+		const recData: { name: string; area: string; type: string; circuitNumber: number }[] = [];
 		if (showDetailed && receptacles.length > 0) {
 			for (const r of receptacles) {
 				const circuitLink = r.fields.Circuit as { id: number } | undefined;
@@ -158,6 +158,7 @@
 	}
 
 	async function printCircuitLabels() {
+		printMode = 'labels';
 		if (!printer.isConnected) {
 			try {
 				await printer.connect();
@@ -223,6 +224,7 @@
 	}
 
 	async function printQrLabels() {
+		printMode = 'qr';
 		if (!printer.isConnected) {
 			try {
 				await printer.connect();
