@@ -406,6 +406,29 @@
 		};
 	});
 
+	// Re-sync when home selection changes
+	$effect(() => {
+		// Access homeFiltered to track it reactively
+		const _ = homeFiltered.panels;
+		if (!dataStore.loaded || loading) return;
+		panels = [...homeFiltered.panels].sort((a: V3Record, b: V3Record) => {
+			const aOrder = (a.fields['Sort Order'] as number) || 99;
+			const bOrder = (b.fields['Sort Order'] as number) || 99;
+			if (aOrder !== bOrder) return aOrder - bOrder;
+			const aType = a.fields['Panel Type'] as string || '';
+			const bType = b.fields['Panel Type'] as string || '';
+			if (aType === 'Main' && bType !== 'Main') return -1;
+			if (bType === 'Main' && aType !== 'Main') return 1;
+			return ((b.fields.Capacity as number) || 0) - ((a.fields.Capacity as number) || 0);
+		});
+		circuits = homeFiltered.circuits;
+		allLoads = homeFiltered.loads;
+		allReceptacles = homeFiltered.receptacles;
+		if (panels.length > 0 && !panels.some(p => p.id === selectedPanelId)) {
+			selectedPanelId = panels[0].id;
+		}
+	});
+
 	// React to URL param changes for deep links (fires on client-side navigation too)
 	$effect(() => {
 		const url = page.url;
