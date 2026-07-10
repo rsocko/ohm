@@ -1076,11 +1076,10 @@
 	});
 </script>
 
-<!-- Hidden file input for panel photo capture -->
+<!-- Hidden file input for panel photo (camera or library) -->
 <input
 	type="file"
 	accept="image/*"
-	capture="environment"
 	bind:this={photoInputEl}
 	onchange={handlePhotoFile}
 	class="hidden"
