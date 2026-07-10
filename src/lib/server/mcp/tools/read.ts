@@ -329,6 +329,97 @@ export const getCircuitCapacity: ToolDefinition = {
 	}
 };
 
+export const listRooms: ToolDefinition = {
+	name: 'list_rooms',
+	description: 'List all rooms/areas in the active home, grouped by floor. Use when user asks "what rooms do I have?", "show me my rooms", or "list areas".',
+	category: 'read',
+	parameters: {
+		floor: { type: 'string', description: 'Optional floor to filter by (e.g., "1st Floor", "Basement")' }
+	},
+	async execute(args): Promise<ToolResponse> {
+		const home = getHomeContext(args);
+		const rooms = await db.getRooms(home?.homeId);
+
+		if (rooms.length === 0) {
+			return { success: false, error: `No rooms found${home ? ` in ${home.homeName}` : ''}. Use create_room to add some.` };
+		}
+
+		const floorFilter = args.floor as string | undefined;
+		let filtered = rooms;
+		if (floorFilter) {
+			filtered = rooms.filter(r => r.floor?.toLowerCase() === floorFilter.toLowerCase());
+			if (filtered.length === 0) {
+				const floors = [...new Set(rooms.map(r => r.floor || 'Unassigned'))];
+				return { success: false, error: `No rooms on floor "${floorFilter}". Available floors: ${floors.join(', ')}` };
+			}
+		}
+
+		// Group by floor
+		const byFloor: Record<string, { id: number; name: string; description?: string }[]> = {};
+		for (const r of filtered) {
+			const floor = r.floor || 'Unassigned';
+			if (!byFloor[floor]) byFloor[floor] = [];
+			byFloor[floor].push({ id: r.id, name: r.name, description: r.description });
+		}
+
+		return {
+			success: true,
+			data: {
+				home: home?.homeName || 'All homes',
+				totalRooms: filtered.length,
+				byFloor
+			}
+		};
+	}
+};
+
+export const getHomeOverview: ToolDefinition = {
+	name: 'get_home_overview',
+	description: 'Get a high-level summary of the active home: room count, panels, total circuits, device counts. Use when user asks "tell me about my home", "what do I have?", or wants an overview.',
+	category: 'read',
+	parameters: {},
+	async execute(args): Promise<ToolResponse> {
+		const home = getHomeContext(args);
+		const rooms = await db.getRooms(home?.homeId);
+		const panels = await db.getPanels(home?.homeId);
+
+		let totalCircuits = 0;
+		let totalLoads = 0;
+		let totalReceptacles = 0;
+
+		for (const panel of panels) {
+			const circuits = await db.getCircuits(panel.id);
+			totalCircuits += circuits.length;
+			for (const c of circuits) {
+				const loads = await db.getLoads(c.id);
+				const recs = await db.getReceptacles(c.id);
+				totalLoads += loads.length;
+				totalReceptacles += recs.length;
+			}
+		}
+
+		// Group rooms by floor for summary
+		const floors: Record<string, number> = {};
+		for (const r of rooms) {
+			const floor = r.floor || 'Unassigned';
+			floors[floor] = (floors[floor] || 0) + 1;
+		}
+
+		return {
+			success: true,
+			data: {
+				home: home?.homeName || 'All homes',
+				rooms: { total: rooms.length, byFloor: floors },
+				panels: panels.map(p => ({ name: p.name, location: p.location, serviceSize: p.serviceSize })),
+				totalCircuits,
+				totalLoads,
+				totalReceptacles,
+				totalDevices: totalLoads + totalReceptacles
+			}
+		};
+	}
+};
+
 /** All read tools */
 export const readTools: ToolDefinition[] = [
 	whatIsOnCircuit,
@@ -336,5 +427,7 @@ export const readTools: ToolDefinition[] = [
 	getPanelDirectory,
 	findDevice,
 	searchElectrical,
-	getCircuitCapacity
+	getCircuitCapacity,
+	listRooms,
+	getHomeOverview
 ];
