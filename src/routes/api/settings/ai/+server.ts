@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAiConfig, saveAiConfig } from '$lib/server/ai-config';
+import type { LlmProvider } from '$lib/server/ai-config';
 
 export const GET: RequestHandler = async () => {
 	const config = await getAiConfig();
@@ -10,9 +11,14 @@ export const GET: RequestHandler = async () => {
 export const POST: RequestHandler = async ({ request }) => {
 	const body = (await request.json()) as {
 		enabled?: boolean;
+		llmProvider?: LlmProvider;
+		ollamaUrl?: string;
+		ollamaModel?: string;
 		openWebUiUrl?: string;
 		openWebUiApiKey?: string;
 		openWebUiModel?: string;
+		openaiApiKey?: string;
+		openaiModel?: string;
 		askApiKey?: string;
 		askAuthRequired?: boolean;
 		regenerateAskApiKey?: boolean;
@@ -20,9 +26,14 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const config = await saveAiConfig({
 		enabled: body.enabled,
+		llmProvider: body.llmProvider,
+		ollamaUrl: body.ollamaUrl,
+		ollamaModel: body.ollamaModel,
 		openWebUiUrl: body.openWebUiUrl,
 		openWebUiApiKey: body.openWebUiApiKey,
 		openWebUiModel: body.openWebUiModel,
+		openaiApiKey: body.openaiApiKey,
+		openaiModel: body.openaiModel,
 		askApiKey: body.askApiKey,
 		askAuthRequired: body.askAuthRequired,
 		regenerateAskApiKey: body.regenerateAskApiKey

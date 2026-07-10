@@ -7,11 +7,18 @@
 	import { dataStore, ensureLoaded, invalidate } from '$lib/stores/data.svelte';
 	import { homeContext } from '$lib/stores/home-context.svelte';
 
+	type LlmProvider = 'ollama' | 'openwebui' | 'openai';
+
 	interface AiConfig {
 		enabled: boolean;
+		llmProvider: LlmProvider;
+		ollamaUrl: string;
+		ollamaModel: string;
 		openWebUiUrl: string;
 		openWebUiApiKey: string;
 		openWebUiModel: string;
+		openaiApiKey: string;
+		openaiModel: string;
 		askApiKey: string;
 		askAuthRequired: boolean;
 		updatedAt: string | null;
@@ -20,6 +27,7 @@
 	interface ConnectionStatus {
 		connected: boolean;
 		message: string;
+		provider: string;
 		model: string;
 		model_available: boolean | null;
 		available_models: string[];
@@ -61,9 +69,14 @@
 		dataStore.homes.find(h => h.id === currentHomeId)?.fields?.Name || 'Default'
 	);
 
+	let llmProvider: LlmProvider = $state(untrack(() => data.config.llmProvider));
+	let ollamaUrl = $state(untrack(() => data.config.ollamaUrl));
+	let ollamaModel = $state(untrack(() => data.config.ollamaModel));
 	let openWebUiUrl = $state(untrack(() => data.config.openWebUiUrl));
 	let openWebUiApiKey = $state(untrack(() => data.config.openWebUiApiKey));
 	let openWebUiModel = $state(untrack(() => data.config.openWebUiModel));
+	let openaiApiKey = $state(untrack(() => data.config.openaiApiKey));
+	let openaiModel = $state(untrack(() => data.config.openaiModel));
 	let askApiKey = $state(untrack(() => data.config.askApiKey));
 	let askAuthRequired = $state(untrack(() => data.config.askAuthRequired));
 	let enabled = $state(untrack(() => data.config.enabled));
@@ -609,7 +622,13 @@
 		}
 	}
 
-	const hasConfig = $derived(Boolean(openWebUiUrl.trim() && openWebUiApiKey.trim() && openWebUiModel.trim()));
+	const hasConfig = $derived(
+		llmProvider === 'ollama'
+			? Boolean(ollamaUrl.trim() && ollamaModel.trim())
+			: llmProvider === 'openai'
+				? Boolean(openaiApiKey.trim() && openaiModel.trim())
+				: Boolean(openWebUiUrl.trim() && openWebUiApiKey.trim() && openWebUiModel.trim())
+	);
 
 	async function saveConfig(regenerateAskApiKey = false) {
 		saving = true;
@@ -619,9 +638,14 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					enabled,
+					llmProvider,
+					ollamaUrl,
+					ollamaModel,
 					openWebUiUrl,
 					openWebUiApiKey,
 					openWebUiModel,
+					openaiApiKey,
+					openaiModel,
 					askApiKey,
 					askAuthRequired,
 					regenerateAskApiKey
@@ -634,9 +658,14 @@
 
 			const savedConfig = (await response.json()) as AiConfig;
 			enabled = savedConfig.enabled;
+			llmProvider = savedConfig.llmProvider;
+			ollamaUrl = savedConfig.ollamaUrl;
+			ollamaModel = savedConfig.ollamaModel;
 			openWebUiUrl = savedConfig.openWebUiUrl;
 			openWebUiApiKey = savedConfig.openWebUiApiKey;
 			openWebUiModel = savedConfig.openWebUiModel;
+			openaiApiKey = savedConfig.openaiApiKey;
+			openaiModel = savedConfig.openaiModel;
 			askApiKey = savedConfig.askApiKey;
 				askAuthRequired = savedConfig.askAuthRequired;
 				updatedAt = savedConfig.updatedAt;
@@ -655,9 +684,14 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
+					llmProvider,
+					ollamaUrl,
+					ollamaModel,
 					openWebUiUrl,
 					openWebUiApiKey,
-					openWebUiModel
+					openWebUiModel,
+					openaiApiKey,
+					openaiModel
 				})
 			});
 
@@ -672,7 +706,8 @@
 			status = {
 				connected: false,
 				message: error instanceof Error ? error.message : 'Connection test failed.',
-				model: openWebUiModel,
+				provider: llmProvider,
+				model: llmProvider === 'ollama' ? ollamaModel : llmProvider === 'openai' ? openaiModel : openWebUiModel,
 				model_available: null,
 				available_models: [],
 				nocodb_tool_available: null,
@@ -876,7 +911,7 @@
 	<header class="space-y-2">
 		<h2 class="text-lg font-bold text-white" style="text-wrap: balance">AI Configuration</h2>
 		<p class="text-sm text-slate-400" style="text-wrap: pretty">
-			Configure Open-WebUI and the API key your Siri Shortcut should send to <code class="text-slate-300">/api/ask</code>.
+			Configure your LLM backend and the API key your Siri Shortcut should send to <code class="text-slate-300">/api/ask</code>.
 		</p>
 	</header>
 
@@ -898,54 +933,150 @@
 			</button>
 		</div>
 
+		<!-- LLM Provider selector -->
 		<div class="space-y-2">
-			<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openwebui-url">
-				Open-WebUI URL
+			<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="llm-provider">
+				LLM Provider
 			</label>
-			<input
-				id="openwebui-url"
-				type="url"
-				bind:value={openWebUiUrl}
-				placeholder="http://open-webui.example.com"
-				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
-			/>
+			<select
+				id="llm-provider"
+				bind:value={llmProvider}
+				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white focus:border-indigo-500 focus:outline-none transition-colors"
+			>
+				<option value="ollama">Ollama (Direct)</option>
+				<option value="openwebui">Open-WebUI</option>
+				<option value="openai">OpenAI</option>
+			</select>
+			<p class="text-xs text-slate-500">
+				{#if llmProvider === 'ollama'}
+					Connects directly to Ollama's OpenAI-compatible API. Best for local models with reliable tool calling.
+				{:else if llmProvider === 'openai'}
+					Connects to the OpenAI API. Requires an API key.
+				{:else}
+					Proxies through Open-WebUI. Legacy option — may cause tool-calling inconsistencies.
+				{/if}
+			</p>
 		</div>
 
-		<div class="space-y-2">
-			<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openwebui-key">
-				Open-WebUI API Key
-			</label>
-			<div class="relative">
+		<!-- Ollama settings -->
+		{#if llmProvider === 'ollama'}
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="ollama-url">
+					Ollama URL
+				</label>
 				<input
-					id="openwebui-key"
-					type={showOpenWebUiKey ? 'text' : 'password'}
-					bind:value={openWebUiApiKey}
-					placeholder="sk-..."
-					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+					id="ollama-url"
+					type="url"
+					bind:value={ollamaUrl}
+					placeholder="http://localhost:11434"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
 				/>
-				<button
-					type="button"
-					onclick={() => { showOpenWebUiKey = !showOpenWebUiKey; }}
-					class="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white active:scale-[0.96]"
-					aria-label={showOpenWebUiKey ? 'Hide API key' : 'Show API key'}
-				>
-					<Icon icon={showOpenWebUiKey ? 'mdi:eye-off-outline' : 'mdi:eye-outline'} width={18} />
-				</button>
 			</div>
-		</div>
 
-		<div class="space-y-2">
-			<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openwebui-model">
-				Model Name
-			</label>
-			<input
-				id="openwebui-model"
-				type="text"
-				bind:value={openWebUiModel}
-				placeholder="gpt-4o"
-				class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
-			/>
-		</div>
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="ollama-model">
+					Model
+				</label>
+				<input
+					id="ollama-model"
+					type="text"
+					bind:value={ollamaModel}
+					placeholder="qwen3:8b"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+				/>
+			</div>
+		{/if}
+
+		<!-- Open-WebUI settings -->
+		{#if llmProvider === 'openwebui'}
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openwebui-url">
+					Open-WebUI URL
+				</label>
+				<input
+					id="openwebui-url"
+					type="url"
+					bind:value={openWebUiUrl}
+					placeholder="http://open-webui.example.com"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+				/>
+			</div>
+
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openwebui-key">
+					Open-WebUI API Key
+				</label>
+				<div class="relative">
+					<input
+						id="openwebui-key"
+						type={showOpenWebUiKey ? 'text' : 'password'}
+						bind:value={openWebUiApiKey}
+						placeholder="sk-..."
+						class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+					/>
+					<button
+						type="button"
+						onclick={() => { showOpenWebUiKey = !showOpenWebUiKey; }}
+						class="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white active:scale-[0.96]"
+						aria-label={showOpenWebUiKey ? 'Hide API key' : 'Show API key'}
+					>
+						<Icon icon={showOpenWebUiKey ? 'mdi:eye-off-outline' : 'mdi:eye-outline'} width={18} />
+					</button>
+				</div>
+			</div>
+
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openwebui-model">
+					Model Name
+				</label>
+				<input
+					id="openwebui-model"
+					type="text"
+					bind:value={openWebUiModel}
+					placeholder="gpt-4o"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+				/>
+			</div>
+		{/if}
+
+		<!-- OpenAI settings -->
+		{#if llmProvider === 'openai'}
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openai-key">
+					OpenAI API Key
+				</label>
+				<div class="relative">
+					<input
+						id="openai-key"
+						type={showOpenWebUiKey ? 'text' : 'password'}
+						bind:value={openaiApiKey}
+						placeholder="sk-..."
+						class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 pr-12 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+					/>
+					<button
+						type="button"
+						onclick={() => { showOpenWebUiKey = !showOpenWebUiKey; }}
+						class="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800 hover:text-white active:scale-[0.96]"
+						aria-label={showOpenWebUiKey ? 'Hide API key' : 'Show API key'}
+					>
+						<Icon icon={showOpenWebUiKey ? 'mdi:eye-off-outline' : 'mdi:eye-outline'} width={18} />
+					</button>
+				</div>
+			</div>
+
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="openai-model">
+					Model
+				</label>
+				<input
+					id="openai-model"
+					type="text"
+					bind:value={openaiModel}
+					placeholder="gpt-4o"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+				/>
+			</div>
+		{/if}
 
 		<div class="space-y-2">
 			<div class="flex items-center justify-between gap-3">
@@ -1038,7 +1169,7 @@
 		<div class="flex items-center justify-between gap-3">
 			<div>
 				<h2 class="text-sm font-semibold text-white">Connection status</h2>
-				<p class="text-xs text-slate-400">Tests chat completions, models, and tools endpoints.</p>
+				<p class="text-xs text-slate-400">Tests chat completions and model availability.</p>
 			</div>
 			{#if status}
 				<span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium {status.connected ? 'bg-emerald-500/12 text-emerald-300' : 'bg-rose-500/12 text-rose-300'}">
@@ -1061,11 +1192,21 @@
 				</div>
 
 				<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
+					<p class="text-[11px] uppercase tracking-wider text-slate-500">Provider</p>
+					<p class="mt-1 text-sm font-medium text-white">
+						{status.provider === 'ollama' ? 'Ollama' : status.provider === 'openai' ? 'OpenAI' : 'Open-WebUI'}
+					</p>
+					<p class="mt-1 text-xs text-slate-400">
+						{status.provider === 'ollama' ? 'Direct connection' : status.provider === 'openai' ? 'Cloud API' : 'Proxy'}
+					</p>
+				</div>
+
+				<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
 					<p class="text-[11px] uppercase tracking-wider text-slate-500">Model</p>
-					<p class="mt-1 text-sm font-medium text-white">{status.model || openWebUiModel}</p>
+					<p class="mt-1 text-sm font-medium text-white">{status.model}</p>
 					<p class="mt-1 text-xs text-slate-400">
 						{#if status.model_available === true}
-							Returned by Open-WebUI
+							Found in model list
 						{:else if status.model_available === false}
 							Not found in model list
 						{:else if !status.models_endpoint_available}
@@ -1076,29 +1217,31 @@
 					</p>
 				</div>
 
-				<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
-					<p class="text-[11px] uppercase tracking-wider text-slate-500">Database connection</p>
-					<p class="mt-1 text-sm font-medium text-white">
-						{#if status.nocodb_tool_available === true}
-							nocodb-electrical detected
-						{:else if status.nocodb_tool_available === false}
-							Not detected
-						{:else}
-							Unknown
-						{/if}
-					</p>
-					<p class="mt-1 text-xs text-slate-400">
-						{status.tools_endpoint_available ? 'Open-WebUI tools endpoint responded' : 'Fell back to connection-only test'}
-					</p>
-				</div>
-
-				<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
-					<p class="text-[11px] uppercase tracking-wider text-slate-500">Available models</p>
-					<p class="mt-1 text-sm font-medium text-white">{status.available_models.length}</p>
-					<p class="mt-1 text-xs text-slate-400" style="text-wrap: pretty">
-						{status.available_models.slice(0, 3).join(', ') || 'No model names returned'}
-					</p>
-				</div>
+				{#if status.provider === 'openwebui'}
+					<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
+						<p class="text-[11px] uppercase tracking-wider text-slate-500">Database connection</p>
+						<p class="mt-1 text-sm font-medium text-white">
+							{#if status.nocodb_tool_available === true}
+								nocodb-electrical detected
+							{:else if status.nocodb_tool_available === false}
+								Not detected
+							{:else}
+								Unknown
+							{/if}
+						</p>
+						<p class="mt-1 text-xs text-slate-400">
+							{status.tools_endpoint_available ? 'Open-WebUI tools endpoint responded' : 'Fell back to connection-only test'}
+						</p>
+					</div>
+				{:else}
+					<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
+						<p class="text-[11px] uppercase tracking-wider text-slate-500">Available models</p>
+						<p class="mt-1 text-sm font-medium text-white">{status.available_models.length}</p>
+						<p class="mt-1 text-xs text-slate-400" style="text-wrap: pretty">
+							{status.available_models.slice(0, 3).join(', ') || 'No model names returned'}
+						</p>
+					</div>
+				{/if}
 			</div>
 
 			<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3 text-sm text-slate-300" style="text-wrap: pretty">
@@ -1119,7 +1262,7 @@
 			{/if}
 		{:else}
 			<div class="rounded-xl border border-dashed border-slate-700/50 bg-slate-900/45 p-4 text-sm text-slate-400" style="text-wrap: pretty">
-				Save or test your configuration to verify the Open-WebUI connection and attempt to detect the <code class="text-slate-300">nocodb-electrical</code> tool.
+				Save or test your configuration to verify the LLM connection.
 			</div>
 		{/if}
 	</section>

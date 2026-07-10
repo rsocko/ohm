@@ -1,7 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getAiConfig } from '$lib/server/ai-config';
-import { createOpenAI } from '@ai-sdk/openai';
+import { getLlmProvider } from '$lib/server/llm-provider';
 import { streamText, tool, isStepCount } from 'ai';
 import { z } from 'zod';
 import { registry, isConfirmation, isDataResult } from '$lib/server/mcp';
@@ -90,7 +89,6 @@ function buildAITools(confirmations: ConfirmationPayload[], homeContext?: HomeCo
 
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json();
-	const config = await getAiConfig();
 
 	// Handle confirmed execution (user clicked Confirm)
 	if (body.message === '__CONFIRM__' && body.confirmation) {
@@ -139,11 +137,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		{ role: 'user', content: body.message }
 	];
 
-	// Create OpenAI-compatible provider pointed at Open WebUI → Azure AI
-	const provider = createOpenAI({
-		baseURL: `${config.openWebUiUrl}/api`,
-		apiKey: config.openWebUiApiKey,
-	});
+	// Create LLM provider based on configured backend (Ollama, OpenAI, or Open-WebUI)
+	const { provider, modelId } = await getLlmProvider();
 
 	// Confirmations collected from tool executions
 	const confirmations: ConfirmationPayload[] = [];
@@ -151,7 +146,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	try {
 		const result = streamText({
-			model: provider.chat(config.openWebUiModel),
+			model: provider.chat(modelId),
 			system: systemMessage,
 			messages,
 			tools: aiTools,
