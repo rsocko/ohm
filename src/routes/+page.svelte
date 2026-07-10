@@ -230,13 +230,14 @@
 						lng: Number(h.fields.Longitude)
 					}));
 				const detectedId = await geo.detectHome(homeLocations);
-				if (detectedId && detectedId !== homeContext.selectedHomeId) {
-					homeContext.selectedHomeId = detectedId;
-					const name = homes.find((h) => h.id === detectedId)?.fields.Name as string;
-					geoToast = `Switched to ${name} based on your location`;
-					setTimeout(() => { geoToast = null; }, 4000);
+					const switchToId = detectedId ?? geo.state.nearestHomeId;
+					if (switchToId && switchToId !== homeContext.selectedHomeId) {
+						homeContext.selectedHomeId = switchToId;
+						const name = homes.find((h) => h.id === switchToId)?.fields.Name as string;
+						geoToast = `Switched to ${name} based on your location`;
+						setTimeout(() => { geoToast = null; }, 4000);
+					}
 				}
-			}
 
 			try {
 				energySource = new EventSource('/api/energy/live');
@@ -347,12 +348,13 @@
 								.filter((h) => h.fields.Latitude && h.fields.Longitude)
 								.map((h) => ({ id: h.id, name: h.fields.Name as string, lat: Number(h.fields.Latitude), lng: Number(h.fields.Longitude) }));
 							const detectedId = await geo.detectHome(homeLocations);
-							if (detectedId && detectedId !== homeContext.selectedHomeId) {
-								homeContext.selectedHomeId = detectedId;
-								const name = homes.find((h) => h.id === detectedId)?.fields.Name as string;
-								geoToast = `Switched to ${name} based on your location`;
-								setTimeout(() => { geoToast = null; }, 4000);
-							}
+								const switchToId = detectedId ?? geo.state.nearestHomeId;
+								if (switchToId && switchToId !== homeContext.selectedHomeId) {
+									homeContext.selectedHomeId = switchToId;
+									const name = homes.find((h) => h.id === switchToId)?.fields.Name as string;
+									geoToast = `Switched to ${name} based on your location`;
+									setTimeout(() => { geoToast = null; }, 4000);
+								}
 						}
 					}}
 					disabled={geo.state.loading}
