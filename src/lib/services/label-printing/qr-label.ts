@@ -55,7 +55,9 @@ export async function renderQrLabel(options: QrLabelOptions): Promise<RenderedLa
 	ctx.fillRect(0, 0, widthPx, heightPx);
 
 	// Generate QR code as data URL
-	const qrSize = heightPx - 8; // Leave 4px margin top/bottom
+	// QR takes full tape height minus margins for maximum scannability
+	const qrMargin = 4;
+	const qrSize = heightPx - qrMargin * 2;
 	const qrDataUrl = await QRCode.toDataURL(url, {
 		width: qrSize,
 		margin: 1,
@@ -63,43 +65,43 @@ export async function renderQrLabel(options: QrLabelOptions): Promise<RenderedLa
 		color: { dark: '#000000', light: '#ffffff' },
 	});
 
-	// Draw QR code on left side
+	// Draw QR code on left side, with D30 vertical offset
+	const verticalOffset = Math.round(heightPx * 0.06); // Match circuit label D30 bias
 	const qrImg = await loadImage(qrDataUrl);
 	const qrX = 4;
-	const qrY = (heightPx - qrSize) / 2;
+	const qrY = (heightPx - qrSize) / 2 + verticalOffset;
 	ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-	// Draw text to the right of QR
-	const textX = qrX + qrSize + 6;
+	// Draw text to the right of QR — use readable font sizes
+	const textX = qrX + qrSize + 8;
 	const textWidth = widthPx - textX - 4;
 
 	ctx.fillStyle = '#000000';
 	ctx.textAlign = 'left';
 
-	// Scale font based on available height
+	// Scale fonts — line1 (name) is primary, should be large and readable
+	// For 96px (12mm tape): primary ~26px, secondary ~18px
 	const lineCount = line3 ? 3 : 2;
-	const maxFontSize = Math.min(12, Math.floor((heightPx - 8) / lineCount) - 2);
-	const primarySize = Math.max(8, maxFontSize);
-	const secondarySize = Math.max(7, primarySize - 2);
+	const primarySize = Math.max(16, Math.round(heightPx * 0.26));
+	const secondarySize = Math.max(12, Math.round(heightPx * 0.18));
+
+	// Vertically center the text block with D30 offset
+	const totalTextHeight = primarySize + (lineCount - 1) * secondarySize + (lineCount - 1) * 4;
+	const textStartY = (heightPx - totalTextHeight) / 2 + primarySize + verticalOffset;
 
 	// Line 1 (bold)
-	ctx.font = `bold ${primarySize}px "SF Mono", "Cascadia Code", "Courier New", monospace`;
-	const y1 = line3
-		? Math.round(heightPx * 0.28)
-		: Math.round(heightPx * 0.38);
-	ctx.fillText(truncateText(ctx, line1, textWidth), textX, y1);
+	ctx.font = `bold ${primarySize}px sans-serif`;
+	ctx.fillText(truncateText(ctx, line1, textWidth), textX, textStartY);
 
 	// Line 2
-	ctx.font = `${secondarySize}px "SF Mono", "Courier New", monospace`;
-	const y2 = line3
-		? Math.round(heightPx * 0.55)
-		: Math.round(heightPx * 0.68);
+	ctx.font = `${secondarySize}px sans-serif`;
+	const y2 = textStartY + secondarySize + 4;
 	ctx.fillText(truncateText(ctx, line2, textWidth), textX, y2);
 
 	// Line 3 (optional)
 	if (line3) {
-		ctx.font = `${secondarySize}px "SF Mono", "Courier New", monospace`;
-		const y3 = Math.round(heightPx * 0.82);
+		ctx.font = `${secondarySize}px sans-serif`;
+		const y3 = y2 + secondarySize + 4;
 		ctx.fillText(truncateText(ctx, line3, textWidth), textX, y3);
 	}
 

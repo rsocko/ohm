@@ -27,7 +27,19 @@ export interface PanelDirectoryTemplate extends LabelTemplate {
 	showAmps: boolean;
 	showBreakerType: boolean;
 	showDate: boolean;
+	showMonitored: boolean;
+	showReceptacles: boolean;
 	fontSize: number;
+	/** Override width in mm (for narrow panel doors) */
+	catalogWidthMm?: number;
+	/** Override height in mm (for narrow panel doors) */
+	catalogHeightMm?: number;
+}
+
+export interface ReceptacleInfo {
+	name: string;
+	area: string;
+	circuitId: number;
 }
 
 export interface CircuitLabelTemplate extends LabelTemplate {

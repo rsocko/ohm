@@ -20,6 +20,8 @@ export const PANEL_DIRECTORY_40MM: PanelDirectoryTemplate = {
 	showAmps: true,
 	showBreakerType: true,
 	showDate: true,
+	showMonitored: true,
+	showReceptacles: false,
 	fontSize: 9,
 };
 
@@ -33,6 +35,8 @@ export const PANEL_DIRECTORY_50MM: PanelDirectoryTemplate = {
 	showAmps: true,
 	showBreakerType: true,
 	showDate: true,
+	showMonitored: true,
+	showReceptacles: false,
 	fontSize: 10,
 };
 
@@ -100,7 +104,7 @@ export function circuitTemplateFromConfig(config: PrinterConfig, format: 'compac
  * Create a panel directory template sized to the printer's label length.
  * Height is auto-calculated from content, but width matches the label.
  */
-export function panelDirectoryTemplateFromConfig(config: PrinterConfig): PanelDirectoryTemplate {
+export function panelDirectoryTemplateFromConfig(config: PrinterConfig, options?: { catalogWidthMm?: number; catalogHeightMm?: number; showReceptacles?: boolean }): PanelDirectoryTemplate {
 	const dims = getLabelDimensions(config);
 	const widthPx = Math.round(dims.widthMm * D30_FEED_PPMM);
 	return {
@@ -113,6 +117,10 @@ export function panelDirectoryTemplateFromConfig(config: PrinterConfig): PanelDi
 		showAmps: true,
 		showBreakerType: true,
 		showDate: true,
+		showMonitored: true,
+		showReceptacles: options?.showReceptacles ?? false,
 		fontSize: dims.heightMm <= 12 ? 8 : 9,
+		catalogWidthMm: options?.catalogWidthMm,
+		catalogHeightMm: options?.catalogHeightMm,
 	};
 }

@@ -277,15 +277,18 @@
 
 	// Panel summary stats
 	const panelStats = $derived.by(() => {
-		let gfci = 0, afci = 0, twoForty = 0;
+		let gfci = 0, afci = 0, twoForty = 0, slotsUsed = 0;
 		for (const c of panelCircuits) {
 			if (c.fields['GFCI Protected'] || c.fields.GFCI_Protected) gfci++;
 			if (c.fields['AFCI Protected'] || c.fields.AFCI_Protected) afci++;
 			const voltage = c.fields.Voltage as string | undefined;
 			const amps = c.fields.Amps as number | undefined;
 			if (voltage === '240V' || (amps && amps >= 30)) twoForty++;
+			slotsUsed += inferPoles(c);
 		}
-		return { gfci, afci, twoForty };
+		const capacity = (selectedPanel?.fields.Capacity as number) || 0;
+		const slotsFree = capacity ? capacity - slotsUsed : 0;
+		return { gfci, afci, twoForty, slotsUsed, slotsFree };
 	});
 
 	// Type → badge config maps (same as rooms page)
@@ -613,11 +616,12 @@
 		const panelName = (selectedPanel?.fields.Name as string) || 'Panel';
 		try {
 			const configRes = await fetch('/api/settings/printer');
-			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 15, labelLengthMm: 'continuous', dpi: 203 } as any;
-			const template = circuitTemplateFromConfig(config, 'compact');
+			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 12, labelLengthMm: 40, dpi: 203 } as any;
+			const format = (config as any).defaultCircuitFormat || 'compact';
+			const template = circuitTemplateFromConfig(config, format);
 			const dims = getLabelDimensions(config);
 			labelPreviewLabel = renderCircuitLabel(circuit, panelName, template);
-			labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
+			labelPreviewTitle = `${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
 			labelPreviewWidthMm = dims.widthMm;
 			labelPreviewHeightMm = dims.heightMm;
 			labelPreviewOpen = true;
@@ -625,7 +629,7 @@
 			// Fallback if config fetch fails
 			const template = circuitTemplateFromConfig({ tapeWidthMm: 12, labelLengthMm: 40, dpi: 203 } as any, 'compact');
 			labelPreviewLabel = renderCircuitLabel(circuit, panelName, template);
-			labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
+			labelPreviewTitle = `${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
 			labelPreviewWidthMm = 40;
 			labelPreviewHeightMm = 12;
 			labelPreviewOpen = true;
@@ -633,22 +637,20 @@
 	}
 
 	async function previewQrLabel(circuit: V3Record) {
-		const panelName = (selectedPanel?.fields.Name as string) || 'Panel';
 		const f = circuit.fields;
 		try {
 			const configRes = await fetch('/api/settings/printer');
-			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 15, labelLengthMm: 'continuous' } as any;
+			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 12, labelLengthMm: 40 } as any;
 			const dims = getLabelDimensions(config);
 			const label = await renderQrLabel({
 				url: buildCircuitUrl(window.location.origin, selectedPanel!.id, circuit.id),
-				line1: `Ckt ${f.Number} · ${panelName}`,
-				line2: (f.Name as string) || 'Circuit',
-				line3: f.Amps ? `${f.Amps}A${f['GFCI Protected'] || f.GFCI_Protected ? ' GFCI' : ''}` : undefined,
+				line1: (f.Name as string) || 'Circuit',
+				line2: `${f.Number} · ${f.Amps || '?'}A${f['GFCI Protected'] || f.GFCI_Protected ? ' · GFCI' : ''}`,
 				widthMm: dims.widthMm,
 				heightMm: dims.heightMm,
 			});
 			labelPreviewLabel = label;
-			labelPreviewTitle = `QR: Ckt ${f.Number} — ${f.Name || 'Circuit'}`;
+			labelPreviewTitle = `QR: ${f.Number} — ${f.Name || 'Circuit'}`;
 			labelPreviewOpen = true;
 		} catch (e) {
 			console.error('QR label render failed:', e);
@@ -1225,7 +1227,7 @@
 							<div>
 								<h2 class="text-lg font-bold text-white drop-shadow-sm">{selectedPanel.fields.Name}</h2>
 								<p class="text-xs text-slate-300 mt-0.5">
-									{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size'] || selectedPanel.fields.Capacity} <span class="text-slate-500 mx-1">|</span> {selectedPanel.fields['Service Size'] || `${selectedPanel.fields.Capacity} spaces`}{/if}
+									{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size']} <span class="text-slate-500 mx-1">|</span> {selectedPanel.fields['Service Size']}A{/if}{#if selectedPanel.fields.Capacity} <span class="text-slate-500 mx-1">|</span> {selectedPanel.fields.Capacity} slots{#if panelStats.slotsFree > 0} · {panelStats.slotsFree} free{/if}{/if}
 								</p>
 							</div>
 							<div class="flex items-center gap-2">
@@ -1295,7 +1297,7 @@
 						{/if}
 						{#if showLabelPrint}
 							<div class="mt-3 pt-3 border-t border-white/10">
-								<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
+								<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} receptacles={allReceptacles} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
 							</div>
 						{/if}
 					</div>
@@ -1307,7 +1309,7 @@
 						<div>
 							<h2 class="text-lg font-bold text-white">{selectedPanel.fields.Name}</h2>
 							<p class="text-xs text-slate-400 mt-0.5">
-								{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size'] || selectedPanel.fields.Capacity} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields['Service Size'] || `${selectedPanel.fields.Capacity} spaces`}{/if}
+								{selectedPanel.fields.Location || ''}{selectedPanel.fields.Location ? ' · ' : ''}{panelCircuits.length} circuits{#if selectedPanel.fields['Service Size']} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields['Service Size']}A{/if}{#if selectedPanel.fields.Capacity} <span class="text-slate-600 mx-1">|</span> {selectedPanel.fields.Capacity} slots{#if panelStats.slotsFree > 0} · {panelStats.slotsFree} free{/if}{/if}
 							</p>
 						</div>
 							<div class="flex items-center gap-1.5">
@@ -1351,7 +1353,7 @@
 					{/if}
 					{#if showLabelPrint}
 						<div class="mt-3 pt-3 border-t border-slate-700/50">
-							<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
+							<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} receptacles={allReceptacles} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
 						</div>
 					{/if}
 				</div>
