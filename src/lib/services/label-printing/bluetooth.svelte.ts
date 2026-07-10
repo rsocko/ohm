@@ -361,13 +361,20 @@ class BluetoothPrinterService {
 			await this.writeCommand(block.marker);
 			await this.delay(30);
 
-			// Send block data in chunks
-			const { chunkSize } = this.config;
-			for (let offset = 0; offset < block.data.length; offset += chunkSize) {
-				const chunk = block.data.slice(offset, Math.min(offset + chunkSize, block.data.length));
+			// Send block data in small chunks with throttling.
+			// The D30's internal buffer is small (~500 bytes); sending too fast
+			// causes the print head to stall and feed blank lines (gaps in text).
+			const D30_CHUNK = 64; // Smaller chunks for reliable D30 streaming
+			const D30_CHUNK_DELAY = 10; // ms between chunks — lets printer process
+			for (let offset = 0; offset < block.data.length; offset += D30_CHUNK) {
+				const chunk = block.data.slice(offset, Math.min(offset + D30_CHUNK, block.data.length));
 				await this.writeCommand(chunk);
 				sentBytes += chunk.length;
 				onProgress?.(sentBytes, totalBytes);
+				// Throttle: small delay between chunks to avoid buffer overflow
+				if (offset + D30_CHUNK < block.data.length) {
+					await this.delay(D30_CHUNK_DELAY);
+				}
 			}
 		}
 
