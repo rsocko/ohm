@@ -501,6 +501,26 @@
 		})
 	);
 
+	// Re-initialize when home selection changes
+	let _prevHomeId: number | null | undefined = undefined;
+	$effect(() => {
+		const currentHomeId = homeContext.selectedHomeId;
+		if (_prevHomeId === undefined) {
+			// First run — skip, onMount handles initial load
+			_prevHomeId = currentHomeId;
+			return;
+		}
+		if (currentHomeId === _prevHomeId) return;
+		_prevHomeId = currentHomeId;
+		// Home changed — reconnect SSE and refetch data
+		disconnectLive();
+		statusLoading = true;
+		void checkHAStatus();
+		if (selectedRange !== 'live') {
+			void loadHistoricalRange(selectedRange as Exclude<TimeRange, 'live'>);
+		}
+	});
+
 	onMount(() => {
 		void checkHAStatus();
 		const clock = setInterval(() => {
