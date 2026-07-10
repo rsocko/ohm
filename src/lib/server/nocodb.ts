@@ -190,6 +190,7 @@ export interface LinkColumn {
 	id: string;
 	title: string;
 	fk_related_model_id: string;
+	type?: string; // 'bt' | 'hm' | 'mm'
 }
 
 /**
@@ -201,11 +202,16 @@ export async function getLinkColumns(tableId: string): Promise<LinkColumn[]> {
 	const columns = (meta.columns || []) as Array<Record<string, unknown>>;
 	return columns
 		.filter((c) => c.uidt === 'LinkToAnotherRecord' || c.uidt === 'Links')
-		.map((c) => ({
-			id: c.id as string,
-			title: c.title as string,
-			fk_related_model_id: c.fk_related_model_id as string
-		}));
+		.map((c) => {
+			const colOptions = (c.colOptions || {}) as Record<string, unknown>;
+			return {
+				id: c.id as string,
+				title: c.title as string,
+				// BelongsTo columns store fk_related_model_id in colOptions, not at root
+				fk_related_model_id: (c.fk_related_model_id || colOptions.fk_related_model_id) as string,
+				type: colOptions.type as string | undefined
+			};
+		});
 }
 
 /**
