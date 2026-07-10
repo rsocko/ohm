@@ -39,6 +39,7 @@ function persistLockedHomes(locked: Set<number>): void {
 
 let _selectedHomeId: number | null = $state(loadPersistedHomeId());
 let _lockedHomes: Set<number> = $state(loadLockedHomes());
+let _manualOverride: boolean = $state(false);
 
 export const homeContext = {
 	get selectedHomeId() { return _selectedHomeId; },
@@ -49,6 +50,12 @@ export const homeContext = {
 			else localStorage.removeItem(STORAGE_KEY);
 		}
 	},
+	/** Whether the user has manually picked a home this session (suppresses auto-geo). */
+	get manualOverride() { return _manualOverride; },
+	/** Mark that the user explicitly chose a home — geo won't override until cleared. */
+	setManualOverride() { _manualOverride = true; },
+	/** Clear manual override so geo auto-detection can run again. */
+	clearManualOverride() { _manualOverride = false; },
 	get selectedHomeName(): string {
 		if (!_selectedHomeId) return '';
 		const home = dataStore.homes.find(h => h.id === _selectedHomeId);

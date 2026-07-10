@@ -6,6 +6,7 @@
 
 const PROXIMITY_THRESHOLD_M = 500; // metres — "near" a home
 const STORAGE_KEY = 'geo_permission';
+const COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes between geo checks
 
 export interface HomeLocation {
 	id: number;
@@ -40,6 +41,8 @@ function createGeoStore() {
 		distanceM: null,
 		loading: false
 	});
+
+	let lastDetectTime: number = 0;
 
 	function findNearest(position: GeolocationPosition, homes: HomeLocation[]): { id: number; dist: number } | null {
 		if (!homes.length) return null;
@@ -76,6 +79,7 @@ function createGeoStore() {
 	async function detectHome(homes: HomeLocation[]): Promise<number | null> {
 		if (state.permission !== 'granted' || !('geolocation' in navigator)) return null;
 		state.loading = true;
+		lastDetectTime = Date.now();
 		try {
 			const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
 				navigator.geolocation.getCurrentPosition(resolve, reject, {
@@ -115,12 +119,18 @@ function createGeoStore() {
 		state.distanceM = null;
 	}
 
+	/** Whether enough time has passed since the last geo check to warrant a new one. */
+	function isCooldownExpired(): boolean {
+		return Date.now() - lastDetectTime >= COOLDOWN_MS;
+	}
+
 	return {
 		get state() { return state; },
 		requestPermission,
 		detectHome,
 		dismiss,
 		reset,
+		isCooldownExpired,
 		PROXIMITY_THRESHOLD_M
 	};
 }

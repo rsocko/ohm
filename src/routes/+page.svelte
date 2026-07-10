@@ -220,7 +220,8 @@
 				);
 			}
 
-			if (geo.state.permission === 'granted' && homes.length > 1) {
+			if (geo.state.permission === 'granted' && homes.length > 1
+				&& !homeContext.manualOverride && geo.isCooldownExpired()) {
 				const homeLocations: HomeLocation[] = homes
 					.filter((h) => h.fields.Latitude && h.fields.Longitude)
 					.map((h) => ({
@@ -306,7 +307,7 @@
 					{#each homes as home}
 						{@const active = homeContext.selectedHomeId === home.id}
 						<button
-							onclick={() => { homeContext.selectedHomeId = home.id; }}
+							onclick={() => { homeContext.selectedHomeId = home.id; homeContext.setManualOverride(); }}
 							class="inline-flex items-center gap-1 px-3 rounded-full text-xs font-medium leading-none transition-background-color,color active:scale-[0.96] {active ? 'bg-indigo-600 text-white' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-600'}"
 							style="height: 28px"
 						>
@@ -317,6 +318,32 @@
 						</button>
 					{/each}
 				</div>
+				{#if geo.state.permission === 'granted' && homeContext.manualOverride}
+					<button
+						onclick={async () => {
+							homeContext.clearManualOverride();
+							const homeLocations: HomeLocation[] = homes
+								.filter((h) => h.fields.Latitude && h.fields.Longitude)
+								.map((h) => ({ id: h.id, name: h.fields.Name as string, lat: Number(h.fields.Latitude), lng: Number(h.fields.Longitude) }));
+							const detectedId = await geo.detectHome(homeLocations);
+							const switchToId = detectedId ?? geo.state.nearestHomeId;
+							if (switchToId && switchToId !== homeContext.selectedHomeId) {
+								homeContext.selectedHomeId = switchToId;
+								const name = homes.find((h) => h.id === switchToId)?.fields.Name as string;
+								geoToast = `Switched to ${name} based on your location`;
+								setTimeout(() => { geoToast = null; }, 4000);
+							} else {
+								geoToast = 'You\'re already at the nearest home';
+								setTimeout(() => { geoToast = null; }, 3000);
+							}
+						}}
+						disabled={geo.state.loading}
+						class="w-7 h-7 rounded-full bg-slate-700/40 flex items-center justify-center text-slate-400 hover:bg-slate-600 hover:text-white transition-all active:scale-90 disabled:opacity-50"
+						title="Re-detect location"
+					>
+						<Icon icon="mdi:crosshairs-gps" width={14} />
+					</button>
+				{/if}
 			</div>
 		{:else if selectedHome}
 			<p class="text-sm text-slate-400">{selectedHome.fields.Name}</p>
