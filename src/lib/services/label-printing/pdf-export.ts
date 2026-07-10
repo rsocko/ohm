@@ -188,7 +188,7 @@ tr:nth-child(even) { background: #fafafa; }
 .afci { background: #dbeafe; color: #1e40af; }
 .v240 { background: #fef3c7; color: #92400e; }
 .monitored { background: #fff7ed; color: #9a3412; }
-.receptacles-section { margin-top: 16px; font-size: 8px; }
+.receptacles-section { margin-top: 16px; font-size: 8px; page-break-before: always; }
 .receptacles-section h3 { font-size: 10px; margin: 0 0 6px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
 .rec-circuit { margin: 6px 0 1px; font-size: 9px; }
 .rec-item { margin: 0; padding-left: 12px; line-height: 1.4; color: #444; }
