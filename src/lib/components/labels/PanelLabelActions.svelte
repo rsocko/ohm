@@ -188,8 +188,10 @@
 	<!-- Printer Status -->
 	{#if printer.isAvailable}
 		<div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-700/50">
-			<span class="w-2 h-2 rounded-full {printer.isConnected ? 'bg-emerald-500' : 'bg-slate-500'}"></span>
-			{#if printer.isConnected}
+			<span class="w-2 h-2 rounded-full {printer.isConnected || printer.isPrinting ? 'bg-emerald-500' : 'bg-slate-500'} {printer.isPrinting ? 'animate-pulse' : ''}"></span>
+			{#if printer.isPrinting}
+				<span class="text-xs text-indigo-300 flex-1">{printer.deviceName || 'Phomemo'} printing…</span>
+			{:else if printer.isConnected}
 				<span class="text-xs text-emerald-300 flex-1">{printer.deviceName || 'Phomemo'} connected</span>
 			{:else}
 				<span class="text-xs text-slate-400 flex-1">Printer not connected</span>
@@ -201,6 +203,15 @@
 				>
 					{connecting ? 'Connecting…' : 'Connect'}
 				</button>
+			{/if}
+			{#if printer.printerStatus === 'paper-out'}
+				<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300">No paper</span>
+			{:else if printer.printerStatus === 'cover-open'}
+				<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300">Cover open</span>
+			{:else if printer.printerStatus === 'overheated'}
+				<span class="text-[10px] px-1.5 py-0.5 rounded bg-red-900/50 text-red-300">Overheated</span>
+			{:else if printer.printerStatus === 'low-battery'}
+				<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-900/50 text-amber-300">Low battery</span>
 			{/if}
 		</div>
 	{:else}

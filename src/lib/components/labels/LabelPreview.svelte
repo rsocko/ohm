@@ -51,6 +51,14 @@
 			await printer.printLabel(label, (sent, total) => {
 				progress = Math.round((sent / total) * 100);
 			});
+			// Check if printer reported an issue during print
+			if (printer.printerStatus === 'paper-out') {
+				error = 'Printer is out of paper/labels';
+			} else if (printer.printerStatus === 'cover-open') {
+				error = 'Printer cover is open';
+			} else if (printer.printerStatus === 'overheated') {
+				error = 'Printer overheated — wait and retry';
+			}
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Print failed';
 		} finally {
@@ -123,7 +131,13 @@
 					<div class="h-2 rounded-full bg-slate-700 overflow-hidden">
 						<div class="h-full bg-indigo-500 transition-[width] duration-200" style="width: {progress}%"></div>
 					</div>
-					<p class="text-xs text-slate-400 mt-1 text-center">Printing… {progress}%</p>
+					<p class="text-xs text-slate-400 mt-1 text-center">
+						{#if progress >= 100}
+							Waiting for printer…
+						{:else}
+							Sending… {progress}%
+						{/if}
+					</p>
 				</div>
 			{/if}
 

@@ -22,14 +22,31 @@ interface BluetoothRemoteGATTService {
 	readonly device: BluetoothDevice;
 	readonly uuid: string;
 	getCharacteristic(characteristic: string | number): Promise<BluetoothRemoteGATTCharacteristic>;
+	getCharacteristics(): Promise<BluetoothRemoteGATTCharacteristic[]>;
 }
 
-interface BluetoothRemoteGATTCharacteristic {
+interface BluetoothCharacteristicProperties {
+	readonly broadcast: boolean;
+	readonly read: boolean;
+	readonly writeWithoutResponse: boolean;
+	readonly write: boolean;
+	readonly notify: boolean;
+	readonly indicate: boolean;
+	readonly authenticatedSignedWrites: boolean;
+}
+
+interface BluetoothRemoteGATTCharacteristic extends EventTarget {
 	readonly uuid: string;
 	readonly value?: DataView;
+	readonly properties: BluetoothCharacteristicProperties;
 	writeValue(value: BufferSource): Promise<void>;
+	writeValueWithResponse(value: BufferSource): Promise<void>;
 	writeValueWithoutResponse(value: BufferSource): Promise<void>;
 	readValue(): Promise<DataView>;
+	startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+	stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+	addEventListener(type: 'characteristicvaluechanged', listener: (ev: Event & { target: BluetoothRemoteGATTCharacteristic }) => void): void;
+	removeEventListener(type: 'characteristicvaluechanged', listener: (ev: Event & { target: BluetoothRemoteGATTCharacteristic }) => void): void;
 }
 
 interface BluetoothRequestDeviceFilter {

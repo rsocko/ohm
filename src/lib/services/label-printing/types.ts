@@ -120,13 +120,25 @@ export interface RenderedLabel {
 /**
  * Known BLE service/characteristic UUID pairs for Phomemo printers.
  * Different models expose different services; we try each in order.
+ * notifyCharUuid is used to subscribe to printer status notifications.
  */
-export const KNOWN_PRINTER_PROFILES: { serviceUuid: string; writeCharUuid: string }[] = [
-	{ serviceUuid: '0000ffe0-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ffe1-0000-1000-8000-00805f9b34fb' },
-	{ serviceUuid: '0000ff00-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ff02-0000-1000-8000-00805f9b34fb' },
-	{ serviceUuid: '0000ae30-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ae01-0000-1000-8000-00805f9b34fb' },
-	{ serviceUuid: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', writeCharUuid: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f' },
+export const KNOWN_PRINTER_PROFILES: { serviceUuid: string; writeCharUuid: string; notifyCharUuid: string }[] = [
+	{ serviceUuid: '0000ffe0-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ffe1-0000-1000-8000-00805f9b34fb', notifyCharUuid: '0000ffe1-0000-1000-8000-00805f9b34fb' },
+	{ serviceUuid: '0000ff00-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ff02-0000-1000-8000-00805f9b34fb', notifyCharUuid: '0000ff01-0000-1000-8000-00805f9b34fb' },
+	{ serviceUuid: '0000ae30-0000-1000-8000-00805f9b34fb', writeCharUuid: '0000ae01-0000-1000-8000-00805f9b34fb', notifyCharUuid: '0000ae02-0000-1000-8000-00805f9b34fb' },
+	{ serviceUuid: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', writeCharUuid: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f', notifyCharUuid: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f' },
 ];
+
+// --- Printer Status ---
+
+/** Printer status decoded from notify characteristic responses */
+export type PrinterStatus = 'idle' | 'printing' | 'paper-out' | 'cover-open' | 'overheated' | 'low-battery' | 'unknown-error';
+
+export interface PrinterStatusEvent {
+	status: PrinterStatus;
+	raw: Uint8Array;
+	timestamp: number;
+}
 
 // --- Bluetooth State ---
 
@@ -135,9 +147,11 @@ export type BluetoothState =
 	| 'disconnected'
 	| 'connecting'
 	| 'connected'
+	| 'printing'
 	| 'error';
 
 export interface PrinterState {
 	bluetooth: BluetoothState;
 	deviceName: string | null;
+	printerStatus: PrinterStatus;
 }
