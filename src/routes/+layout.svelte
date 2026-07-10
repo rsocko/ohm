@@ -102,7 +102,7 @@
 <svelte:head>
 	<title>Ωhm</title>
 	<meta name="description" content="Ωhm — AI-powered home electrical intelligence" />
-	<meta name="theme-color" content="#6366F1" />
+	<meta name="theme-color" content="#0f0f1a" />
 </svelte:head>
 
 <!-- Close home dropdown on outside click -->
@@ -136,7 +136,7 @@
 		</div>
 	{/if}
 
-	<main class="flex-1 pb-20 px-4 pt-4 relative">
+	<main class="flex-1 pb-20 px-4 pt-4 relative" style="padding-top: max(1rem, env(safe-area-inset-top))">
 		<!-- Offline banner -->
 		{#if dataStore.offline}
 			<div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-energy-subtle border border-[#F5A623]/30 text-[#F5A623] text-[11px]">
@@ -199,7 +199,7 @@
 		{@render children()}
 	</main>
 
-	<nav class="fixed bottom-0 inset-x-0 bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 px-2 py-2 flex justify-around z-30">
+	<nav class="fixed bottom-0 inset-x-0 bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 px-2 pt-2 flex justify-around z-30" style="padding-bottom: max(0.5rem, env(safe-area-inset-bottom))">
 		{#each navItems as item}
 			{@const active = page.url.pathname === item.href || (item.href !== '/' && page.url.pathname.startsWith(item.href))}
 			<a
