@@ -93,44 +93,56 @@ export function rotateCanvas90CW(canvas: HTMLCanvasElement): HTMLCanvasElement {
  * the raster line width (in pixels) MUST match the tape width in pixels,
  * otherwise the printer misinterprets the byte stream.
  *
+ * The D30 has asymmetric resolution:
+ * - Across print head (tape width): 8px/mm (203 DPI)
+ * - Feed direction (label length): 4px/mm (~100 DPI)
+ *
  * This function:
- * 1. Scales the source canvas so its height = tapeWidthPx (becomes raster width after rotation)
- * 2. Rotates 90° clockwise
- * 3. Aligns the final width to a multiple of 8 (byte boundary)
+ * 1. Scales the source canvas height → tapeWidthPx (becomes raster line width)
+ * 2. Scales the source canvas width → labelLengthPx at feed DPI (becomes feed lines)
+ * 3. Rotates 90° clockwise
+ * 4. Aligns the raster width to a multiple of 8 (byte boundary)
  *
  * @param canvas - Source canvas (landscape orientation, user-visible layout)
  * @param tapeWidthMm - Physical tape width in mm (12 or 15)
- * @param pixelsPerMm - Printer resolution (default 8 = 203 DPI)
+ * @param labelLengthMm - Label length in mm (feed direction), or 0 for proportional scaling only
+ * @param headPixelsPerMm - Print head resolution (default 8 = 203 DPI)
+ * @param feedPixelsPerMm - Feed direction resolution (default 4 = ~100 DPI, empirically determined)
  */
 export function prepareCanvasForD30(
 	canvas: HTMLCanvasElement,
 	tapeWidthMm: number,
-	pixelsPerMm: number = 8
+	labelLengthMm: number = 0,
+	headPixelsPerMm: number = 8,
+	feedPixelsPerMm: number = 4
 ): HTMLCanvasElement {
-	// Target height (becomes raster line width after rotation) must match tape
-	const tapeWidthPx = Math.ceil(tapeWidthMm * pixelsPerMm / 8) * 8; // align to byte boundary
+	// Raster line width: tape width at head DPI, byte-aligned
+	const tapeWidthPx = Math.ceil(tapeWidthMm * headPixelsPerMm / 8) * 8;
 
-	// Scale factor to fit the canvas height into the tape width
-	const scale = tapeWidthPx / canvas.height;
+	// Feed direction: label length at feed DPI
+	// If labelLengthMm is provided, use it; otherwise scale proportionally from tape scaling
+	let feedPx: number;
+	if (labelLengthMm > 0) {
+		feedPx = Math.round(labelLengthMm * feedPixelsPerMm);
+	} else {
+		// Proportional: scale width same as height
+		const scale = tapeWidthPx / canvas.height;
+		feedPx = Math.round(canvas.width * scale * (feedPixelsPerMm / headPixelsPerMm));
+	}
 
-	// Scaled dimensions (before rotation)
-	const scaledWidth = Math.round(canvas.width * scale);
-	const scaledHeight = tapeWidthPx;
-
-	// Create scaled canvas
+	// Create scaled canvas at target dimensions (before rotation)
 	const scaled = document.createElement('canvas');
-	scaled.width = scaledWidth;
-	scaled.height = scaledHeight;
+	scaled.width = feedPx;       // becomes feed direction after rotation
+	scaled.height = tapeWidthPx; // becomes raster line width after rotation
 	const sctx = scaled.getContext('2d')!;
-	// White background (thermal printers: white = no print)
 	sctx.fillStyle = '#ffffff';
-	sctx.fillRect(0, 0, scaledWidth, scaledHeight);
-	sctx.drawImage(canvas, 0, 0, scaledWidth, scaledHeight);
+	sctx.fillRect(0, 0, feedPx, tapeWidthPx);
+	sctx.drawImage(canvas, 0, 0, feedPx, tapeWidthPx);
 
 	// Rotate 90° CW: width→height, height→width
 	const rotated = document.createElement('canvas');
-	rotated.width = scaledHeight; // tape width becomes raster line width
-	rotated.height = scaledWidth; // label length becomes feed direction
+	rotated.width = tapeWidthPx; // raster line width
+	rotated.height = feedPx;     // feed lines
 	const rctx = rotated.getContext('2d')!;
 	rctx.translate(rotated.width / 2, rotated.height / 2);
 	rctx.rotate(Math.PI / 2);
@@ -312,23 +324,43 @@ export function renderCircuitLabel(
 	ctx.fillStyle = '#ffffff';
 	ctx.fillRect(0, 0, widthPx, height);
 
+	// Scale font sizes relative to label height for legibility on any tape size
+	// For 96px (12mm tape): primarySize ~28px, secondarySize ~20px
+	// For 160px (20mm tape): primarySize ~48px, secondarySize ~32px
+	const primarySize = Math.round(height * 0.30);
+	const secondarySize = Math.round(height * 0.21);
+	const padding = Math.round(height * 0.08);
+
+	ctx.fillStyle = '#000000';
+	ctx.textAlign = 'left';
+
 	if (format === 'compact') {
-		ctx.fillStyle = '#000000';
-		ctx.font = 'bold 11px sans-serif';
+		// Single-line: maximize text size, centered vertically
+		const fontSize = Math.round(height * 0.38);
+		ctx.font = `bold ${fontSize}px sans-serif`;
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
-		const line = `Ckt ${slot} • ${panelName} • ${amps || '?'}A${typeStr ? ' ' + typeStr : ''}`;
-		ctx.fillText(line, widthPx / 2, height / 2, widthPx - 12);
+		const line = `${slot} · ${panelName} · ${amps || '?'}A${typeStr ? ' ' + typeStr : ''}`;
+		ctx.fillText(line, widthPx / 2, height / 2, widthPx - padding * 2);
 	} else {
-		ctx.fillStyle = '#000000';
-		ctx.font = 'bold 11px sans-serif';
-		ctx.textAlign = 'center';
-		ctx.fillText(
-			`Ckt ${slot} • ${panelName} • ${amps || '?'}A${typeStr ? ' ' + typeStr : ''}`,
-			widthPx / 2, height * 0.35, widthPx - 12
-		);
-		ctx.font = '10px sans-serif';
-		ctx.fillText(name, widthPx / 2, height * 0.7, widthPx - 12);
+		// Two-line layout: circuit name large on top, details below
+		// Line 1: Circuit name (bold, large — this is the most important info)
+		ctx.font = `bold ${primarySize}px sans-serif`;
+		ctx.textBaseline = 'alphabetic';
+		const nameY = padding + primarySize;
+		let displayName = name;
+		const maxTextWidth = widthPx - padding * 2;
+		while (ctx.measureText(displayName).width > maxTextWidth && displayName.length > 3) {
+			displayName = displayName.slice(0, -1);
+		}
+		if (displayName.length < name.length) displayName += '…';
+		ctx.fillText(displayName, padding, nameY, maxTextWidth);
+
+		// Line 2: Panel · Ckt # · Amps · Type (secondary info)
+		ctx.font = `${secondarySize}px sans-serif`;
+		const detailY = nameY + secondarySize + Math.round(height * 0.06);
+		const detail = `${panelName} · Ckt ${slot} · ${amps || '?'}A${typeStr ? ' · ' + typeStr : ''}`;
+		ctx.fillText(detail, padding, detailY, maxTextWidth);
 	}
 
 	// Border

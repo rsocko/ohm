@@ -335,9 +335,9 @@ class BluetoothPrinterService {
 	 * 3. Send footer to finalize the print
 	 */
 	private async printLabelD30(label: RenderedLabel, onProgress?: (sent: number, total: number) => void): Promise<void> {
-		// Scale and rotate for D30: the raster line width must match the tape width exactly,
-		// otherwise the printer misinterprets the byte stream (causing massive over-feed)
-		const rotated = prepareCanvasForD30(label.canvas, this.config.tapeWidthMm);
+		// Scale and rotate for D30: asymmetric DPI (8px/mm head, 4px/mm feed)
+		const labelLengthMm = this.config.labelLengthMm === 'continuous' ? 0 : this.config.labelLengthMm;
+		const rotated = prepareCanvasForD30(label.canvas, this.config.tapeWidthMm, labelLengthMm);
 		const { raster, bytesPerLine } = canvasToRaster(rotated);
 
 		// Determine media type from tape config
