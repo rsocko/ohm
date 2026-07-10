@@ -107,6 +107,7 @@
 		batchTotal = circuits.length;
 
 		const config = await fetchPrinterConfig();
+		printer.updateConfig(config);
 		const template = circuitTemplateFromConfig(config, 'compact');
 		const labels = circuits.map(circuit =>
 			renderCircuitLabel(circuit, panelName, template)
@@ -161,6 +162,7 @@
 		try {
 			const baseUrl = window.location.origin;
 			const config = await fetchPrinterConfig();
+			printer.updateConfig(config);
 			const dims = getLabelDimensions(config);
 
 			for (let i = 0; i < circuits.length; i++) {
@@ -192,7 +194,7 @@
 			const res = await fetch('/api/settings/printer');
 			if (res.ok) return await res.json();
 		} catch { /* fall through */ }
-		return { labelWidthMm: 50, tapeWidthMm: 15, labelLengthMm: 'continuous', dpi: 203, density: 4, serviceUuid: '', writeCharUuid: '', chunkSize: 100, chunkDelayMs: 20 } as PrinterConfig;
+		return { labelWidthMm: 40, tapeWidthMm: 12, labelLengthMm: 40, dpi: 203, density: 4, serviceUuid: '', writeCharUuid: '', chunkSize: 128, chunkDelayMs: 20 } as PrinterConfig;
 	}
 </script>
 
