@@ -86,8 +86,8 @@ export interface PrinterConfig {
 export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
 	deviceName: null,
 	labelWidthMm: 40,
-	tapeWidthMm: 15,
-	labelLengthMm: 'continuous',
+	tapeWidthMm: 12,
+	labelLengthMm: 40,
 	dpi: 203,
 	density: 4,
 	serviceUuid: '0000ffe0-0000-1000-8000-00805f9b34fb',

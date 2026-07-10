@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
 	import Icon from '@iconify/svelte';
-	import { getPrinterService, downloadLabelAsPng, printSingleLabel } from '$lib/services/label-printing';
+	import { getPrinterService, downloadLabelAsPng, printSingleLabel, type PrinterConfig } from '$lib/services/label-printing';
 	import type { RenderedLabel } from '$lib/services/label-printing';
 
 	let {
@@ -50,6 +50,14 @@
 		error = null;
 		progress = 0;
 		try {
+			// Fetch server config and sync to printer service before printing
+			try {
+				const res = await fetch('/api/settings/printer');
+				if (res.ok) {
+					const config: PrinterConfig = await res.json();
+					printer.updateConfig(config);
+				}
+			} catch { /* use existing config */ }
 			await printer.printLabel(label, (sent, total) => {
 				progress = Math.round((sent / total) * 100);
 			});

@@ -363,9 +363,9 @@ class BluetoothPrinterService {
 			labelLengthMm,
 		});
 
-		// Concatenate entire print job into a single buffer
-		// (matches catdogmaus approach: header+marker+data+footer as one stream)
-		const block = job.blocks[0]; // Single block (no splitting)
+		// Phomemo header IS required — printer won't print without it.
+		// Include header + ESC @ + GS v 0 + bitmap + ESC d 0
+		const block = job.blocks[0];
 		const totalSize = job.header.length + block.marker.length + block.data.length + job.footer.length;
 		const printBuffer = new Uint8Array(totalSize);
 		let pos = 0;
@@ -374,9 +374,23 @@ class BluetoothPrinterService {
 		printBuffer.set(block.data, pos); pos += block.data.length;
 		printBuffer.set(job.footer, pos);
 
-		// Send in 128-byte chunks with 20ms delay (proven stable by catdogmaus)
+		// Log exact bytes being sent for debugging (compare with catdogmaus)
+		const hexDump = (arr: Uint8Array, n = 30) => 
+			Array.from(arr.slice(0, n)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+		
+		console.log('[D30 Print] Buffer details:', {
+			totalBytes: totalSize,
+			markerBytes: block.marker.length,
+			markerHex: hexDump(block.marker),
+			dataBytes: block.data.length,
+			dataFirst20: hexDump(block.data, 20),
+			footerHex: hexDump(job.footer),
+			fullBufferFirst30: hexDump(printBuffer, 30),
+		});
+
+		// Use writeValueWithResponse + 20ms delay (produces output)
 		const PACKET_SIZE = 128;
-		const CHUNK_DELAY = 20; // ms — matches catdogmaus D30printerPWA
+		const CHUNK_DELAY = 20;
 		let sentBytes = 0;
 
 		for (let offset = 0; offset < printBuffer.length; offset += PACKET_SIZE) {
@@ -384,8 +398,6 @@ class BluetoothPrinterService {
 			await this.characteristic!.writeValueWithResponse(chunk);
 			sentBytes += chunk.length;
 			onProgress?.(sentBytes, totalSize);
-
-			// 20ms delay between chunks — belt-and-suspenders flow control
 			if (offset + PACKET_SIZE < printBuffer.length) {
 				await this.delay(CHUNK_DELAY);
 			}
