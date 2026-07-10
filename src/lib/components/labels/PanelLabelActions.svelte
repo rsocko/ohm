@@ -13,6 +13,7 @@
 		printPanelDirectoryPdf,
 		downloadAllLabelsAsPng,
 		getLabelDimensions,
+		circuitTemplateFromConfig,
 		CIRCUIT_LABEL_COMPACT,
 		CIRCUIT_LABEL_DETAILED,
 	} from '$lib/services/label-printing';
@@ -44,6 +45,8 @@
 	let previewLabel: RenderedLabel | null = $state(null);
 	let previewOpen = $state(false);
 	let previewTitle = $state('');
+	let previewWidthMm = $state(40);
+	let previewHeightMm = $state(12);
 	let batchPrinting = $state(false);
 	let batchProgress = $state(0);
 	let batchTotal = $state(0);
@@ -52,12 +55,14 @@
 
 	const panelName = $derived((panel.fields.Name as string) || 'Panel');
 
-	function showPreview(label: RenderedLabel, title: string) {
+	function showPreview(label: RenderedLabel, title: string, widthMm?: number, heightMm?: number) {
 		if (onpreview) {
 			onpreview(label, title);
 		} else {
 			previewLabel = label;
 			previewTitle = title;
+			previewWidthMm = widthMm ?? 40;
+			previewHeightMm = heightMm ?? 12;
 			previewOpen = true;
 		}
 	}
@@ -79,9 +84,12 @@
 		});
 	}
 
-	function previewCircuitLabel(circuit: V3Record) {
-		const label = renderCircuitLabel(circuit, panelName, CIRCUIT_LABEL_DETAILED);
-		showPreview(label, `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`);
+	async function previewCircuitLabel(circuit: V3Record) {
+		const config = await fetchPrinterConfig();
+		const template = circuitTemplateFromConfig(config, 'compact');
+		const label = renderCircuitLabel(circuit, panelName, template);
+		const dims = getLabelDimensions(config);
+		showPreview(label, `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`, dims.widthMm, dims.heightMm);
 	}
 
 	async function printAllCircuitLabels() {
@@ -98,8 +106,10 @@
 		batchProgress = 0;
 		batchTotal = circuits.length;
 
+		const config = await fetchPrinterConfig();
+		const template = circuitTemplateFromConfig(config, 'compact');
 		const labels = circuits.map(circuit =>
-			renderCircuitLabel(circuit, panelName, CIRCUIT_LABEL_COMPACT)
+			renderCircuitLabel(circuit, panelName, template)
 		);
 
 		try {
@@ -125,9 +135,11 @@
 		connecting = false;
 	}
 
-	function downloadAllLabels() {
+	async function downloadAllLabels() {
+		const config = await fetchPrinterConfig();
+		const template = circuitTemplateFromConfig(config, 'compact');
 		const labels = circuits.map(circuit =>
-			renderCircuitLabel(circuit, panelName, CIRCUIT_LABEL_COMPACT)
+			renderCircuitLabel(circuit, panelName, template)
 		);
 		downloadAllLabelsAsPng(labels, `${panelName.toLowerCase().replace(/\s+/g, '-')}-ckt`);
 	}
@@ -308,6 +320,7 @@
 	bind:open={previewOpen}
 	label={previewLabel}
 	title={previewTitle}
-	labelWidthMm={40}
+	labelWidthMm={previewWidthMm}
+	labelHeightMm={previewHeightMm}
 />
 {/if}

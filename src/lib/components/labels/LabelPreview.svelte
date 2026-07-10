@@ -12,11 +12,13 @@
 		open = $bindable(false),
 		title = 'Label Preview',
 		labelWidthMm = 40,
+		labelHeightMm = 12,
 	}: {
 		label: RenderedLabel | null;
 		open: boolean;
 		title?: string;
 		labelWidthMm?: number;
+		labelHeightMm?: number;
 	} = $props();
 
 	const printer = getPrinterService();
@@ -115,7 +117,7 @@
 
 			<!-- Dimensions info -->
 			<div class="px-5 py-2 text-xs text-slate-400 text-center font-variant-numeric:tabular-nums">
-				{label.width} × {label.height}px • {labelWidthMm}mm wide
+					{label.width} × {label.height}px • {labelWidthMm} × {labelHeightMm}mm
 			</div>
 
 			<!-- Error -->

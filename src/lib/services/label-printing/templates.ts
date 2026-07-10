@@ -2,7 +2,8 @@
  * Label Templates — Pre-configured sizes for Phomemo printers
  */
 
-import type { PanelDirectoryTemplate, CircuitLabelTemplate, DeviceLabelTemplate } from './types';
+import type { PanelDirectoryTemplate, CircuitLabelTemplate, DeviceLabelTemplate, PrinterConfig } from './types';
+import { getLabelDimensions } from './types';
 
 /** Convert mm to pixels at given DPI */
 export function mmToPx(mm: number, dpi: number): number {
@@ -68,3 +69,45 @@ export const DEVICE_LABEL: DeviceLabelTemplate = {
 	showVlan: true,
 	showPoe: true,
 };
+
+// --- Dynamic template factories (from printer config) ---
+
+/**
+ * Create a circuit label template sized to match the printer's tape config.
+ * Width = label length (feed direction), Height = tape width.
+ */
+export function circuitTemplateFromConfig(config: PrinterConfig, format: 'compact' | 'detailed' = 'compact'): CircuitLabelTemplate {
+	const dims = getLabelDimensions(config);
+	const dpi = config.dpi || 203;
+	return {
+		type: 'circuit',
+		widthMm: dims.widthMm,
+		heightMm: dims.heightMm,
+		dpi,
+		widthPx: mmToPx(dims.widthMm, dpi),
+		heightPx: mmToPx(dims.heightMm, dpi),
+		format,
+		includeQr: false,
+	};
+}
+
+/**
+ * Create a panel directory template sized to the printer's label length.
+ * Height is auto-calculated from content, but width matches the label.
+ */
+export function panelDirectoryTemplateFromConfig(config: PrinterConfig): PanelDirectoryTemplate {
+	const dims = getLabelDimensions(config);
+	const dpi = config.dpi || 203;
+	return {
+		type: 'panel-directory',
+		widthMm: dims.widthMm,
+		heightMm: null,
+		dpi,
+		widthPx: mmToPx(dims.widthMm, dpi),
+		heightPx: null,
+		showAmps: true,
+		showBreakerType: true,
+		showDate: true,
+		fontSize: dims.heightMm <= 12 ? 8 : 9,
+	};
+}
