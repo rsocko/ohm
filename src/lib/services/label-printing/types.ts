@@ -106,8 +106,11 @@ export const DEFAULT_PRINTER_CONFIG: PrinterConfig = {
  *   the 255-line block boundary (256 lines causes garbled output from the
  *   split GS v 0 marker confusing the D30 firmware).
  */
-export const D30_HEAD_PPMM = 8;      // pixels per mm across print head
-export const D30_FEED_PPMM = 6.375;  // pixels per mm in feed direction
+export const D30_HEAD_PPMM = 8;   // pixels per mm across print head (203 DPI)
+export const D30_FEED_PPMM = 8;   // pixels per mm in feed direction (203 DPI uniform)
+// Note: catdogmaus/D30printerPWA confirms 8 px/mm in both directions.
+// For die-cut labels, ESC d 0 triggers the gap sensor to stop at the next gap,
+// so the exact feed line count doesn't need to match mm precisely.
 
 /** Get label dimensions in mm from config (width = length, height = tape width) */
 export function getLabelDimensions(config: PrinterConfig): { widthMm: number; heightMm: number } {
