@@ -1,9 +1,10 @@
 /**
  * Chat store — manages conversation state, streaming, and persistence.
- * Uses @ai-sdk/svelte for streaming and Svelte 5 runes for state.
+ * Uses SSE-based streaming from the MCP chat endpoint.
  */
 
-import type { ChatMessage, ChatContext, ActionConfirmationContent, BatchConfirmationContent } from '$lib/types/chat';
+import type { ChatMessage, ChatContext, BatchConfirmationContent } from '$lib/types/chat';
+import type { ConfirmationPayload } from '$lib/server/mcp/types';
 
 const STORAGE_KEY = 'electrical-ai-chat-messages';
 const MAX_MESSAGES = 200;
@@ -37,7 +38,7 @@ export const chatState = $state({
 	isLoading: false,
 	isOpen: false,
 	streamingContent: '',
-	pendingAction: null as ActionConfirmationContent | null,
+	pendingConfirmation: null as ConfirmationPayload | null,
 	pendingBatch: null as BatchConfirmationContent | null,
 	context: {
 		currentRoute: '/',
@@ -92,6 +93,40 @@ function updateLastAssistantMessage(content: string) {
 	}
 }
 
+/** Parse SSE events from a response stream */
+async function* parseSSE(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncGenerator<{ event: string; data: string }> {
+	const decoder = new TextDecoder();
+	let buffer = '';
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+
+		buffer += decoder.decode(value, { stream: true });
+		const lines = buffer.split('\n');
+		buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+		let currentEvent = '';
+		let currentData = '';
+
+		for (const line of lines) {
+			if (line.startsWith('event: ')) {
+				currentEvent = line.slice(7);
+			} else if (line.startsWith('data: ')) {
+				currentData = line.slice(6);
+			} else if (line === '' && currentEvent) {
+				yield { event: currentEvent, data: currentData };
+				currentEvent = '';
+				currentData = '';
+			}
+		}
+	}
+	// Flush remaining
+	if (buffer.startsWith('data: ') && buffer.includes('\n')) {
+		// partial flush not needed for well-formed SSE
+	}
+}
+
 export async function sendMessage(content: string) {
 	if (!content.trim() || chatState.isLoading) return;
 
@@ -123,77 +158,64 @@ export async function sendMessage(content: string) {
 		const reader = response.body?.getReader();
 		if (!reader) throw new Error('No response stream');
 
-		const decoder = new TextDecoder();
 		let accumulated = '';
 		let hasAssistantMessage = false;
+		let confirmation: ConfirmationPayload | null = null;
 
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
+		for await (const { event, data } of parseSSE(reader)) {
+			if (event === 'text') {
+				try {
+					const parsed = JSON.parse(data) as { content: string };
+					accumulated += parsed.content;
+					chatState.streamingContent = accumulated;
 
-			const chunk = decoder.decode(value, { stream: true });
-			accumulated += chunk;
-			chatState.streamingContent = accumulated;
-
-			// Strip confirmation markers from display text
-			const displayText = accumulated.replace(/\n<!--OHM_CONFIRMATION:.*?-->/g, '');
-
-			if (!hasAssistantMessage) {
-				addMessage({ role: 'assistant', content: displayText, contentType: 'text' });
-				hasAssistantMessage = true;
-			} else {
-				updateLastAssistantMessage(displayText);
+					if (!hasAssistantMessage) {
+						addMessage({ role: 'assistant', content: accumulated, contentType: 'text' });
+						hasAssistantMessage = true;
+					} else {
+						updateLastAssistantMessage(accumulated);
+					}
+				} catch { /* skip malformed */ }
+			} else if (event === 'confirmation') {
+				try {
+					confirmation = JSON.parse(data) as ConfirmationPayload;
+				} catch { /* skip */ }
+			} else if (event === 'error') {
+				try {
+					const parsed = JSON.parse(data) as { message: string };
+					if (!hasAssistantMessage) {
+						addMessage({ role: 'assistant', content: parsed.message, contentType: 'error' });
+						hasAssistantMessage = true;
+					}
+				} catch { /* skip */ }
 			}
+			// 'done' event just ends the loop naturally
 		}
 
-		// Parse confirmation markers from the complete stream
-		const confirmationRegex = /<!--OHM_CONFIRMATION:(.*?)-->/g;
-		let match;
-		while ((match = confirmationRegex.exec(accumulated)) !== null) {
-			try {
-				const conf = JSON.parse(match[1]) as { type: string; data: Record<string, unknown> };
-				if (conf.type === 'batch-confirmation') {
-					chatState.pendingBatch = conf.data as unknown as import('$lib/types/chat').BatchConfirmationContent;
-					// Add the batch confirmation to the last message for rendering
-					const msgs = chatState.messages;
-					const lastIdx = msgs.length - 1;
-					if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
-						chatState.messages = [
-							...msgs.slice(0, lastIdx),
-							{ ...msgs[lastIdx], contentType: 'batch-confirmation' as const, batchConfirmation: chatState.pendingBatch }
-						];
-					}
-				} else if (conf.type === 'action-confirmation') {
-					chatState.pendingAction = conf.data as unknown as import('$lib/types/chat').ActionConfirmationContent;
-					const msgs = chatState.messages;
-					const lastIdx = msgs.length - 1;
-					if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
-						chatState.messages = [
-							...msgs.slice(0, lastIdx),
-							{ ...msgs[lastIdx], contentType: 'action-confirmation' as const, actionConfirmation: chatState.pendingAction }
-						];
-					}
-				}
-			} catch {
-				console.error('Failed to parse confirmation marker');
-			}
-		}
-
-		// Clean the final stored message content (strip markers)
-		if (hasAssistantMessage) {
+		// If we got a confirmation, attach it to the last message
+		if (confirmation) {
+			chatState.pendingConfirmation = confirmation;
 			const msgs = chatState.messages;
 			const lastIdx = msgs.length - 1;
 			if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
-				const cleanContent = msgs[lastIdx].content.replace(/\n<!--OHM_CONFIRMATION:.*?-->/g, '').trim();
+				const batchConfirmation: BatchConfirmationContent = {
+					summary: confirmation.summary,
+					operations: confirmation.operations.map(op => ({
+						action: op.action as BatchConfirmationContent['operations'][number]['action'],
+						table: op.table,
+						label: op.label,
+						fields: op.details
+					}))
+				};
 				chatState.messages = [
 					...msgs.slice(0, lastIdx),
-					{ ...msgs[lastIdx], content: cleanContent }
+					{ ...msgs[lastIdx], contentType: 'batch-confirmation' as const, batchConfirmation }
 				];
 			}
 		}
 
-		// If nothing came back, show a generic error
-		if (!hasAssistantMessage) {
+		// If nothing came back
+		if (!hasAssistantMessage && !confirmation) {
 			addMessage({
 				role: 'assistant',
 				content: 'No response received. Check AI connection in Settings.',
@@ -213,51 +235,9 @@ export async function sendMessage(content: string) {
 	}
 }
 
-export async function confirmAction() {
-	const action = chatState.pendingAction;
-	if (!action) return;
-
-	chatState.isLoading = true;
-	try {
-		const response = await fetch('/api/chat', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				message: '__CONFIRM_ACTION__',
-				action,
-				context: chatState.context
-			})
-		});
-
-		if (!response.ok) throw new Error('Action failed');
-		const result = await response.json();
-		addMessage({
-			role: 'assistant',
-			content: result.message || `✓ Updated ${action.changes.length} record(s) successfully.`,
-			contentType: 'text'
-		});
-	} catch (error) {
-		addMessage({
-			role: 'assistant',
-			content: error instanceof Error ? error.message : 'Action failed',
-			contentType: 'error'
-		});
-	} finally {
-		chatState.pendingAction = null;
-		chatState.isLoading = false;
-		saveMessages(chatState.messages);
-	}
-}
-
-export function cancelAction() {
-	chatState.pendingAction = null;
-	addMessage({ role: 'assistant', content: 'Action cancelled.', contentType: 'text' });
-	saveMessages(chatState.messages);
-}
-
 export async function confirmBatch() {
-	const batch = chatState.pendingBatch;
-	if (!batch) return;
+	const confirmation = chatState.pendingConfirmation;
+	if (!confirmation) return;
 
 	chatState.isLoading = true;
 	try {
@@ -265,34 +245,38 @@ export async function confirmBatch() {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				message: '__CONFIRM_BATCH__',
-				batch,
+				message: '__CONFIRM__',
+				confirmation,
 				context: chatState.context
 			})
 		});
 
-		if (!response.ok) throw new Error('Batch execution failed');
+		if (!response.ok) throw new Error('Execution failed');
 		const result = await response.json();
 		addMessage({
 			role: 'assistant',
-			content: result.message || `✓ Completed ${batch.operations.length} operation(s).`,
+			content: result.message || `✓ Done!`,
 			contentType: 'text'
 		});
 	} catch (error) {
 		addMessage({
 			role: 'assistant',
-			content: error instanceof Error ? error.message : 'Batch execution failed',
+			content: error instanceof Error ? error.message : 'Execution failed',
 			contentType: 'error'
 		});
 	} finally {
-		chatState.pendingBatch = null;
+		chatState.pendingConfirmation = null;
 		chatState.isLoading = false;
 		saveMessages(chatState.messages);
 	}
 }
 
 export function cancelBatch() {
-	chatState.pendingBatch = null;
-	addMessage({ role: 'assistant', content: 'Batch cancelled. What would you like to change?', contentType: 'text' });
+	chatState.pendingConfirmation = null;
+	addMessage({ role: 'assistant', content: 'Cancelled. What would you like to change?', contentType: 'text' });
 	saveMessages(chatState.messages);
 }
+
+// Legacy aliases for backward compatibility with existing components
+export const confirmAction = confirmBatch;
+export const cancelAction = cancelBatch;

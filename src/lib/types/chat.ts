@@ -39,7 +39,7 @@ export interface ActionConfirmationContent {
 }
 
 export interface BatchOperation {
-	action: 'create' | 'update' | 'link' | 'unlink';
+	action: 'create' | 'update' | 'link' | 'unlink' | 'delete';
 	table: string;
 	label: string;
 	fields?: Record<string, unknown>;
@@ -68,6 +68,8 @@ export interface ChatMessage {
 
 export interface ChatContext {
 	currentRoute: string;
+	selectedHomeId?: number;
+	selectedHomeName?: string;
 	selectedPanel?: string;
 	selectedCircuit?: string;
 	selectedRoom?: string;

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
-	import { chatState, initChat, sendMessage, clearMessages } from '$lib/stores/chat.svelte';
+	import { chatState, initChat, sendMessage, clearMessages, setContext } from '$lib/stores/chat.svelte';
+	import { homeContext } from '$lib/stores/home-context.svelte';
 	import MessageBubble from '$lib/components/chat/MessageBubble.svelte';
 	import SuggestionChips from '$lib/components/chat/SuggestionChips.svelte';
 	import TypingIndicator from '$lib/components/chat/TypingIndicator.svelte';
@@ -16,6 +17,12 @@
 
 	onMount(() => {
 		initChat();
+		// Sync home context into chat context
+		setContext({
+			currentRoute: '/chat',
+			selectedHomeId: homeContext.selectedHomeId ?? undefined,
+			selectedHomeName: homeContext.selectedHomeName || undefined
+		});
 		if (!data.aiEnabled) return;
 		const q = new URL(window.location.href).searchParams.get('q');
 		if (q) {
@@ -34,6 +41,14 @@
 		void chatState.messages.length;
 		void chatState.isLoading;
 		scrollToBottom();
+	});
+
+	// Keep chat context in sync with selected home
+	$effect(() => {
+		setContext({
+			selectedHomeId: homeContext.selectedHomeId ?? undefined,
+			selectedHomeName: homeContext.selectedHomeName || undefined
+		});
 	});
 
 	async function handleSend() {
