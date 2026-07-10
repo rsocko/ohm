@@ -87,6 +87,58 @@ export function rotateCanvas90CW(canvas: HTMLCanvasElement): HTMLCanvasElement {
 	return rotated;
 }
 
+/**
+ * Scale and prepare a canvas for D30 printing.
+ * The D30 print head width is fixed by the tape size. After 90° rotation,
+ * the raster line width (in pixels) MUST match the tape width in pixels,
+ * otherwise the printer misinterprets the byte stream.
+ *
+ * This function:
+ * 1. Scales the source canvas so its height = tapeWidthPx (becomes raster width after rotation)
+ * 2. Rotates 90° clockwise
+ * 3. Aligns the final width to a multiple of 8 (byte boundary)
+ *
+ * @param canvas - Source canvas (landscape orientation, user-visible layout)
+ * @param tapeWidthMm - Physical tape width in mm (12 or 15)
+ * @param pixelsPerMm - Printer resolution (default 8 = 203 DPI)
+ */
+export function prepareCanvasForD30(
+	canvas: HTMLCanvasElement,
+	tapeWidthMm: number,
+	pixelsPerMm: number = 8
+): HTMLCanvasElement {
+	// Target height (becomes raster line width after rotation) must match tape
+	const tapeWidthPx = Math.ceil(tapeWidthMm * pixelsPerMm / 8) * 8; // align to byte boundary
+
+	// Scale factor to fit the canvas height into the tape width
+	const scale = tapeWidthPx / canvas.height;
+
+	// Scaled dimensions (before rotation)
+	const scaledWidth = Math.round(canvas.width * scale);
+	const scaledHeight = tapeWidthPx;
+
+	// Create scaled canvas
+	const scaled = document.createElement('canvas');
+	scaled.width = scaledWidth;
+	scaled.height = scaledHeight;
+	const sctx = scaled.getContext('2d')!;
+	// White background (thermal printers: white = no print)
+	sctx.fillStyle = '#ffffff';
+	sctx.fillRect(0, 0, scaledWidth, scaledHeight);
+	sctx.drawImage(canvas, 0, 0, scaledWidth, scaledHeight);
+
+	// Rotate 90° CW: width→height, height→width
+	const rotated = document.createElement('canvas');
+	rotated.width = scaledHeight; // tape width becomes raster line width
+	rotated.height = scaledWidth; // label length becomes feed direction
+	const rctx = rotated.getContext('2d')!;
+	rctx.translate(rotated.width / 2, rotated.height / 2);
+	rctx.rotate(Math.PI / 2);
+	rctx.drawImage(scaled, -scaled.width / 2, -scaled.height / 2);
+
+	return rotated;
+}
+
 // --- Panel Directory Renderer ---
 
 export function renderPanelDirectory(

@@ -7,7 +7,7 @@ import type { PrinterConfig, PrinterState, BluetoothState, RenderedLabel, Printe
 import { DEFAULT_PRINTER_CONFIG, KNOWN_PRINTER_PROFILES } from './types';
 import { buildPrintJob, buildD30PrintJob } from './escpos';
 import type { D30MediaType } from './escpos';
-import { canvasToRaster, rotateCanvas90CW } from './renderer';
+import { canvasToRaster, rotateCanvas90CW, prepareCanvasForD30 } from './renderer';
 
 class BluetoothPrinterService {
 	private config: PrinterConfig;
@@ -335,9 +335,9 @@ class BluetoothPrinterService {
 	 * 3. Send footer to finalize the print
 	 */
 	private async printLabelD30(label: RenderedLabel, onProgress?: (sent: number, total: number) => void): Promise<void> {
-		// Rotate 90° clockwise — D30 print head is narrow (tape width),
-		// image must be rotated so the short dimension becomes raster line width
-		const rotated = rotateCanvas90CW(label.canvas);
+		// Scale and rotate for D30: the raster line width must match the tape width exactly,
+		// otherwise the printer misinterprets the byte stream (causing massive over-feed)
+		const rotated = prepareCanvasForD30(label.canvas, this.config.tapeWidthMm);
 		const { raster, bytesPerLine } = canvasToRaster(rotated);
 
 		// Determine media type from tape config
