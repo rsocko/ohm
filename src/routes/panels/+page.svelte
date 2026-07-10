@@ -406,10 +406,17 @@
 		};
 	});
 
-	// Re-sync when home selection changes
+	// Re-sync when home selection changes (not on every derived re-computation)
+	let _prevPanelsHomeId: number | null | undefined = undefined;
 	$effect(() => {
-		// Access homeFiltered to track it reactively
-		const _ = homeFiltered.panels;
+		const currentHomeId = homeContext.selectedHomeId;
+		if (_prevPanelsHomeId === undefined) {
+			// First run — skip, onMount handles initial load
+			_prevPanelsHomeId = currentHomeId;
+			return;
+		}
+		if (currentHomeId === _prevPanelsHomeId) return;
+		_prevPanelsHomeId = currentHomeId;
 		if (!dataStore.loaded || loading) return;
 		panels = [...homeFiltered.panels].sort((a: V3Record, b: V3Record) => {
 			const aOrder = (a.fields['Sort Order'] as number) || 99;
