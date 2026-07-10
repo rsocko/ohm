@@ -8,7 +8,7 @@
 	import { getDisplayName } from '$lib/utils/display-name';
 	import PanelLabelActions from '$lib/components/labels/PanelLabelActions.svelte';
 	import LabelPreview from '$lib/components/labels/LabelPreview.svelte';
-	import { renderCircuitLabel, renderQrLabel, buildCircuitUrl, getLabelDimensions, CIRCUIT_LABEL_DETAILED } from '$lib/services/label-printing';
+	import { renderCircuitLabel, renderQrLabel, buildCircuitUrl, getLabelDimensions, circuitTemplateFromConfig } from '$lib/services/label-printing';
 	import type { RenderedLabel, PrinterConfig } from '$lib/services/label-printing';
 	import type { LiveSSEData } from '$lib/types/energy';
 	import PanelARView from '$lib/components/ar/PanelARView.svelte';
@@ -57,6 +57,8 @@
 	let labelPreviewOpen = $state(false);
 	let labelPreviewLabel: RenderedLabel | null = $state(null);
 	let labelPreviewTitle = $state('');
+	let labelPreviewWidthMm = $state(40);
+	let labelPreviewHeightMm = $state(12);
 	let gridTopPct = $state(2);    // % from top where breaker grid starts
 	let gridBottomPct = $state(98); // % from top where breaker grid ends
 	let calibrationLoadVersion = 0;
@@ -607,11 +609,27 @@
 		}
 	}
 
-	function previewCircuitLabel(circuit: V3Record) {
+	async function previewCircuitLabel(circuit: V3Record) {
 		const panelName = (selectedPanel?.fields.Name as string) || 'Panel';
-		labelPreviewLabel = renderCircuitLabel(circuit, panelName, CIRCUIT_LABEL_DETAILED);
-		labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
-		labelPreviewOpen = true;
+		try {
+			const configRes = await fetch('/api/settings/printer');
+			const config: PrinterConfig = configRes.ok ? await configRes.json() : { tapeWidthMm: 15, labelLengthMm: 'continuous', dpi: 203 } as any;
+			const template = circuitTemplateFromConfig(config, 'compact');
+			const dims = getLabelDimensions(config);
+			labelPreviewLabel = renderCircuitLabel(circuit, panelName, template);
+			labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
+			labelPreviewWidthMm = dims.widthMm;
+			labelPreviewHeightMm = dims.heightMm;
+			labelPreviewOpen = true;
+		} catch {
+			// Fallback if config fetch fails
+			const template = circuitTemplateFromConfig({ tapeWidthMm: 12, labelLengthMm: 40, dpi: 203 } as any, 'compact');
+			labelPreviewLabel = renderCircuitLabel(circuit, panelName, template);
+			labelPreviewTitle = `Ckt ${circuit.fields.Number} — ${circuit.fields.Name || 'Circuit'}`;
+			labelPreviewWidthMm = 40;
+			labelPreviewHeightMm = 12;
+			labelPreviewOpen = true;
+		}
 	}
 
 	async function previewQrLabel(circuit: V3Record) {
@@ -1277,7 +1295,7 @@
 						{/if}
 						{#if showLabelPrint}
 							<div class="mt-3 pt-3 border-t border-white/10">
-								<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewOpen = true; }} />
+								<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
 							</div>
 						{/if}
 					</div>
@@ -1333,7 +1351,7 @@
 					{/if}
 					{#if showLabelPrint}
 						<div class="mt-3 pt-3 border-t border-slate-700/50">
-							<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewOpen = true; }} />
+							<PanelLabelActions panel={selectedPanel} circuits={panelCircuits} onpreview={(label, title, w, h) => { labelPreviewLabel = label; labelPreviewTitle = title; labelPreviewWidthMm = w ?? 40; labelPreviewHeightMm = h ?? 12; labelPreviewOpen = true; }} />
 						</div>
 					{/if}
 				</div>
@@ -2261,7 +2279,8 @@
 	bind:open={labelPreviewOpen}
 	label={labelPreviewLabel}
 	title={labelPreviewTitle}
-	labelWidthMm={40}
+	labelWidthMm={labelPreviewWidthMm}
+	labelHeightMm={labelPreviewHeightMm}
 />
 
 <!-- Create Panel Modal -->

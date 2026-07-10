@@ -32,7 +32,7 @@
 	}: {
 		panel: V3Record;
 		circuits: V3Record[];
-		onpreview?: (label: RenderedLabel, title: string) => void;
+		onpreview?: (label: RenderedLabel, title: string, widthMm?: number, heightMm?: number) => void;
 	} = $props();
 
 	const printer = getPrinterService();
@@ -57,7 +57,7 @@
 
 	function showPreview(label: RenderedLabel, title: string, widthMm?: number, heightMm?: number) {
 		if (onpreview) {
-			onpreview(label, title);
+			onpreview(label, title, widthMm, heightMm);
 		} else {
 			previewLabel = label;
 			previewTitle = title;
