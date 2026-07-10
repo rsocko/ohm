@@ -89,57 +89,51 @@ export function rotateCanvas90CW(canvas: HTMLCanvasElement): HTMLCanvasElement {
 
 /**
  * Scale and prepare a canvas for D30 printing.
- * The D30 print head width is fixed by the tape size. After 90° rotation,
- * the raster line width (in pixels) MUST match the tape width in pixels,
- * otherwise the printer misinterprets the byte stream.
- *
  * The D30 has asymmetric resolution:
  * - Across print head (tape width): 8px/mm (203 DPI)
- * - Feed direction (label length): 4px/mm (~100 DPI)
+ * - Feed direction (label length): ~6.4px/mm (~163 DPI)
  *
- * This function:
- * 1. Scales the source canvas height → tapeWidthPx (becomes raster line width)
- * 2. Scales the source canvas width → labelLengthPx at feed DPI (becomes feed lines)
- * 3. Rotates 90° clockwise
- * 4. Aligns the raster width to a multiple of 8 (byte boundary)
+ * If the source canvas was rendered via circuitTemplateFromConfig (which uses
+ * D30_FEED_PPMM for width and D30_HEAD_PPMM for height), dimensions already
+ * match the printer and only rotation is needed.
+ *
+ * For other canvases, this function scales to fit.
  *
  * @param canvas - Source canvas (landscape orientation, user-visible layout)
  * @param tapeWidthMm - Physical tape width in mm (12 or 15)
- * @param labelLengthMm - Label length in mm (feed direction), or 0 for proportional scaling only
- * @param headPixelsPerMm - Print head resolution (default 8 = 203 DPI)
- * @param feedPixelsPerMm - Feed direction resolution (default 4 = ~100 DPI, empirically determined)
+ * @param labelLengthMm - Label length in mm (0 = proportional from tape scaling)
  */
 export function prepareCanvasForD30(
 	canvas: HTMLCanvasElement,
 	tapeWidthMm: number,
-	labelLengthMm: number = 0,
-	headPixelsPerMm: number = 8,
-	feedPixelsPerMm: number = 4
+	labelLengthMm: number = 0
 ): HTMLCanvasElement {
-	// Raster line width: tape width at head DPI, byte-aligned
-	const tapeWidthPx = Math.ceil(tapeWidthMm * headPixelsPerMm / 8) * 8;
+	const headPPMM = 8;   // D30_HEAD_PPMM
+	const feedPPMM = 6.4; // D30_FEED_PPMM
 
-	// Feed direction: label length at feed DPI
-	// If labelLengthMm is provided, use it; otherwise scale proportionally from tape scaling
+	// Raster line width: tape width at head DPI, byte-aligned
+	const tapeWidthPx = Math.ceil(tapeWidthMm * headPPMM / 8) * 8;
+
+	// Feed direction pixels
 	let feedPx: number;
 	if (labelLengthMm > 0) {
-		feedPx = Math.round(labelLengthMm * feedPixelsPerMm);
+		feedPx = Math.round(labelLengthMm * feedPPMM);
 	} else {
-		// Proportional: scale width same as height
+		// Proportional scaling based on aspect ratio
 		const scale = tapeWidthPx / canvas.height;
-		feedPx = Math.round(canvas.width * scale * (feedPixelsPerMm / headPixelsPerMm));
+		feedPx = Math.round(canvas.width * scale * (feedPPMM / headPPMM));
 	}
 
-	// Create scaled canvas at target dimensions (before rotation)
+	// Scale source canvas to target print dimensions
 	const scaled = document.createElement('canvas');
-	scaled.width = feedPx;       // becomes feed direction after rotation
-	scaled.height = tapeWidthPx; // becomes raster line width after rotation
+	scaled.width = feedPx;       // feed direction (becomes height after rotation)
+	scaled.height = tapeWidthPx; // tape width (becomes raster line width after rotation)
 	const sctx = scaled.getContext('2d')!;
 	sctx.fillStyle = '#ffffff';
 	sctx.fillRect(0, 0, feedPx, tapeWidthPx);
 	sctx.drawImage(canvas, 0, 0, feedPx, tapeWidthPx);
 
-	// Rotate 90° CW: width→height, height→width
+	// Rotate 90° CW
 	const rotated = document.createElement('canvas');
 	rotated.width = tapeWidthPx; // raster line width
 	rotated.height = feedPx;     // feed lines
