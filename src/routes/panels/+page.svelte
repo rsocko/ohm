@@ -628,12 +628,15 @@
 		try {
 			const formData = new FormData();
 			formData.append('file', file);
-			formData.append('table', 'Panels');
+			formData.append('table', 'Panel');
 			formData.append('field', 'Attachment');
 			formData.append('recordId', String(selectedPanelId));
 
 			const resp = await fetch('/api/upload', { method: 'POST', body: formData });
-			if (!resp.ok) throw new Error('Upload failed');
+			if (!resp.ok) {
+				const errData = await resp.json().catch(() => null);
+				throw new Error(errData?.error || `Upload failed (${resp.status})`);
+			}
 
 			const result = await resp.json();
 			// Update local panel record with the new attachment
@@ -645,7 +648,7 @@
 			toast.success('Panel photo saved');
 		} catch (err) {
 			console.error('Photo upload error:', err);
-			toast.error('Failed to upload photo');
+			toast.error(`Failed to upload photo: ${err instanceof Error ? err.message : 'Unknown error'}`);
 		} finally {
 			uploadingPhoto = false;
 			input.value = '';
