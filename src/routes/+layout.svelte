@@ -136,7 +136,7 @@
 		</div>
 	{/if}
 
-	<main class="flex-1 pb-20 px-4 pt-4 relative" style="padding-top: max(1rem, env(safe-area-inset-top))">
+	<main class="flex-1 pb-20 px-4 pt-4 relative" style="padding-top: calc(env(safe-area-inset-top, 0px) + 1rem)">
 		<!-- Offline banner -->
 		{#if dataStore.offline}
 			<div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-energy-subtle border border-[#F5A623]/30 text-[#F5A623] text-[11px]">
@@ -146,7 +146,7 @@
 		{/if}
 		<!-- Top-right actions: home switcher + refresh + settings -->
 		{#if dataStore.loaded}
-			<div class="absolute top-4 right-4 flex items-center gap-2.5 z-10">
+			<div class="absolute right-4 flex items-center gap-2.5 z-10" style="top: calc(env(safe-area-inset-top, 0px) + 1rem)">
 				{#if homeContext.hasMultipleHomes}
 					<div class="relative">
 						<button
