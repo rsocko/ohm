@@ -5,6 +5,7 @@
 	import { goto } from '$app/navigation';
 	import { refresh, dataStore, refreshing, doRefresh } from '$lib/stores/data.svelte';
 	import { homeContext, initHomeContext } from '$lib/stores/home-context.svelte';
+	import { setContext as setChatContext } from '$lib/stores/chat.svelte';
 	import { onMount } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
 	import IosPwaNudge from '$lib/components/ui/IosPwaNudge.svelte';
@@ -40,6 +41,21 @@
 	// Initialize home context once data loads
 	$effect(() => {
 		if (dataStore.loaded) initHomeContext();
+	});
+
+	// Keep chat context in sync with current page and home selection
+	$effect(() => {
+		const url = page.url;
+		if (!url) return;
+		const params = url.searchParams;
+		setChatContext({
+			currentRoute: url.pathname,
+			selectedHomeId: homeContext.selectedHomeId ?? undefined,
+			selectedHomeName: homeContext.selectedHomeName || undefined,
+			selectedPanel: params.get('panel') || undefined,
+			selectedCircuit: params.get('circuit') || undefined,
+			selectedRoom: params.get('area') || params.get('room') || undefined
+		});
 	});
 
 	function relativeTime(ts: number | null): string {

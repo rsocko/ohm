@@ -429,6 +429,82 @@ export const updateField: ToolDefinition = {
 	}
 };
 
+export const linkToRoom: ToolDefinition = {
+	name: 'link_to_room',
+	description: 'Link an existing load or receptacle to a room. Use when user says "that outlet is in the kitchen" or "move the fan to the bedroom".',
+	category: 'write',
+	parameters: {
+		device_name: { type: 'string', description: 'Name of the load or receptacle to link', required: true },
+		room_name: { type: 'string', description: 'Target room name', required: true }
+	},
+	async execute(args): Promise<ToolResponse> {
+		const home = getHomeContext(args);
+		const deviceName = String(args.device_name);
+		const roomName = String(args.room_name);
+
+		// Find the device (search both loads and receptacles), scoped to active home
+		let loads, receptacles;
+		if (home) {
+			const rooms = await db.getRooms(home.homeId);
+			const roomIds = rooms.map(r => r.id);
+			const allLoads = await db.getLoads();
+			const allRecs = await db.getReceptacles();
+			loads = allLoads.filter(l => !l.roomId || roomIds.includes(l.roomId));
+			receptacles = allRecs.filter(r => !r.roomId || roomIds.includes(r.roomId));
+		} else {
+			loads = await db.getLoads();
+			receptacles = await db.getReceptacles();
+		}
+
+		const loadMatch = loads.find(l => l.name.toLowerCase() === deviceName.toLowerCase());
+		const recMatch = receptacles.find(r => r.name.toLowerCase() === deviceName.toLowerCase());
+		const device = loadMatch || recMatch;
+		const deviceTable = loadMatch ? 'Load' : 'Receptacle';
+
+		if (!device) {
+			const allDevices = [...loads.map(l => l.name), ...receptacles.map(r => r.name)];
+			const suggestions = allDevices.filter(n => n.toLowerCase().includes(deviceName.toLowerCase().split(' ')[0])).slice(0, 3);
+			const hint = suggestions.length > 0 ? ` Did you mean: ${suggestions.join(', ')}?` : '';
+			return { success: false, error: `Device "${deviceName}" not found${home ? ` in ${home.homeName}` : ''}.${hint}` };
+		}
+
+		// Validate target room exists
+		const room = await db.getRoomByName(roomName, home?.homeId);
+		if (!room) {
+			const rooms = await db.getRooms(home?.homeId);
+			const suggestions = rooms.filter(r => r.name.toLowerCase().includes(roomName.toLowerCase().split(' ')[0])).slice(0, 3);
+			const hint = suggestions.length > 0 ? ` Did you mean: ${suggestions.map(r => r.name).join(', ')}?` : '';
+			return { success: false, error: `Room "${roomName}" not found${home ? ` in ${home.homeName}` : ''}.${hint}` };
+		}
+
+		const currentRoom = device.roomId
+			? (await db.getRoom(device.roomId))?.name || 'unknown'
+			: 'none';
+
+		return {
+			success: true,
+			confirmation: {
+				id: generateConfirmationId(),
+				tool: 'link_to_room',
+				summary: `Link "${device.name}" to ${roomName}`,
+				operations: [
+					{ action: 'link' as const, table: deviceTable, label: `${device.name} → ${roomName}`, details: { from: currentRoom, to: roomName } }
+				],
+				execute: { tool: 'link_to_room', args: { ...args, _resolved: { deviceId: device.id, deviceTable, roomId: room.id } }, confirmed: true }
+			}
+		};
+	},
+	async executeConfirmed(args): Promise<ToolResult | ToolError> {
+		try {
+			const resolved = args._resolved as { deviceId: number; deviceTable: string; roomId: number };
+			await db.replaceLinks(resolved.deviceTable, 'Area', resolved.deviceId, [resolved.roomId]);
+			return { success: true, data: { message: `✓ Linked device to ${args.room_name}` } };
+		} catch (err) {
+			return { success: false, error: err instanceof Error ? err.message : 'Failed to link device to room' };
+		}
+	}
+};
+
 /** All write tools */
 export const writeTools: ToolDefinition[] = [
 	createRoom,
@@ -436,5 +512,6 @@ export const writeTools: ToolDefinition[] = [
 	addLoad,
 	addReceptacle,
 	moveDeviceToCircuit,
+	linkToRoom,
 	updateField
 ];

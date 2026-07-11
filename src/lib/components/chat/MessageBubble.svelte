@@ -5,6 +5,7 @@
 	import BatchConfirmation from './BatchConfirmation.svelte';
 	import Icon from '@iconify/svelte';
 	import { closeChat } from '$lib/stores/chat.svelte';
+	import { goto } from '$app/navigation';
 	import { marked } from 'marked';
 
 	interface Props {
@@ -26,21 +27,36 @@
 		gfm: true,
 	});
 
-	// Parse [link:/route]text[/link] markers then render markdown
+	// Parse [link:/route]text[/link] markers into navigable anchor tags with a data attribute
 	function parseContent(content: string): { html: string; links: Array<{ text: string; route: string }> } {
 		const links: Array<{ text: string; route: string }> = [];
 		const regex = /\[link:(\/[^\]]*)\]([^[]*)\[\/link\]/g;
 
-		// Replace custom link markers with markdown links (handled separately)
+		// Replace custom link markers with anchor tags that have a data-deeplink attribute
 		const withLinks = content.replace(regex, (_match, route, text) => {
 			links.push({ text, route });
-			return `[${text}](${route})`;
+			// Escape HTML entities to prevent XSS from AI-generated content
+			const safeRoute = route.replace(/[&<>"']/g, (c: string) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			const safeText = text.replace(/[&<>"']/g, (c: string) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			return `<a href="${safeRoute}" data-deeplink class="deep-link">📍 ${safeText}</a>`;
 		});
 
 		return { html: marked.parse(withLinks) as string, links };
 	}
 
 	const parsed = $derived(parseContent(message.content));
+
+	/** Intercept clicks on internal links and deep links — use SvelteKit navigation */
+	function handleContentClick(e: MouseEvent) {
+		const anchor = (e.target as HTMLElement).closest('a');
+		if (!anchor) return;
+		const href = anchor.getAttribute('href');
+		if (!href || !href.startsWith('/')) return;
+
+		e.preventDefault();
+		closeChat();
+		goto(href);
+	}
 </script>
 
 <div class="flex {isUser ? 'justify-end' : 'justify-start'}">
@@ -56,9 +72,10 @@
 				<p class="whitespace-pre-wrap">{message.content}</p>
 			{:else}
 				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-				<div class="chat-markdown prose prose-invert prose-sm max-w-none">
-					{@html parsed.html}
-				</div>
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<div class="chat-markdown prose prose-invert prose-sm max-w-none" onclick={handleContentClick}>
+						{@html parsed.html}
+					</div>
 			{/if}
 		{/if}
 
@@ -200,5 +217,21 @@
 	.chat-markdown :global(th) {
 		background: rgba(0, 0, 0, 0.2);
 		font-weight: 600;
+	}
+	.chat-markdown :global(a.deep-link) {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25em;
+		padding: 0.1em 0.5em;
+		border-radius: 6px;
+		background: rgba(99, 102, 241, 0.15);
+		color: #93c5fd;
+		text-decoration: none;
+		font-size: 0.9em;
+		transition: background 0.15s, color 0.15s;
+	}
+	.chat-markdown :global(a.deep-link:hover) {
+		background: rgba(99, 102, 241, 0.3);
+		color: #bfdbfe;
 	}
 </style>

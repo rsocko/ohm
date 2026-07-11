@@ -60,6 +60,8 @@ export interface ToolDefinition {
 	description: string;
 	category: 'read' | 'write' | 'smart';
 	parameters: Record<string, ToolParam>;
+	/** Whether this tool is safe for automated/voice-first clients (no mutations). Defaults to true for reads. */
+	siriSafe?: boolean;
 	/** Execute the tool. Write tools return ToolConfirmation; reads return ToolResult. */
 	execute(args: Record<string, unknown>): Promise<ToolResponse>;
 	/** Execute a confirmed write operation (only for write/smart tools). */

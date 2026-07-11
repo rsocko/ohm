@@ -17,6 +17,7 @@ interface MCPRequest {
 		name?: string;
 		arguments?: Record<string, unknown>;
 		confirmation?: ConfirmationPayload;
+		mode?: 'read_only' | 'all';
 	};
 }
 
@@ -25,18 +26,26 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	switch (body.method) {
 		case 'tools/list': {
-			const tools = registry.list().map(t => ({
-				name: t.name,
-				description: t.description,
-				category: t.category,
-				parameters: t.parameters
-			}));
-			return json({ tools });
+			const mode = body.params?.mode || 'all';
+			let tools = registry.list();
+			if (mode === 'read_only') {
+				tools = tools.filter(t => t.category === 'read');
+			}
+			return json({
+				tools: tools.map(t => ({
+					name: t.name,
+					description: t.description,
+					category: t.category,
+					parameters: t.parameters,
+					siriSafe: t.siriSafe ?? (t.category === 'read')
+				}))
+			});
 		}
 
 		case 'tools/call': {
 			const name = body.params?.name;
 			const args = body.params?.arguments || {};
+			const mode = body.params?.mode;
 
 			if (!name) {
 				return json({ error: 'Missing params.name' }, { status: 400 });
@@ -45,6 +54,14 @@ export const POST: RequestHandler = async ({ request }) => {
 			const tool = registry.get(name);
 			if (!tool) {
 				return json({ error: `Unknown tool: ${name}` }, { status: 404 });
+			}
+
+			// In read_only mode, reject write/smart tools
+			if (mode === 'read_only' && tool.category !== 'read') {
+				return json({
+					status: 'error',
+					error: `Tool "${name}" requires confirmation and is not available in read-only mode. Use mode "all" and handle the confirmation flow.`
+				}, { status: 403 });
 			}
 
 			const response = await registry.call(name, args);
