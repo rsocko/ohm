@@ -28,13 +28,25 @@
 		panel,
 		circuits,
 		receptacles = [],
+		areas = [],
 		onpreview,
 	}: {
 		panel: V3Record;
 		circuits: V3Record[];
 		receptacles?: V3Record[];
+		areas?: V3Record[];
 		onpreview?: (label: RenderedLabel, title: string, widthMm?: number, heightMm?: number) => void;
 	} = $props();
+
+	/** Build a map of area id → area name for quick lookup */
+	const areaNameById = $derived.by(() => {
+		const map = new Map<number, string>();
+		for (const a of areas) {
+			const name = (a.fields.Name as string) || (a.fields.name as string) || '';
+			if (name) map.set(a.id, name);
+		}
+		return map;
+	});
 
 	const printer = getPrinterService();
 
@@ -109,6 +121,19 @@
 		return String(field);
 	}
 
+	/** Resolve the area/room display name for a receptacle.
+	 *  Tries the field's embedded name first, then looks up by linked record ID. */
+	function resolveAreaName(field: unknown): string {
+		const inline = extractFieldName(field);
+		if (inline) return inline;
+		// Linked record with only an id — look up from the areas prop
+		if (field && typeof field === 'object' && !Array.isArray(field)) {
+			const id = (field as Record<string, unknown>).id as number | undefined;
+			if (id && areaNameById.has(id)) return areaNameById.get(id)!;
+		}
+		return '';
+	}
+
 	function previewPanelDirectory() {
 		// Build receptacle info for detailed mode
 		const recData: { name: string; area: string; type: string; circuitNumber: number }[] = [];
@@ -121,7 +146,7 @@
 				if (!circuit) continue;
 				recData.push({
 						name: String(r.fields.Name || 'Unnamed'),
-						area: extractFieldName(r.fields.Room) || extractFieldName(r.fields.Area) || '',
+						area: resolveAreaName(r.fields.Room) || resolveAreaName(r.fields.Area) || '',
 						type: String(r.fields['Receptacle Type'] || r.fields.Type || 'outlet'),
 						circuitNumber: (circuit.fields.Number as number) || 0,
 					});
