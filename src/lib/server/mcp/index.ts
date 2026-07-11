@@ -10,6 +10,8 @@
 import type { ToolDefinition, ToolResponse, ToolResult, ToolError, ToolParam, HomeContext } from './types';
 import { readTools } from './tools/read';
 import { writeTools } from './tools/write';
+import { crossFeatureReadTools } from './tools/cross-feature';
+import { crossFeatureWriteTools } from './tools/control';
 
 export type { ToolDefinition, ToolResponse, ToolResult, ToolError, ToolParam, HomeContext };
 export type { ConfirmationPayload, ConfirmationOperation, ExecuteRequest, SSEEvent, SSEEventType } from './types';
@@ -108,6 +110,8 @@ class ToolRegistry {
 export const registry = new ToolRegistry();
 registry.registerAll(readTools);
 registry.registerAll(writeTools);
+registry.registerAll(crossFeatureReadTools);
+registry.registerAll(crossFeatureWriteTools);
 
 /** Check if a ToolResponse contains a confirmation (for type narrowing) */
 export function isConfirmation(response: ToolResponse): response is { success: true; confirmation: import('./types').ConfirmationPayload } {
