@@ -2774,7 +2774,7 @@
 			{/if}
 			<!-- Floor selector (always show when floorplans exist) -->
 			{#if floorplans.length > 0}
-				<div class="flex gap-1.5 pb-2 items-center flex-wrap">
+				<div class="flex gap-1.5 pb-2 items-center flex-wrap {isFullscreen ? 'hidden' : ''}" >
 					{#each floorplans as fp, idx}
 						{@const active = selectedFloorId === fp.id}
 						<div class="relative shrink-0 overflow-visible">
@@ -2883,7 +2883,7 @@
 			{#if selectedFloorplan && getFloorplanImage(selectedFloorplan)}
 				<!-- Layer toggles -->
 				{#if !editingMarkers}
-					<div class="flex items-center flex-wrap gap-y-1.5">
+					<div class="flex items-center flex-wrap gap-y-1.5 {isFullscreen ? 'hidden' : ''}" >
 						<div class="flex gap-1.5 items-center flex-wrap">
 							<span class="text-[10px] text-slate-500 mr-1">Layers:</span>
 							<button onclick={() => { visibleLayers.rooms = !visibleLayers.rooms; }} class="px-2 py-0.5 rounded text-[10px] font-medium transition-colors {visibleLayers.rooms ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-slate-800/50 text-slate-500 border border-transparent'}">
@@ -2983,9 +2983,9 @@
 
 					<!-- Floorplan image with markers -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<div class="relative {isFullscreen ? 'flex-1 min-h-0 overflow-auto' : ''}">
+						<div class="relative {isFullscreen ? 'flex-1 min-h-0 overflow-auto flex justify-center items-start' : ''}">
 						<div
-							class="relative rounded-xl overflow-hidden border bg-slate-800/30 {editingMarkers ? 'border-amber-500/40 cursor-crosshair' : 'border-slate-700/50'}"
+							class="relative rounded-xl overflow-hidden border bg-slate-800/30 {editingMarkers ? 'border-amber-500/40 cursor-crosshair' : 'border-slate-700/50'} {isFullscreen ? 'w-fit max-w-full' : ''}"
 						style="touch-action: none"
 						onwheel={(e) => {
 							if (!e.ctrlKey && !e.metaKey) return;
@@ -3018,14 +3018,14 @@
 					>
 						<div style="transform: scale({floorplanScale}) translate({floorplanTranslate.x / floorplanScale}px, {floorplanTranslate.y / floorplanScale}px); transform-origin: center; transition: {isPanning || isTouchZooming ? 'none' : 'transform 0.15s ease-out'}">
 							<!-- Grid stacks both transitioning elements in same cell -->
-							<div class="grid [&>*]:[grid-area:1/1]">
+							<div class="grid [&>*]:[grid-area:1/1] {isFullscreen ? 'justify-items-center' : ''}">
 							{#key selectedFloorId}
-							<div class="relative" in:fade={{ duration: 250, delay: 80 }} out:fade={{ duration: 150 }}>
+							<div class="relative {isFullscreen ? 'w-fit' : ''}" in:fade={{ duration: 250, delay: 80 }} out:fade={{ duration: 150 }}>
 							<img
 								src={getFloorplanImage(selectedFloorplan)}
 								alt="Floorplan - {selectedFloorplan.fields.Floor}"
-								class="w-full h-auto select-none"
-								style="{invertFloorplan ? 'filter: invert(1); ' : ''}{isFullscreen ? 'max-height: calc(100vh - 10rem); max-width: 100%; width: auto; margin: 0 auto;' : ''}"
+								class="{isFullscreen ? '' : 'w-full'} h-auto select-none"
+								style="{invertFloorplan ? 'filter: invert(1); ' : ''}{isFullscreen ? 'max-height: calc(100vh - 3rem); max-width: 100%; width: auto;' : ''}"
 								draggable="false"
 							/>
 							<!-- Snap alignment guides -->
