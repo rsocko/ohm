@@ -285,5 +285,7 @@
 .floorplan-fullscreen-container:-webkit-full-screen {
 	background: var(--color-surface-base, #0f0f1a);
 	padding: 1rem;
-	overflow: auto;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }

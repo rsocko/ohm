@@ -2758,7 +2758,7 @@
 		<!-- FLOORPLAN VIEW -->
 		<div
 			bind:this={floorplanContainerEl}
-			class="floorplan-fullscreen-container space-y-3 {isFullscreen ? 'fixed inset-0 z-50 bg-surface-base overflow-auto p-4' : ''}"
+			class="floorplan-fullscreen-container space-y-3 {isFullscreen ? 'fixed inset-0 z-50 bg-surface-base overflow-hidden p-4 flex flex-col' : ''}"
 		>
 			<!-- Fullscreen close button -->
 			{#if isFullscreen}
@@ -2983,7 +2983,7 @@
 
 					<!-- Floorplan image with markers -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
-						<div class="relative">
+						<div class="relative {isFullscreen ? 'flex-1 min-h-0 overflow-auto' : ''}">
 						<div
 							class="relative rounded-xl overflow-hidden border bg-slate-800/30 {editingMarkers ? 'border-amber-500/40 cursor-crosshair' : 'border-slate-700/50'}"
 						style="touch-action: none"
@@ -3025,7 +3025,7 @@
 								src={getFloorplanImage(selectedFloorplan)}
 								alt="Floorplan - {selectedFloorplan.fields.Floor}"
 								class="w-full h-auto select-none"
-								style={invertFloorplan ? 'filter: invert(1)' : ''}
+								style="{invertFloorplan ? 'filter: invert(1); ' : ''}{isFullscreen ? 'max-height: calc(100vh - 10rem); max-width: 100%; width: auto; margin: 0 auto;' : ''}"
 								draggable="false"
 							/>
 							<!-- Snap alignment guides -->
