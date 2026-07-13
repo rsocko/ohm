@@ -73,6 +73,61 @@
 	let viewLayer: 'power' | 'network' = $state('power');
 	let viewLayerReady = $state(false);
 
+	// Fullscreen floorplan state
+	let isFullscreen = $state(false);
+	let floorplanContainerEl: HTMLDivElement | null = $state(null);
+
+	async function toggleFullscreen() {
+		if (!floorplanContainerEl) return;
+
+		// If we're in CSS-only fullscreen (iOS PWA), just toggle the flag
+		const nativeFullscreenEl = document.fullscreenElement || (document as any).webkitFullscreenElement;
+		if (isFullscreen && !nativeFullscreenEl) {
+			isFullscreen = false;
+			document.body.style.overflow = '';
+			return;
+		}
+
+		try {
+			if (!nativeFullscreenEl) {
+				if (floorplanContainerEl.requestFullscreen) {
+					await floorplanContainerEl.requestFullscreen();
+				} else if ((floorplanContainerEl as any).webkitRequestFullscreen) {
+					(floorplanContainerEl as any).webkitRequestFullscreen();
+				} else {
+					// No Fullscreen API (iOS PWA) — use CSS fallback
+					isFullscreen = true;
+					document.body.style.overflow = 'hidden';
+				}
+			} else {
+				if (document.exitFullscreen) {
+					await document.exitFullscreen();
+				} else if ((document as any).webkitExitFullscreen) {
+					(document as any).webkitExitFullscreen();
+				}
+			}
+		} catch (err) {
+			// Fallback for environments that reject the request
+			isFullscreen = !isFullscreen;
+			document.body.style.overflow = isFullscreen ? 'hidden' : '';
+		}
+	}
+
+	// Sync state with browser fullscreen changes (including native Escape)
+	function onFullscreenChange() {
+		const fsEl = document.fullscreenElement || (document as any).webkitFullscreenElement;
+		isFullscreen = fsEl === floorplanContainerEl;
+		if (!isFullscreen) {
+			document.body.style.overflow = '';
+		}
+		// Try to unlock screen orientation when entering fullscreen (for iOS/Android rotation)
+		if (isFullscreen && 'screen' in window && 'orientation' in screen) {
+			try {
+				(screen.orientation as any).unlock?.();
+			} catch (_) { /* ignore — not all browsers support this */ }
+		}
+	}
+
 	// Advanced type filters: null means "show all", Set means "show only these types"
 	let loadTypeFilter: Set<string> | null = $state(null);
 	let receptacleTypeFilter: Set<string> | null = $state(null);
@@ -387,26 +442,40 @@
 		selectedLoadId = upstream.id;
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		// Detect mobile viewport
 		isMobileView = window.innerWidth < 768;
 		const mql = window.matchMedia('(max-width: 767px)');
 		const mqlHandler = (e: MediaQueryListEvent) => { isMobileView = e.matches; };
 		mql.addEventListener('change', mqlHandler);
 
-		await ensureLoaded();
+		// Listen for fullscreen changes (handles native Escape, etc.)
+		document.addEventListener('fullscreenchange', onFullscreenChange);
+		document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
-		syncFromDataStore();
-		const savedViewLayer = window.localStorage.getItem('rooms:view-layer');
-		if (savedViewLayer === 'power' || savedViewLayer === 'network') viewLayer = savedViewLayer;
-		viewLayerReady = true;
-		if (floorplans.length > 0) selectedFloorId = floorplans[0].id;
-		// Fire comment count fetches for all areas (non-blocking)
-		for (const area of areas) { fetchCommentCount(area.id); }
-		loading = false;
+		// Async initialization
+		(async () => {
+			await ensureLoaded();
 
-		// Handle URL params
-		handleDeepLinkParams();
+			syncFromDataStore();
+			const savedViewLayer = window.localStorage.getItem('rooms:view-layer');
+			if (savedViewLayer === 'power' || savedViewLayer === 'network') viewLayer = savedViewLayer;
+			viewLayerReady = true;
+			if (floorplans.length > 0) selectedFloorId = floorplans[0].id;
+			// Fire comment count fetches for all areas (non-blocking)
+			for (const area of areas) { fetchCommentCount(area.id); }
+			loading = false;
+
+			// Handle URL params
+			handleDeepLinkParams();
+		})();
+
+		return () => {
+			mql.removeEventListener('change', mqlHandler);
+			document.removeEventListener('fullscreenchange', onFullscreenChange);
+			document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+			document.body.style.overflow = '';
+		};
 	});
 
 	// React to URL param changes for deep links (fires on client-side navigation too)
@@ -2601,7 +2670,7 @@
 	}
 </script>
 
-<svelte:window onpaste={handlePaste} onclick={() => { showFloorMenu = null; expandedGroup = null; selectedLoadId = null; expandedFixtureLoadId = null; selectedPanelMarkerId = null; tracingCircuitId = null; }} onkeydown={(e) => { if (e.key === 'Escape') { if (placingFixture) { placingFixture = null; toast.info('Fixture placement cancelled'); } else if (placingItem) { placingItem = null; previewPos = null; snapGuides = []; mergeTargetKey = null; } } }} />
+<svelte:window onpaste={handlePaste} onclick={() => { showFloorMenu = null; expandedGroup = null; selectedLoadId = null; expandedFixtureLoadId = null; selectedPanelMarkerId = null; tracingCircuitId = null; }} onkeydown={(e) => { if (e.key === 'Escape') { if (isFullscreen) { toggleFullscreen(); } else if (placingFixture) { placingFixture = null; toast.info('Fixture placement cancelled'); } else if (placingItem) { placingItem = null; previewPos = null; snapGuides = []; mergeTargetKey = null; } } }} />
 
 <div class="max-w-2xl mx-auto space-y-4">
 	<!-- Header + Search + Filter row -->
@@ -2687,7 +2756,22 @@
 
 	{#if viewMode === 'floorplan'}
 		<!-- FLOORPLAN VIEW -->
-		<div class="space-y-3">
+		<div
+			bind:this={floorplanContainerEl}
+			class="floorplan-fullscreen-container space-y-3 {isFullscreen ? 'fixed inset-0 z-50 bg-surface-base overflow-auto p-4' : ''}"
+		>
+			<!-- Fullscreen close button -->
+			{#if isFullscreen}
+				<button
+					onclick={() => toggleFullscreen()}
+					class="fixed top-3 right-3 z-[60] w-9 h-9 rounded-full bg-slate-800/90 border border-slate-600/60 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition-colors shadow-lg backdrop-blur-sm"
+					style="top: max(0.75rem, env(safe-area-inset-top, 0px)); right: max(0.75rem, env(safe-area-inset-right, 0px))"
+					title="Exit fullscreen (Esc)"
+					aria-label="Exit fullscreen"
+				>
+					<Icon icon="mdi:fullscreen-exit" width={20} />
+				</button>
+			{/if}
 			<!-- Floor selector (always show when floorplans exist) -->
 			{#if floorplans.length > 0}
 				<div class="flex gap-1.5 pb-2 items-center flex-wrap">
@@ -2783,6 +2867,14 @@
 							>
 								<Icon icon={editingMarkers ? 'mdi:check' : 'mdi:pencil-outline'} width={12} class="inline mr-0.5" />
 								{editingMarkers ? 'Done' : 'Edit'}
+							</button>
+							<button
+								onclick={() => toggleFullscreen()}
+								class="px-1.5 py-1 rounded-lg text-[10px] font-medium transition-colors bg-slate-800 text-slate-400 hover:text-white"
+								title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+								aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+							>
+								<Icon icon={isFullscreen ? 'mdi:fullscreen-exit' : 'mdi:fullscreen'} width={14} />
 							</button>
 						</div>
 				</div>
