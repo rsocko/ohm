@@ -80,10 +80,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 
 		case 'tools/execute': {
-			// Execute a previously confirmed write operation
+			// Redirect callers to the dedicated /api/mcp/execute endpoint
 			const confirmation = body.params?.confirmation;
 			if (!confirmation) {
-				return json({ error: 'Missing params.confirmation' }, { status: 400 });
+				return json({ error: 'Missing params.confirmation. Use POST /api/mcp/execute instead.' }, { status: 400 });
 			}
 
 			const result = await registry.executeConfirmed(confirmation.tool, confirmation.execute.args);

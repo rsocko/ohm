@@ -247,14 +247,10 @@ export async function confirmBatch() {
 	try {
 		const results: string[] = [];
 		for (const confirmation of confirmations) {
-			const response = await fetch('/api/chat', {
+			const response = await fetch('/api/mcp/execute', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					message: '__CONFIRM__',
-					confirmation,
-					context: chatState.context
-				})
+				body: JSON.stringify({ confirmation })
 			});
 
 			if (!response.ok) throw new Error(`Execution failed for: ${confirmation.summary}`);

@@ -102,21 +102,6 @@ function buildAITools(confirmations: ConfirmationPayload[], homeContext?: HomeCo
 export const POST: RequestHandler = async ({ request }) => {
 	const body = await request.json();
 
-	// Handle confirmed execution (user clicked Confirm)
-	if (body.message === '__CONFIRM__' && body.confirmation) {
-		const conf = body.confirmation as ConfirmationPayload;
-		try {
-			const result = await registry.executeConfirmed(conf.tool, conf.execute.args);
-			if (result.success) {
-				return json({ message: `✓ ${conf.summary} — done!`, data: result.data });
-			} else {
-				return json({ message: `✗ ${(result as { error: string }).error}` });
-			}
-		} catch (err) {
-			return json({ message: `Error: ${err instanceof Error ? err.message : 'Execution failed'}` });
-		}
-	}
-
 	// Build context string
 	const ctx = body.context || {};
 	const homeContext: HomeContext | undefined = ctx.selectedHomeId
