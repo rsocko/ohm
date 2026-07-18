@@ -101,7 +101,7 @@ export function addStatusClient(callback: StatusClient): () => void {
  * Get current bridge status.
  */
 export function getStatus(): BridgeStatus {
-	const wsStatus = getWSConnectionStatus();
+	const wsStatus = getWSConnectionStatus(currentHomeId);
 	let mode: BridgeStatus['mode'];
 	if (wsStatus === 'connected') mode = 'websocket';
 	else if (pollingInterval) mode = 'polling';
@@ -135,10 +135,10 @@ async function startBridge() {
 	mappingRefreshInterval = setInterval(loadMappingsAndSubscribe, 5 * 60 * 1000);
 
 	// Listen for WS status changes to toggle fallback polling
-	wsStatusUnsubscribe = onWSStatusChange(handleWSStatusChange);
+	wsStatusUnsubscribe = onWSStatusChange(handleWSStatusChange, currentHomeId);
 
 	// If WS isn't connected right now, start polling immediately
-	if (getWSConnectionStatus() !== 'connected') {
+	if (getWSConnectionStatus(currentHomeId) !== 'connected') {
 		startPolling();
 	}
 }
@@ -188,10 +188,10 @@ async function loadMappingsAndSubscribe() {
 
 		if (wsUnsubscribe) {
 			// Update subscription without re-creating the connection
-			updateSubscribedEntities(entityIds);
+			updateSubscribedEntities(entityIds, currentHomeId);
 		} else {
 			// First subscription — start the WebSocket
-			wsUnsubscribe = subscribeToStates(entityIds, handleWSStateChange);
+			wsUnsubscribe = subscribeToStates(entityIds, handleWSStateChange, currentHomeId);
 		}
 	} catch {
 		// Mappings unavailable — will retry on next interval

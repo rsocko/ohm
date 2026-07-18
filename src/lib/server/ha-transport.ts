@@ -128,67 +128,100 @@ export async function testConnection(homeId?: number | null): Promise<HAApiInfo 
 	}
 }
 
-// --- WebSocket Transport ---
+// --- WebSocket Transport (per-home) ---
 
 export type WSConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'auth_error';
 type WSStateCallback = (entityId: string, newState: string, lastChanged: number) => void;
 type WSStatusCallback = (status: WSConnectionStatus) => void;
 
-let wsConnection: WebSocket | null = null;
-let wsMessageId = 0;
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let wsStatus: WSConnectionStatus = 'disconnected';
-const stateListeners = new Set<WSStateCallback>();
-const statusListeners = new Set<WSStatusCallback>();
-let subscribedEntities: string[] = [];
+interface WSSession {
+	connection: WebSocket | null;
+	messageId: number;
+	reconnectTimer: ReturnType<typeof setTimeout> | null;
+	listeners: Set<WSStateCallback>;
+	statusListeners: Set<WSStatusCallback>;
+	entities: string[];
+	homeId: number | null;
+	status: WSConnectionStatus;
+}
 
-function setWSStatus(status: WSConnectionStatus) {
-	if (wsStatus === status) return;
-	wsStatus = status;
-	for (const listener of statusListeners) {
+const wsSessions = new Map<string, WSSession>();
+
+function wsKey(homeId: number | null): string {
+	return homeId != null ? String(homeId) : 'default';
+}
+
+function getOrCreateSession(homeId: number | null): WSSession {
+	const key = wsKey(homeId);
+	let session = wsSessions.get(key);
+	if (!session) {
+		session = {
+			connection: null,
+			messageId: 0,
+			reconnectTimer: null,
+			listeners: new Set(),
+			statusListeners: new Set(),
+			entities: [],
+			homeId: homeId ?? null,
+			status: 'disconnected'
+		};
+		wsSessions.set(key, session);
+	}
+	return session;
+}
+
+function setWSStatus(session: WSSession, status: WSConnectionStatus) {
+	if (session.status === status) return;
+	session.status = status;
+	for (const listener of session.statusListeners) {
 		listener(status);
 	}
 }
 
 /**
- * Get current WebSocket connection status.
+ * Get current WebSocket connection status for a home.
  */
-export function getWSConnectionStatus(): WSConnectionStatus {
-	return wsStatus;
+export function getWSConnectionStatus(homeId: number | null): WSConnectionStatus {
+	const session = wsSessions.get(wsKey(homeId));
+	return session?.status ?? 'disconnected';
 }
 
 /**
- * Subscribe to WebSocket connection status changes.
+ * Subscribe to WebSocket connection status changes for a home.
  * Returns an unsubscribe function.
  */
-export function onWSStatusChange(callback: WSStatusCallback): () => void {
-	statusListeners.add(callback);
-	return () => { statusListeners.delete(callback); };
+export function onWSStatusChange(callback: WSStatusCallback, homeId: number | null): () => void {
+	const session = getOrCreateSession(homeId);
+	session.statusListeners.add(callback);
+	return () => { session.statusListeners.delete(callback); };
 }
 
 /**
  * Subscribe to live entity state changes via WebSocket.
- * Maintains a single shared connection; fans out to all listeners.
+ * Maintains one shared connection per home; fans out to all listeners for that home.
  * Returns an unsubscribe function.
  */
 export function subscribeToStates(
 	entityIds: string[],
-	callback: WSStateCallback
+	callback: WSStateCallback,
+	homeId: number | null
 ): () => void {
-	stateListeners.add(callback);
-	const newEntities = entityIds.filter(id => !subscribedEntities.includes(id));
-	subscribedEntities = [...new Set([...subscribedEntities, ...entityIds])];
+	const session = getOrCreateSession(homeId);
+	session.listeners.add(callback);
+	const newEntities = entityIds.filter(id => !session.entities.includes(id));
+	session.entities = [...new Set([...session.entities, ...entityIds])];
 
-	if (!wsConnection || wsConnection.readyState !== WebSocket.OPEN) {
-		connectWebSocket();
+	if (!session.connection || session.connection.readyState !== WebSocket.OPEN) {
+		connectWebSocket(session);
 	} else if (newEntities.length > 0) {
-		sendSubscription();
+		sendSubscription(session);
 	}
 
 	return () => {
-		stateListeners.delete(callback);
-		if (stateListeners.size === 0) {
-			disconnectWebSocket();
+		session.listeners.delete(callback);
+		if (session.listeners.size === 0) {
+			disconnectWebSocket(session);
+			wsSessions.delete(wsKey(homeId));
 		}
 	};
 }
@@ -197,114 +230,120 @@ export function subscribeToStates(
  * Update the set of subscribed entities without adding a new listener.
  * Useful when entity mappings change.
  */
-export function updateSubscribedEntities(entityIds: string[]): void {
-	subscribedEntities = [...new Set(entityIds)];
-	if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
-		sendSubscription();
+export function updateSubscribedEntities(entityIds: string[], homeId: number | null): void {
+	const session = wsSessions.get(wsKey(homeId));
+	if (!session) return;
+	session.entities = [...new Set(entityIds)];
+	if (session.connection && session.connection.readyState === WebSocket.OPEN) {
+		sendSubscription(session);
 	}
 }
 
-async function connectWebSocket() {
-	if (wsConnection) return;
+async function connectWebSocket(session: WSSession) {
+	if (session.connection) return;
 
-	const config = await getHAConfig();
+	const config = await getHAConfig(session.homeId);
 	if (!config.url || !config.token) {
-		setWSStatus('disconnected');
+		setWSStatus(session, 'disconnected');
 		return;
 	}
 
-	setWSStatus('connecting');
+	setWSStatus(session, 'connecting');
 	const wsUrl = config.url.replace(/^http/, 'ws') + '/api/websocket';
 
 	try {
-		wsConnection = new WebSocket(wsUrl);
+		session.connection = new WebSocket(wsUrl);
 	} catch {
-		setWSStatus('disconnected');
-		scheduleReconnect();
+		setWSStatus(session, 'disconnected');
+		scheduleReconnect(session);
 		return;
 	}
 
-	wsConnection.onmessage = (event) => {
+	session.connection.onmessage = (event) => {
 		try {
 			const msg = JSON.parse(String(event.data));
-			handleWSMessage(msg, config.token);
+			handleWSMessage(msg, config.token, session);
 		} catch { /* ignore parse errors */ }
 	};
 
-	wsConnection.onclose = () => {
-		wsConnection = null;
-		if (wsStatus !== 'auth_error') {
-			setWSStatus('disconnected');
+	session.connection.onclose = () => {
+		session.connection = null;
+		if (session.status !== 'auth_error') {
+			setWSStatus(session, 'disconnected');
 		}
-		scheduleReconnect();
+		scheduleReconnect(session);
 	};
 
-	wsConnection.onerror = () => {
-		wsConnection?.close();
+	session.connection.onerror = () => {
+		session.connection?.close();
 	};
 }
 
 function handleWSMessage(
 	msg: { type: string; event?: { a?: Record<string, { s: string; lc: number }> } },
-	token: string
+	token: string,
+	session: WSSession
 ) {
 	switch (msg.type) {
 		case 'auth_required':
-			wsConnection?.send(JSON.stringify({ type: 'auth', access_token: token }));
+			session.connection?.send(JSON.stringify({ type: 'auth', access_token: token }));
 			break;
 		case 'auth_ok':
-			setWSStatus('connected');
-			sendSubscription();
+			setWSStatus(session, 'connected');
+			sendSubscription(session);
 			break;
 		case 'auth_invalid':
-			setWSStatus('auth_error');
-			wsConnection?.close();
+			setWSStatus(session, 'auth_error');
+			session.connection?.close();
 			break;
 		case 'event':
-			handleStateEvent(msg);
+			handleStateEvent(msg, session);
 			break;
 	}
 }
 
-function sendSubscription() {
-	if (!wsConnection || subscribedEntities.length === 0) return;
-	wsMessageId++;
-	wsConnection.send(JSON.stringify({
-		id: wsMessageId,
+function sendSubscription(session: WSSession) {
+	if (!session.connection || session.entities.length === 0) return;
+	session.messageId++;
+	session.connection.send(JSON.stringify({
+		id: session.messageId,
 		type: 'subscribe_entities',
-		entity_ids: subscribedEntities
+		entity_ids: session.entities
 	}));
 }
 
-function handleStateEvent(msg: { event?: { a?: Record<string, { s: string; lc: number }> } }) {
+function handleStateEvent(
+	msg: { event?: { a?: Record<string, { s: string; lc: number }> } },
+	session: WSSession
+) {
 	const changes = msg.event?.a;
 	if (!changes) return;
 	for (const [entityId, data] of Object.entries(changes)) {
-		for (const listener of stateListeners) {
+		for (const listener of session.listeners) {
 			listener(entityId, data.s, data.lc);
 		}
 	}
 }
 
-function disconnectWebSocket() {
-	if (reconnectTimer) {
-		clearTimeout(reconnectTimer);
-		reconnectTimer = null;
+function disconnectWebSocket(session: WSSession) {
+	if (session.reconnectTimer) {
+		clearTimeout(session.reconnectTimer);
+		session.reconnectTimer = null;
 	}
-	if (wsConnection) {
-		wsConnection.close();
-		wsConnection = null;
+	if (session.connection) {
+		session.connection.close();
+		session.connection = null;
 	}
-	subscribedEntities = [];
-	setWSStatus('disconnected');
+	session.entities = [];
+	setWSStatus(session, 'disconnected');
 }
 
-function scheduleReconnect() {
-	if (stateListeners.size === 0) return;
-	if (reconnectTimer) return;
-	reconnectTimer = setTimeout(() => {
-		reconnectTimer = null;
-		connectWebSocket();
+function scheduleReconnect(session: WSSession) {
+	if (session.listeners.size === 0) return;
+	if (session.reconnectTimer) return;
+	session.reconnectTimer = setTimeout(() => {
+		session.reconnectTimer = null;
+		connectWebSocket(session);
 	}, 3000);
 }
 
