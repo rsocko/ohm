@@ -1,32 +1,21 @@
 /**
  * SSE endpoint for live energy readings.
- * Streams real-time power data from HA to the client.
+ * Streams real-time power data from HA via WebSocket bridge (with REST fallback).
  */
 
 import type { RequestHandler } from './$types';
-import {
-	getCircuitReadings,
-	getSolarReading,
-	calculateCost,
-	checkConnection
-} from '$lib/server/ha-energy';
-import { getEntityMappings } from '$lib/server/energy-mappings';
-import type { LiveSSEData, CapacityAlert } from '$lib/types/energy';
+import { addSSEClient, getStatus } from '$lib/server/ha-websocket-bridge';
+import { checkConnection } from '$lib/server/ha-energy';
+import type { LiveSSEData } from '$lib/types/energy';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const homeId = url.searchParams.get('homeId') ? Number(url.searchParams.get('homeId')) : null;
 	const encoder = new TextEncoder();
-	let intervalId: ReturnType<typeof setInterval> | null = null;
-	let previousReadings = new Map<string, number>();
-
-	// Cache mappings per-connection (refresh every 5 minutes)
-	let cachedMappings: Awaited<ReturnType<typeof getEntityMappings>> | null = null;
-	let lastMappingRefresh = 0;
-	const MAPPING_REFRESH_MS = 5 * 60 * 1000;
+	let unsubscribe: (() => void) | null = null;
 
 	const stream = new ReadableStream({
 		async start(controller) {
-			// Send retry interval
+			// Send retry interval for auto-reconnect
 			controller.enqueue(encoder.encode('retry: 3000\n\n'));
 
 			const connected = await checkConnection(homeId);
@@ -38,74 +27,28 @@ export const GET: RequestHandler = async ({ url }) => {
 				return;
 			}
 
-			let closed = false;
+			// Send current bridge status
+			const status = getStatus();
+			controller.enqueue(
+				encoder.encode(`event: status\ndata: ${JSON.stringify({ mode: status.mode, wsConnected: status.wsConnected })}\n\n`)
+			);
 
-			async function sendUpdate() {
-				if (closed) return;
+			// Register with the WebSocket-SSE bridge
+			unsubscribe = addSSEClient((data: LiveSSEData) => {
 				try {
-					const now = Date.now();
-					if (!cachedMappings || now - lastMappingRefresh > MAPPING_REFRESH_MS) {
-						cachedMappings = await getEntityMappings();
-						lastMappingRefresh = now;
-					}
-					const circuits = await getCircuitReadings(cachedMappings, previousReadings, homeId);
-						const solar = await getSolarReading(homeId);
-
-					// Update previous readings for trend calculation
-					previousReadings = new Map(circuits.map((c) => [c.entityId, c.watts]));
-
-					const totalWatts = circuits.reduce((sum, c) => sum + c.watts, 0);
-
-					// Calculate net solar
-					if (solar) {
-						solar.netWatts = totalWatts - solar.production;
-					}
-
-					const cost = calculateCost(totalWatts);
-
-					// Generate capacity alerts
-					const alerts: CapacityAlert[] = circuits
-						.filter((c) => c.capacityPercent >= 60)
-						.map((c) => ({
-							circuitId: c.circuitId,
-							circuitName: c.circuitName,
-							severity: c.capacityPercent >= 80 ? 'critical' : 'warning',
-							currentAmps: c.watts / (cachedMappings!.find((m) => m.circuitId === c.circuitId)?.voltage || 120),
-							ratedAmps: cachedMappings!.find((m) => m.circuitId === c.circuitId)?.ampRating || 20,
-							percent: c.capacityPercent,
-							message: `${c.circuitName} at ${c.capacityPercent}% capacity`
-						}));
-
-					const data: LiveSSEData = {
-						total: totalWatts,
-						circuits,
-						solar,
-						cost,
-						alerts,
-						timestamp: new Date().toISOString()
-					};
-
 					controller.enqueue(
 						encoder.encode(`event: power\ndata: ${JSON.stringify(data)}\n\n`)
 					);
-				} catch (err) {
-					if (closed) return;
-					try {
-						controller.enqueue(
-							encoder.encode(`event: error\ndata: ${JSON.stringify({ message: String(err) })}\n\n`)
-						);
-					} catch { /* controller already closed */ }
+				} catch {
+					// Client disconnected — cleanup will happen in cancel()
 				}
-			}
-
-			// Send initial snapshot
-			await sendUpdate();
-
-			// Then update every two seconds
-			intervalId = setInterval(sendUpdate, 2000);
+			}, homeId);
 		},
 		cancel() {
-			if (intervalId) clearInterval(intervalId);
+			if (unsubscribe) {
+				unsubscribe();
+				unsubscribe = null;
+			}
 		}
 	});
 

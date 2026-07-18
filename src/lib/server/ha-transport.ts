@@ -130,13 +130,41 @@ export async function testConnection(homeId?: number | null): Promise<HAApiInfo 
 
 // --- WebSocket Transport ---
 
+export type WSConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'auth_error';
 type WSStateCallback = (entityId: string, newState: string, lastChanged: number) => void;
+type WSStatusCallback = (status: WSConnectionStatus) => void;
 
 let wsConnection: WebSocket | null = null;
 let wsMessageId = 0;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let wsStatus: WSConnectionStatus = 'disconnected';
 const stateListeners = new Set<WSStateCallback>();
+const statusListeners = new Set<WSStatusCallback>();
 let subscribedEntities: string[] = [];
+
+function setWSStatus(status: WSConnectionStatus) {
+	if (wsStatus === status) return;
+	wsStatus = status;
+	for (const listener of statusListeners) {
+		listener(status);
+	}
+}
+
+/**
+ * Get current WebSocket connection status.
+ */
+export function getWSConnectionStatus(): WSConnectionStatus {
+	return wsStatus;
+}
+
+/**
+ * Subscribe to WebSocket connection status changes.
+ * Returns an unsubscribe function.
+ */
+export function onWSStatusChange(callback: WSStatusCallback): () => void {
+	statusListeners.add(callback);
+	return () => { statusListeners.delete(callback); };
+}
 
 /**
  * Subscribe to live entity state changes via WebSocket.
@@ -148,11 +176,12 @@ export function subscribeToStates(
 	callback: WSStateCallback
 ): () => void {
 	stateListeners.add(callback);
+	const newEntities = entityIds.filter(id => !subscribedEntities.includes(id));
 	subscribedEntities = [...new Set([...subscribedEntities, ...entityIds])];
 
 	if (!wsConnection || wsConnection.readyState !== WebSocket.OPEN) {
 		connectWebSocket();
-	} else {
+	} else if (newEntities.length > 0) {
 		sendSubscription();
 	}
 
@@ -164,22 +193,49 @@ export function subscribeToStates(
 	};
 }
 
+/**
+ * Update the set of subscribed entities without adding a new listener.
+ * Useful when entity mappings change.
+ */
+export function updateSubscribedEntities(entityIds: string[]): void {
+	subscribedEntities = [...new Set(entityIds)];
+	if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+		sendSubscription();
+	}
+}
+
 async function connectWebSocket() {
 	if (wsConnection) return;
 
 	const config = await getHAConfig();
-	if (!config.url || !config.token) return;
+	if (!config.url || !config.token) {
+		setWSStatus('disconnected');
+		return;
+	}
 
+	setWSStatus('connecting');
 	const wsUrl = config.url.replace(/^http/, 'ws') + '/api/websocket';
-	wsConnection = new WebSocket(wsUrl);
+
+	try {
+		wsConnection = new WebSocket(wsUrl);
+	} catch {
+		setWSStatus('disconnected');
+		scheduleReconnect();
+		return;
+	}
 
 	wsConnection.onmessage = (event) => {
-		const msg = JSON.parse(event.data);
-		handleWSMessage(msg, config.token);
+		try {
+			const msg = JSON.parse(String(event.data));
+			handleWSMessage(msg, config.token);
+		} catch { /* ignore parse errors */ }
 	};
 
 	wsConnection.onclose = () => {
 		wsConnection = null;
+		if (wsStatus !== 'auth_error') {
+			setWSStatus('disconnected');
+		}
 		scheduleReconnect();
 	};
 
@@ -197,7 +253,12 @@ function handleWSMessage(
 			wsConnection?.send(JSON.stringify({ type: 'auth', access_token: token }));
 			break;
 		case 'auth_ok':
+			setWSStatus('connected');
 			sendSubscription();
+			break;
+		case 'auth_invalid':
+			setWSStatus('auth_error');
+			wsConnection?.close();
 			break;
 		case 'event':
 			handleStateEvent(msg);
@@ -235,6 +296,7 @@ function disconnectWebSocket() {
 		wsConnection = null;
 	}
 	subscribedEntities = [];
+	setWSStatus('disconnected');
 }
 
 function scheduleReconnect() {
