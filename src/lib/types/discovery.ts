@@ -2,7 +2,7 @@
 
 export interface DiscoveryItem {
 	id: string;
-	source: 'unifi' | 'ha';
+	source: 'unifi' | 'ha' | 'homebox';
 	externalId: string;
 	name: string;
 	type: string;

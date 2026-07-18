@@ -7,23 +7,9 @@ import { isConfigured as isHAConfigured } from '$lib/server/ha-transport';
 import { getUnifiConfig } from '$lib/server/unifi-config';
 import { listTables, getRecords } from '$lib/server/nocodb';
 import { getIgnoredDevices, type DiscoveryItem, type DiscoveryResponse } from '$lib/server/discovery-state';
-
-function normalize(str: string): string {
-	return str.toLowerCase().replace(/[^a-z0-9]/g, '');
-}
-
-function fuzzyScore(a: string, b: string): number {
-	const na = normalize(a);
-	const nb = normalize(b);
-	if (!na || !nb) return 0;
-	if (na === nb) return 1.0;
-	if (na.includes(nb) || nb.includes(na)) return 0.8;
-	const wordsA = a.toLowerCase().split(/[\s\-_]+/).filter(Boolean);
-	const wordsB = b.toLowerCase().split(/[\s\-_]+/).filter(Boolean);
-	const overlap = wordsA.filter((w) => wordsB.some((wb) => wb.includes(w) || w.includes(wb)));
-	if (overlap.length > 0) return 0.4 + (0.4 * overlap.length) / Math.max(wordsA.length, wordsB.length);
-	return 0;
-}
+import { fuzzyScore, findBestMatches } from '$lib/server/fuzzy-match';
+import { inferDeviceCategory, inferCategoryFromHA } from '$lib/server/device-category';
+import { unifiCache, haCache } from '$lib/server/cache';
 
 function inferArea(deviceName: string, areas: Array<{ id: number; name: string }>): { id: number; name: string } | null {
 	const lower = deviceName.toLowerCase();
@@ -39,29 +25,10 @@ function inferArea(deviceName: string, areas: Array<{ id: number; name: string }
 	return best ? { id: best.id, name: best.name } : null;
 }
 
-function inferCategoryFromHA(device: { manufacturer: string | null; model: string | null; name: string | null }): string {
-	const name = (device.name || '').toLowerCase();
-	const mfr = (device.manufacturer || '').toLowerCase();
-	const model = (device.model || '').toLowerCase();
-	const combined = `${name} ${mfr} ${model}`;
-
-	if (/thermostat|ecobee|nest|hvac|climate/.test(combined)) return 'climate';
-	if (/camera|doorbell|protect/.test(combined)) return 'camera';
-	if (/light|bulb|hue|wled|led/.test(combined)) return 'lighting';
-	if (/switch|plug|outlet|relay/.test(combined)) return 'power';
-	if (/sensor|motion|door|window|leak|temp/.test(combined)) return 'sensor';
-	if (/lock|alarm|siren/.test(combined)) return 'security';
-	if (/speaker|sonos|tv|chromecast|roku/.test(combined)) return 'media';
-	if (/router|switch|ap|unifi|network/.test(combined)) return 'networking';
-	if (/hub|bridge|coordinator|zigbee|zwave|yolink/.test(combined)) return 'iot-hub';
-	if (/washer|dryer|fridge|dishwasher|oven/.test(combined)) return 'appliance';
-	return 'other';
-}
-
 export const GET: RequestHandler = async ({ url }) => {
 	const homeId = url.searchParams.get('homeId') ? Number(url.searchParams.get('homeId')) : null;
 	try {
-		const ignoredDevices = getIgnoredDevices();
+		const ignoredDevices = await getIgnoredDevices();
 
 		// Fetch NocoDB loads + areas
 		const tables = await listTables();
@@ -108,7 +75,16 @@ export const GET: RequestHandler = async ({ url }) => {
 		const unifiConfig = await getUnifiConfig(homeId);
 		if (unifiConfig.url) {
 			try {
-				const [devices, clients] = await Promise.all([getDevices(homeId), getClients(homeId)]);
+				const cacheKey = `unifi:${homeId ?? 'default'}`;
+				let devices: any[], clients: any[];
+				const cached = unifiCache.get(cacheKey);
+				if (cached) {
+					devices = cached.devices as any[];
+					clients = cached.clients as any[];
+				} else {
+					[devices, clients] = await Promise.all([getDevices(homeId), getClients(homeId)]);
+					unifiCache.set(cacheKey, { clients, devices });
+				}
 				unifiConnected = true;
 
 				// Process UniFi infrastructure devices (APs, switches, etc.)
@@ -218,10 +194,19 @@ export const GET: RequestHandler = async ({ url }) => {
 		const haConfigured = await isHAConfigured(homeId);
 		if (haConfigured) {
 			try {
-				const [haDevices, haAreas] = await Promise.all([getHADevices(false, homeId), getHAAreas(false, homeId)]);
+				const cacheKey = `ha:${homeId ?? 'default'}`;
+				let haDevices: any[], haAreas: any[];
+				const cachedHA = haCache.get(cacheKey);
+				if (cachedHA) {
+					haDevices = cachedHA.devices as any[];
+					haAreas = cachedHA.areas as any[];
+				} else {
+					[haDevices, haAreas] = await Promise.all([getHADevices(false, homeId), getHAAreas(false, homeId)]);
+					haCache.set(cacheKey, { devices: haDevices, areas: haAreas });
+				}
 				haConnected = true;
 
-				const haAreaMap = new Map(haAreas.map(a => [a.area_id, a.name]));
+				const haAreaMap = new Map(haAreas.map((a: any) => [a.area_id, a.name]));
 
 				for (const haDevice of haDevices) {
 					if (haDevice.disabled_by) continue;
@@ -233,9 +218,9 @@ export const GET: RequestHandler = async ({ url }) => {
 
 					// Check if HA device has a MAC that's already matched
 					const haMACs = haDevice.connections
-						.filter(([type]) => type === 'mac')
-						.map(([, mac]) => mac.toLowerCase());
-					if (haMACs.some(mac => loadByMac.has(mac))) continue;
+							.filter(([type]: [string, string]) => type === 'mac')
+							.map(([, mac]: [string, string]) => mac.toLowerCase());
+						if (haMACs.some((mac: string) => loadByMac.has(mac))) continue;
 
 					const name = haDevice.name_by_user || haDevice.name || haId;
 					const areaName = haDevice.area_id ? haAreaMap.get(haDevice.area_id) || null : null;

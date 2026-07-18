@@ -4,82 +4,64 @@ import { getClients, getDevices } from '$lib/server/unifi';
 import { getHADevices, getHAAreas } from '$lib/server/ha-devices';
 import { isConfigured as isHAConfigured } from '$lib/server/ha-transport';
 import { getUnifiConfig } from '$lib/server/unifi-config';
-import { loadTypeConfig } from '$lib/config/device-types';
+import { listTables, getRecords } from '$lib/server/nocodb';
+import { inferDeviceCategory, resolveDeviceIcon } from '$lib/server/device-category';
+import { unifiCache, haCache } from '$lib/server/cache';
+import type { UnifiedDevice } from '$lib/types/unified';
 
-export interface UnifiedDevice {
-	id: string;
-	name: string;
-	icon?: string;
-	deviceCategory: string;
-	circuitId?: string;
-	circuitName?: string;
-	panelName?: string;
-	breakerAmps?: number;
-	areaId?: number;
-	areaName?: string;
-	powerSource?: string;
-	network?: {
-		mac: string;
-		ip: string;
-		hostname: string;
-		isOnline: boolean;
-		lastSeen: number;
-		switchPort?: { switchName: string; port: number };
-		poePower?: number;
-		manufacturer?: string;
-		vlan?: string;
-		uptime?: number;
-	};
-	homeAssistant?: {
-		deviceId: string;
-		manufacturer: string | null;
-		model: string | null;
-		swVersion: string | null;
-		areaName: string | null;
-		entityCount: number;
-		isControllable: boolean;
-		viaDevice?: string | null;
-		entities?: string[];
-	};
-	sources: ('nocodb' | 'unifi' | 'ha')[];
-}
+export type { UnifiedDevice } from '$lib/types/unified';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const homeId = url.searchParams.get('homeId') ? Number(url.searchParams.get('homeId')) : null;
 	try {
+		// Resolve NocoDB table IDs
+		const tables = await listTables();
+		const loadTable = tables.find(t => t.title.toLowerCase() === 'load');
+		const areaTable = tables.find(t => t.title.toLowerCase() === 'area');
+		const circuitTable = tables.find(t => t.title.toLowerCase() === 'circuit');
+		const panelTable = tables.find(t => t.title.toLowerCase() === 'panel');
+
 		// Fetch ALL data sources in parallel — don't let one slow source block others
 		const [nocoResult, unifiResult, haResult] = await Promise.all([
-			// NocoDB loads + areas + circuits + panels (parallel sub-fetches)
+			// NocoDB loads + areas + circuits + panels (direct module calls)
 			Promise.all([
-				fetch(url.origin + '/api/nocodb?action=records&table=Load&limit=500').then(r => r.json()).catch(() => ({ records: [] })),
-					fetch(url.origin + '/api/nocodb?action=records&table=Area&limit=500').then(r => r.json()).catch(() => ({ records: [] })),
-					fetch(url.origin + '/api/nocodb?action=records&table=Circuit&limit=500').then(r => r.json()).catch(() => ({ records: [] })),
-					fetch(url.origin + '/api/nocodb?action=records&table=Panel&limit=500').then(r => r.json()).catch(() => ({ records: [] }))
+				loadTable ? getRecords(loadTable.id, { pageSize: '500' }).catch(() => []) : Promise.resolve([]),
+				areaTable ? getRecords(areaTable.id, { pageSize: '500' }).catch(() => []) : Promise.resolve([]),
+				circuitTable ? getRecords(circuitTable.id, { pageSize: '500' }).catch(() => []) : Promise.resolve([]),
+				panelTable ? getRecords(panelTable.id, { pageSize: '500' }).catch(() => []) : Promise.resolve([])
 			]),
-			// UniFi clients + devices (with config check)
+			// UniFi clients + devices (cached, 60s TTL)
 			(async () => {
+				const cacheKey = `unifi:${homeId ?? 'default'}`;
+				const cached = unifiCache.get(cacheKey);
+				if (cached) return { ...cached, up: true };
 				try {
 					const config = await getUnifiConfig(homeId);
 					if (!config.url || !config.username) return { clients: [], devices: [], up: false };
 					const [clients, devices] = await Promise.all([getClients(homeId), getDevices(homeId)]);
+					unifiCache.set(cacheKey, { clients, devices });
 					return { clients, devices, up: true };
 				} catch { return { clients: [], devices: [], up: false }; }
 			})(),
-			// HA devices + areas (with config check, 5s timeout)
+			// HA devices + areas (cached, 120s TTL)
 			(async () => {
+				const cacheKey = `ha:${homeId ?? 'default'}`;
+				const cached = haCache.get(cacheKey);
+				if (cached) return { ...cached, up: true };
 				try {
 					const configured = await isHAConfigured(homeId);
 					if (!configured) return { devices: [], areas: [], up: false };
 					const [devices, areas] = await Promise.all([getHADevices(false, homeId), getHAAreas(false, homeId)]);
+					haCache.set(cacheKey, { devices, areas });
 					return { devices, areas, up: true };
 				} catch { return { devices: [], areas: [], up: false }; }
 			})()
 		]);
 
-		const loads: Array<{ id: number; fields: Record<string, unknown> }> = nocoResult[0].records || [];
-		const areas: Array<{ id: number; fields: Record<string, unknown> }> = nocoResult[1].records || [];
-		const circuits: Array<{ id: number; fields: Record<string, unknown> }> = nocoResult[2].records || [];
-		const panelRecords: Array<{ id: number; fields: Record<string, unknown> }> = nocoResult[3].records || [];
+		const loads = nocoResult[0];
+		const areas = nocoResult[1];
+		const circuits = nocoResult[2];
+		const panelRecords = nocoResult[3];
 		const areaMap = new Map(areas.map(a => [a.id, String(a.fields.Title || a.fields.Name || '')]));
 		const panelMap = new Map(panelRecords.map(p => [p.id, String(p.fields.Name || p.fields.Title || '')]));
 
@@ -113,8 +95,8 @@ export const GET: RequestHandler = async ({ url }) => {
 		}));
 
 		const haUp = haResult.up;
-		const haDevices = haResult.devices || [];
-		const haAreas = haResult.areas || [];
+		const haDevices: any[] = haResult.devices || [];
+		const haAreas: any[] = haResult.areas || [];
 		const haAreaMap = new Map(haAreas.map((a: any) => [a.area_id, a.name]));
 
 		// Build UniFi lookup by MAC
@@ -131,11 +113,11 @@ export const GET: RequestHandler = async ({ url }) => {
 		}
 
 		// Build HA lookup by device_id AND by MAC
-		const haByMac = new Map<string, typeof haDevices[0]>();
-		const haById = new Map<string, typeof haDevices[0]>();
+		const haByMac = new Map<string, any>();
+		const haById = new Map<string, any>();
 		for (const d of haDevices) {
 			haById.set(d.id, d);
-			for (const [type, value] of d.connections) {
+			for (const [type, value] of d.connections as [string, string][]) {
 				if (type === 'mac') haByMac.set(value.toLowerCase(), d);
 			}
 		}
@@ -161,7 +143,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				id: String(load.id),
 				name: loadName,
 					icon: resolveDeviceIcon(f),
-					deviceCategory: inferCategory(f),
+						deviceCategory: inferDeviceCategory(f),
 				areaId,
 				areaName,
 				powerSource: String(f.Power_Source || ''),
@@ -244,47 +226,3 @@ export const GET: RequestHandler = async ({ url }) => {
 		);
 	}
 };
-
-/** Resolve the display icon: use custom override, fall back to type-based default */
-function resolveDeviceIcon(fields: Record<string, unknown>): string | undefined {
-	const iconField = String(fields.Icon || '').trim();
-	// If it's a real icon override (not "Default" or empty), use it
-	if (iconField && iconField.toLowerCase() !== 'default' && iconField.includes(':')) {
-		return iconField;
-	}
-	// Fall back to type-based icon from loadTypeConfig
-	const deviceType = String(fields['Device Type'] || '');
-	const typeConfig = loadTypeConfig[deviceType];
-	if (typeConfig) return typeConfig.icon;
-	return undefined;
-}
-
-function inferCategory(fields: Record<string, unknown>): string {
-	const type = String(fields['Device Type'] || '').toLowerCase();
-	const role = String(fields.Network_Role || '').toLowerCase();
-	const name = String(fields.Title || fields.Name || '').toLowerCase();
-
-	// --- Type-based checks first (most reliable) ---
-	if (type === 'networking' || role === 'router' || role === 'switch' || role === 'ap' || role === 'access point') return 'networking';
-	if (type === 'camera') return 'camera';
-	if (type === 'electronics') return 'media';
-	if (type.includes('light') || type.includes('lamp') || type === 'ceiling fan/light') return 'lighting';
-	if (type === 'hvac' || type === 'vent fan') return 'climate';
-	if (type === 'appliance' || type === 'washer/dryer' || type.includes('washer') || type.includes('dryer')) return 'appliance';
-	if (type === 'ev charger') return 'power';
-	if (type === 'smoke/co detector' || type === 'doorbell') return 'security';
-
-	// --- Name-based heuristics (fallback) ---
-	if (name.includes('camera')) return 'camera';
-	if (name.includes('projector') || name.includes('speaker') || name.includes('sonos') || name.includes('receiver') || name.match(/\btv\b/)) return 'media';
-	if (name.includes('raspberry') || name.includes('server') || name.includes('nas') || name.includes('desktop') || name.includes('pc') || name.includes('computer')) return 'computing';
-	if (name.includes('hub') || name.includes('yolink') || name.includes('zigbee') || name.includes('zwave')) return 'iot-hub';
-	if (name.includes('thermostat') || name.includes('ecobee') || name.includes('hvac') || name.includes('furnace') || name.includes('air conditioner') || name.includes('dehumidifier') || name.includes('humidifier')) return 'climate';
-	if (name.includes('light') || name.includes('lamp') || name.includes('bulb') || name.includes('sconce') || name.includes('chandelier')) return 'lighting';
-	if (name.includes('washer') || name.includes('dryer') || name.includes('fridge') || name.includes('refrigerator') || name.includes('dishwasher') || name.includes('oven') || name.includes('microwave') || name.includes('garbage disposal') || name.includes('range') || name.includes('stove') || name.includes('freezer')) return 'appliance';
-	if (name.includes('ups') || name.includes('pdu') || name.includes('plug') || name.includes('ev charger') || name.includes('charger')) return 'power';
-	if (name.includes('sensor') || name.includes('motion') || name.includes('leak') || name.includes('smoke') || name.includes('doorbell')) return 'security';
-	if (name.includes('fan') || name.includes('exhaust')) return 'climate';
-
-	return 'other';
-}

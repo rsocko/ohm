@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
 	import LoadEditForm from '$lib/components/LoadEditForm.svelte';
-	import type { UnifiedDevice } from '../api/devices/unified/+server';
+	import type { UnifiedDevice } from '$lib/types/unified';
 	import { homeContext, getHomeAreaIds } from '$lib/stores/home-context.svelte';
 
 	let allDevices: UnifiedDevice[] = $state([]);

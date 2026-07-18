@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { listTables, getRecords, createRecord, updateRecord, replaceLinks } from '$lib/server/nocodb';
-import { getIgnoredDevices } from '$lib/server/discovery-state';
+import { listTables, getRecords, createRecord, updateRecord, getLinkColumns, addLinks } from '$lib/server/nocodb';
+import { getIgnoredDevices, ignoreDevice, ignoreDevices } from '$lib/server/discovery-state';
 
 interface LinkBody {
 	action: 'link';
@@ -42,14 +42,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		const body = (await request.json()) as MatchBody;
 
 		if (body.action === 'ignore') {
-			getIgnoredDevices().add(body.discoveryId);
+			await ignoreDevice(body.discoveryId);
 			return json({ success: true, action: 'ignored', id: body.discoveryId });
 		}
 
 		if (body.action === 'ignore-all') {
-			for (const id of body.discoveryIds) {
-				getIgnoredDevices().add(id);
-			}
+			await ignoreDevices(body.discoveryIds);
 			return json({ success: true, action: 'ignored-all', count: body.discoveryIds.length });
 		}
 
@@ -124,70 +122,32 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 };
 
-async function getNocoDBEnv() {
-	const { env } = await import('$env/dynamic/private');
-	return {
-		url: env.NOCODB_URL || 'http://nocodb.example.com',
-		token: env.NOCODB_API_TOKEN || ''
-	};
+async function findLinkColumnId(tableId: string, columnTitle: string): Promise<string | null> {
+	const linkCols = await getLinkColumns(tableId);
+	const col = linkCols.find(c => c.title === columnTitle);
+	return col?.id || null;
 }
 
 async function linkToArea(loadTableId: string, loadId: number, areaId: number) {
-	const { url, token } = await getNocoDBEnv();
 	try {
-		const metaResp = await fetch(`${url}/api/v2/meta/tables/${loadTableId}`, {
-			headers: { 'xc-token': token }
-		});
-		const meta = await metaResp.json();
-		const areaCol = meta.columns?.find(
-			(c: { title: string; uidt: string }) => c.title === 'Area' && c.uidt === 'LinkToAnotherRecord'
-		);
-		if (!areaCol) return;
-
-		await fetch(`${url}/api/v2/tables/${loadTableId}/links/${areaCol.id}/records/${loadId}`, {
-			method: 'POST',
-			headers: { 'xc-token': token, 'Content-Type': 'application/json' },
-			body: JSON.stringify([{ Id: areaId }])
-		});
+		const colId = await findLinkColumnId(loadTableId, 'Area');
+		if (!colId) return;
+		await addLinks(loadTableId, colId, loadId, [areaId]);
 	} catch { /* non-fatal */ }
 }
 
 async function linkToCircuit(loadTableId: string, loadId: number, circuitId: number) {
-	const { url, token } = await getNocoDBEnv();
 	try {
-		const metaResp = await fetch(`${url}/api/v2/meta/tables/${loadTableId}`, {
-			headers: { 'xc-token': token }
-		});
-		const meta = await metaResp.json();
-		const circuitCol = meta.columns?.find(
-			(c: { title: string; uidt: string }) => c.title === 'Circuit' && c.uidt === 'LinkToAnotherRecord'
-		);
-		if (!circuitCol) return;
-
-		await fetch(`${url}/api/v2/tables/${loadTableId}/links/${circuitCol.id}/records/${loadId}`, {
-			method: 'POST',
-			headers: { 'xc-token': token, 'Content-Type': 'application/json' },
-			body: JSON.stringify([{ Id: circuitId }])
-		});
+		const colId = await findLinkColumnId(loadTableId, 'Circuit');
+		if (!colId) return;
+		await addLinks(loadTableId, colId, loadId, [circuitId]);
 	} catch { /* non-fatal */ }
 }
 
 async function linkUpstream(loadTableId: string, loadId: number, upstreamLoadId: number) {
-	const { url, token } = await getNocoDBEnv();
 	try {
-		const metaResp = await fetch(`${url}/api/v2/meta/tables/${loadTableId}`, {
-			headers: { 'xc-token': token }
-		});
-		const meta = await metaResp.json();
-		const upstreamCol = meta.columns?.find(
-			(c: { title: string; uidt: string }) => c.title === 'Network_Upstream' && c.uidt === 'LinkToAnotherRecord'
-		);
-		if (!upstreamCol) return;
-
-		await fetch(`${url}/api/v2/tables/${loadTableId}/links/${upstreamCol.id}/records/${loadId}`, {
-			method: 'POST',
-			headers: { 'xc-token': token, 'Content-Type': 'application/json' },
-			body: JSON.stringify([{ Id: upstreamLoadId }])
-		});
+		const colId = await findLinkColumnId(loadTableId, 'Network_Upstream');
+		if (!colId) return;
+		await addLinks(loadTableId, colId, loadId, [upstreamLoadId]);
 	} catch { /* non-fatal */ }
 }
