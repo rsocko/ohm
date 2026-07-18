@@ -8,14 +8,27 @@
 		fields: Record<string, unknown>;
 	}
 
+	interface SemanticResult {
+		id: string;
+		type: string;
+		label: string;
+		refId: number;
+		meta: Record<string, unknown>;
+		score: number;
+		textScore: number;
+		semanticScore: number;
+	}
+
 	let query = $state('');
 	let results: Record<string, V3Record[]> = $state({});
+	let semanticResults: SemanticResult[] = $state([]);
 	let loading = $state(false);
 	let searched = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 	let inputEl: HTMLInputElement | undefined = $state();
 	let typeFilter: string | null = $state(null);
 	let recentSearches: string[] = $state([]);
+	let searchMode: 'text' | 'semantic' = $state('semantic');
 
 	const RECENT_KEY = 'electrical-config-recent-searches';
 	const MAX_RECENT = 5;
@@ -36,6 +49,7 @@
 	async function doSearch() {
 		if (!query.trim()) {
 			results = {};
+			semanticResults = [];
 			searched = false;
 			return;
 		}
@@ -43,13 +57,30 @@
 		searched = true;
 
 		try {
-			const resp = await fetch(`/api/nocodb?action=search&q=${encodeURIComponent(query.trim())}`);
-			const data = await resp.json();
-			results = data.results || {};
-			// Save to recent searches
+			if (searchMode === 'semantic') {
+				// Hybrid: fire both text and semantic search in parallel
+				const [textResp, semanticResp] = await Promise.all([
+					fetch(`/api/nocodb?action=search&q=${encodeURIComponent(query.trim())}`),
+					fetch(`/api/search/semantic?q=${encodeURIComponent(query.trim())}${typeFilter ? `&type=${typeFilter.toLowerCase()}` : ''}`)
+				]);
+				const textData = await textResp.json();
+				results = textData.results || {};
+				if (semanticResp.ok) {
+					const semData = await semanticResp.json();
+					semanticResults = semData.results || [];
+				} else {
+					semanticResults = [];
+				}
+			} else {
+				const resp = await fetch(`/api/nocodb?action=search&q=${encodeURIComponent(query.trim())}`);
+				const data = await resp.json();
+				results = data.results || {};
+				semanticResults = [];
+			}
 			saveRecent(query.trim());
 		} catch {
 			results = {};
+			semanticResults = [];
 		} finally {
 			loading = false;
 		}
@@ -140,6 +171,28 @@
 		return null;
 	}
 
+	function semanticTypeToCategoryName(type: string): string {
+		const map: Record<string, string> = { circuit: 'Circuit', room: 'Area', load: 'Load', receptacle: 'Receptacle', panel: 'Panel' };
+		return map[type] || type;
+	}
+
+	function getSemanticLink(result: SemanticResult): string | null {
+		switch (result.type) {
+			case 'room': return `/rooms?area=${result.refId}`;
+			case 'panel': return `/panels?panel=${result.refId}`;
+			case 'circuit': {
+				const panelId = result.meta.panelId;
+				return panelId ? `/panels?panel=${panelId}&circuit=${result.refId}` : `/panels?circuit=${result.refId}`;
+			}
+			case 'load':
+			case 'receptacle': {
+				const roomId = result.meta.roomId;
+				return roomId ? `/rooms?area=${roomId}` : null;
+			}
+			default: return null;
+		}
+	}
+
 	// Total result count
 	const totalResults = $derived(
 		Object.values(results).reduce((sum, arr) => sum + arr.length, 0)
@@ -207,6 +260,24 @@
 			{/if}
 		</div>
 
+		<!-- Search mode toggle -->
+		<div class="flex items-center gap-2 px-1">
+			<button
+				onclick={() => { searchMode = 'semantic'; if (query) doSearch(); }}
+				class="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors {searchMode === 'semantic' ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30' : 'text-slate-500 hover:text-slate-300'}"
+			>
+				<Icon icon="mdi:brain" width={12} />
+				Smart
+			</button>
+			<button
+				onclick={() => { searchMode = 'text'; if (query) doSearch(); }}
+				class="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-colors {searchMode === 'text' ? 'bg-slate-700 text-slate-200 border border-slate-600' : 'text-slate-500 hover:text-slate-300'}"
+			>
+				<Icon icon="mdi:text-search" width={12} />
+				Text
+			</button>
+		</div>
+
 		<!-- Category filter chips (show when we have results) -->
 		{#if searched && totalResults > 0}
 			<div class="flex gap-1.5 overflow-x-auto pb-0.5 -mb-0.5">
@@ -269,7 +340,7 @@
 					</div>
 				</div>
 			</div>
-		{:else if totalResults === 0}
+		{:else if totalResults === 0 && semanticResults.length === 0}
 			<div class="text-center py-12 space-y-2">
 				<Icon icon="mdi:magnify-close" width={32} class="text-slate-700 mx-auto" />
 				<p class="text-sm text-slate-400">No results for "<span class="text-white">{query}</span>"</p>
@@ -279,6 +350,57 @@
 				</a>
 			</div>
 		{:else}
+			<!-- Semantic results (shown first when available, as they're ranked by relevance) -->
+			{#if semanticResults.length > 0}
+				<div>
+					<h2 class="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-purple-400 mb-1.5 px-1">
+						<Icon icon="mdi:brain" width={13} />
+						Semantic Matches
+						<span class="text-slate-600 font-normal normal-case ml-1">({semanticResults.length})</span>
+					</h2>
+					<div class="space-y-1">
+						{#each semanticResults as result}
+							{@const link = getSemanticLink(result)}
+							{@const cat = getCategoryInfo(semanticTypeToCategoryName(result.type))}
+							{#if link}
+								<a href={link} class="flex items-center gap-3 bg-slate-800/60 rounded-lg p-3 border border-purple-500/20 hover:border-purple-500/40 transition-colors">
+									<div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700/60 shrink-0">
+										<Icon icon={cat.icon} width={18} class={cat.color} />
+									</div>
+									<div class="flex-1 min-w-0">
+										<p class="text-sm text-white font-medium truncate">{result.label}</p>
+										<p class="text-xs text-slate-500 truncate mt-0.5">
+											{result.meta.roomName || result.meta.panelName || result.meta.location || result.meta.floor || ''}
+											{#if result.meta.wattage}· {result.meta.wattage}W{/if}
+											{#if result.meta.amps}· {result.meta.amps}A{/if}
+										</p>
+									</div>
+									<div class="flex flex-col items-end gap-0.5 shrink-0">
+										<span class="text-[10px] text-purple-400/80">{Math.round(result.score * 100)}%</span>
+										<Icon icon="mdi:chevron-right" width={16} class="text-slate-600" />
+									</div>
+								</a>
+							{:else}
+								<div class="flex items-center gap-3 bg-slate-800/60 rounded-lg p-3 border border-purple-500/20">
+									<div class="w-9 h-9 flex items-center justify-center rounded-lg bg-slate-700/60 shrink-0">
+										<Icon icon={cat.icon} width={18} class={cat.color} />
+									</div>
+									<div class="flex-1 min-w-0">
+										<p class="text-sm text-white font-medium truncate">{result.label}</p>
+										<p class="text-xs text-slate-500 truncate mt-0.5">
+											{result.meta.roomName || result.meta.panelName || result.meta.location || ''}
+										</p>
+									</div>
+									<span class="text-[10px] text-purple-400/80 shrink-0">{Math.round(result.score * 100)}%</span>
+								</div>
+							{/if}
+						{/each}
+					</div>
+				</div>
+			{/if}
+
+			<!-- Text-match results (grouped by category) -->
+			{#if totalResults > 0}
 			{#each Object.entries(filteredResults) as [tableName, records]}
 				{@const cat = getCategoryInfo(tableName)}
 				<div>
@@ -321,6 +443,7 @@
 					</div>
 				</div>
 			{/each}
+			{/if}
 		{/if}
 	</div>
 </div>

@@ -244,20 +244,49 @@ export const findDevice: ToolDefinition = {
 
 export const searchElectrical: ToolDefinition = {
 	name: 'search_electrical',
-	description: 'Free-text search across all tables (homes, rooms, panels, circuits, loads, receptacles). Use for general lookups.',
+	description: 'Semantic + text search across all tables (homes, rooms, panels, circuits, loads, receptacles). Understands meaning, not just keywords — "things that use a lot of power" finds high-wattage loads, "master bedroom outlets" finds "Primary Bedroom" receptacles.',
 	category: 'read',
 	parameters: {
-		query: { type: 'string', description: 'Search term', required: true }
+		query: { type: 'string', description: 'Search term or natural-language question', required: true }
 	},
 	async execute(args): Promise<ToolResponse> {
-		const results = await db.searchAll(String(args.query));
+		const query = String(args.query);
+
+		// Try semantic search first (more relevant results)
+		try {
+			const { semanticSearch } = await import('$lib/server/vector-store');
+			const semanticResults = await semanticSearch(query, { limit: 15 });
+
+			if (semanticResults.length > 0) {
+				return {
+					success: true,
+					data: {
+						query,
+						searchType: 'semantic',
+						results: semanticResults.map(r => ({
+							type: r.document.type,
+							id: r.document.refId,
+							label: r.document.label,
+							score: Math.round(r.score * 100),
+							meta: r.document.meta
+						}))
+					}
+				};
+			}
+		} catch {
+			// Fall through to text search if semantic is unavailable
+		}
+
+		// Fallback: plain text search
+		const results = await db.searchAll(query);
 		if (results.length === 0) {
-			return { success: false, error: `No results for "${args.query}"` };
+			return { success: false, error: `No results for "${query}"` };
 		}
 		return {
 			success: true,
 			data: {
-				query: args.query,
+				query,
+				searchType: 'text',
 				results: results.slice(0, 20).map(r => ({
 					table: r.table, id: r.id, name: r.name,
 					fields: r.fields
