@@ -3,6 +3,7 @@
 	import CircuitRanking from '$lib/components/energy/CircuitRanking.svelte';
 	import EnergyFlowDiagram from '$lib/components/energy/EnergyFlowDiagram.svelte';
 	import EnergyInsights from '$lib/components/energy/EnergyInsights.svelte';
+	import EnergyOverviewChart from '$lib/components/energy/EnergyOverviewChart.svelte';
 	import TimeRangeSelector from '$lib/components/energy/TimeRangeSelector.svelte';
 	import { buildEnergyInsights } from '$lib/services/energy/insights';
 	import { homeContext } from '$lib/stores/home-context.svelte';
@@ -684,6 +685,13 @@
 				{/if}
 			</div>
 		</div>
+
+		{#if todayTotalPoints.length >= 2 || solarHistory.length >= 2}
+			<EnergyOverviewChart
+				consumptionPoints={todayTotalPoints}
+				productionPoints={solarHistory}
+			/>
+		{/if}
 
 		<section class="card overflow-hidden p-0">
 			<button
