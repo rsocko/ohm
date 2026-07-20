@@ -45,18 +45,11 @@ jobs:
     runs-on: [self-hosted, linux, docker, build, homelab, dockhand]
     if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Pre-clean workspace (self-hosted)
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -d "$GITHUB_WORKSPACE" ]; then
-            find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-          fi
-
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          clean: false
+          clean: true
+          fetch-depth: 1
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Resolve image tag (push to main)
@@ -91,13 +84,22 @@ jobs:
             exit 1
           fi
           echo "resolved_tag=$TAG" >> "$GITHUB_OUTPUT"
-
-      - name: Show resolved image target
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Resolved image: ${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
+          echo "Resolved image: ${{ env.REGISTRY_REPOSITORY }}:$TAG"
           echo "Push latest: ${{ github.event.inputs.push_latest || 'true' }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}
+            ${{ (github.event.inputs.push_latest || 'true') == 'true' && format('{0}:latest', env.REGISTRY_REPOSITORY) || '' }}
+          cache-from: type=registry,ref=${{ env.REGISTRY_REPOSITORY }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY_REPOSITORY }}:buildcache,mode=max
 
       - name: Publish version summary
         shell: bash
@@ -115,24 +117,3 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           echo "::notice title=Resolved ohm image::${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
-
-      - name: Build image
-        shell: bash
-        run: |
-          set -euo pipefail
-          IMAGE="${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
-          docker build -t "$IMAGE" .
-          if [ "${{ github.event.inputs.push_latest || 'true' }}" = 'true' ]; then
-            docker tag "$IMAGE" "${{ env.REGISTRY_REPOSITORY }}:latest"
-          fi
-          echo "Built $IMAGE"
-
-      - name: Push image
-        shell: bash
-        run: |
-          set -euo pipefail
-          IMAGE="${{ env.REGISTRY_REPOSITORY }}:${{ steps.version.outputs.resolved_tag }}"
-          docker push "$IMAGE"
-          if [ "${{ github.event.inputs.push_latest || 'true' }}" = 'true' ]; then
-            docker push "${{ env.REGISTRY_REPOSITORY }}:latest"
-          fi
