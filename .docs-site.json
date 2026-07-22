@@ -1,0 +1,9 @@
+{
+  "label": "Ohm",
+  "description": "Home energy monitoring and electrical system management application.",
+  "emoji": "⚡",
+  "order": 50,
+  "sidebarId": "ohmSidebar",
+  "navbar": true,
+  "homepage": true
+}
