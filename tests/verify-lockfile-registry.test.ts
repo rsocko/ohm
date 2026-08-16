@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
 	ALLOWED_RESOLVED_PREFIX,
 	findDisallowedPackageJsonSpecs,
@@ -106,5 +107,12 @@ describe('verify-lockfile-registry guard', () => {
 			},
 		};
 		expect(verifyRegistrySources({ pkgJson, lockJson })).toHaveLength(2);
+	});
+
+	it('keeps the patched cookie transitive override in the lockfile', () => {
+		const lockJson = JSON.parse(
+			readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'),
+		);
+		expect(lockJson.packages['node_modules/cookie'].version).toBe('0.7.2');
 	});
 });
