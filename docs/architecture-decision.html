@@ -648,7 +648,7 @@ FloorPlans table:
 <h2>Phase 1.5: Siri Voice Bridge (iOS Shortcuts + PWA API)</h2>
 <h3>How It Works</h3>
 <p>Siri doesn't understand MCP — it's purely a voice trigger for iOS Shortcuts. MCP is a protocol between AI agents and data sources (Claude, Open-WebUI, etc.), not something iOS can speak natively.</p>
-<p>However, Siri + Shortcuts can make HTTP requests to <strong>any local LAN endpoint</strong> — no internet required. The Shortcut itself contains the endpoint URL (e.g., <code>http://electrical.local/api/ask</code> or <code>http://192.168.1.x:3000/api/ask</code>).</p>
+<p>However, Siri + Shortcuts can make HTTP requests to <strong>any local LAN endpoint</strong> — no internet required. The Shortcut itself contains the endpoint URL (e.g., <code>http://electrical.local/api/ask</code> or <code>http://192.0.2.50:3000/api/ask</code>).</p>
 <pre><code>┌─────────────────────────────────────────────────────────────┐
 │  &quot;Hey Siri, ask electrical what circuit the pool pump is on&quot; │
 └──────────────────────────┬──────────────────────────────────┘

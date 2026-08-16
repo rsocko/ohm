@@ -2,7 +2,7 @@
 
 > **Status:** Proposed  
 > **Date:** 2026-07-26  
-> **Related:** [homelab-config/stacks/server-mini/bifrost](https://github.com/rsocko/homelab-config/tree/main/stacks/server-mini/bifrost)
+> **Deployment note:** Maintainer-specific Bifrost deployment is managed outside this repository.
 
 ## Context
 

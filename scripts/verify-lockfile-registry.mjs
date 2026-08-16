@@ -16,6 +16,9 @@ const DISALLOWED_SPEC_PATTERNS = [
 	{ pattern: /^ssh:/i, reason: 'ssh: dependency specifier' },
 	{ pattern: /^file:/i, reason: 'file: (local path) dependency specifier' },
 	{ pattern: /^link:/i, reason: 'link: (local workspace) dependency specifier' },
+	{ pattern: /^workspace:/i, reason: 'workspace: dependency specifier' },
+	{ pattern: /^(?:github|gitlab|bitbucket):/i, reason: 'repository shorthand dependency specifier' },
+	{ pattern: /^[^@/\s]+\/[^/\s]+(?:#.*)?$/, reason: 'bare repository shorthand dependency specifier' },
 	{ pattern: /^https?:\/\/(?!registry\.npmjs\.org\/)/i, reason: 'non-npmjs tarball URL dependency specifier' },
 ];
 
@@ -26,22 +29,37 @@ const DISALLOWED_SPEC_PATTERNS = [
  * @returns {string[]} human-readable violation messages
  */
 export function findDisallowedPackageJsonSpecs(pkgJson) {
+	/** @type {string[]} */
 	const violations = [];
-	const fields = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
+	const fields = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies', 'overrides', 'resolutions'];
 	for (const field of fields) {
 		const deps = pkgJson[field];
 		if (!deps || typeof deps !== 'object') continue;
-		for (const [name, spec] of Object.entries(deps)) {
-			if (typeof spec !== 'string') continue;
-			for (const { pattern, reason } of DISALLOWED_SPEC_PATTERNS) {
-				if (pattern.test(spec)) {
-					violations.push(`package.json ${field}["${name}"] = "${spec}" (${reason})`);
-					break;
-				}
+		collectPackageJsonSpecViolations(/** @type {Record<string, unknown>} */ (deps), violations, field);
+	}
+	return violations;
+}
+
+/**
+ * @param {Record<string, unknown>} dependencies
+ * @param {string[]} violations
+ * @param {string} pathPrefix
+ */
+function collectPackageJsonSpecViolations(dependencies, violations, pathPrefix) {
+	for (const [name, spec] of Object.entries(dependencies)) {
+		const path = `${pathPrefix}["${name}"]`;
+		if (spec && typeof spec === 'object') {
+			collectPackageJsonSpecViolations(/** @type {Record<string, unknown>} */ (spec), violations, path);
+			continue;
+		}
+		if (typeof spec !== 'string') continue;
+		for (const { pattern, reason } of DISALLOWED_SPEC_PATTERNS) {
+			if (pattern.test(spec)) {
+				violations.push(`package.json ${path} = "${spec}" (${reason})`);
+				break;
 			}
 		}
 	}
-	return violations;
 }
 
 /**

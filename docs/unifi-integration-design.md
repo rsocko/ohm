@@ -97,7 +97,7 @@ UniFi Network Application uses cookie-based session auth:
 ```json
 {
   "mac": "11:22:33:44:55:66",
-  "ip": "192.0.2.1",
+  "ip": "192.0.2.50",
   "hostname": "camera-front",
   "name": "Front Camera",
   "sw_mac": "ab:cd:ef:12:34:56",

@@ -20,7 +20,7 @@ export function getDemoUnifiDevices(): UnifiDevice[] {
 		},
 		{
 			mac: 'f0:9f:c2:bb:22:02',
-			ip: '192.0.2.1',
+			ip: '192.0.2.2',
 			name: 'USW-24-PoE',
 			model: 'USW-24-PoE',
 			model_in_lts: true,
@@ -38,7 +38,7 @@ export function getDemoUnifiDevices(): UnifiDevice[] {
 		},
 		{
 			mac: 'f0:9f:c2:cc:33:03',
-			ip: '192.0.2.1',
+			ip: '192.0.2.3',
 			name: 'U6-LR (Living Room)',
 			model: 'U6-LR',
 			model_in_lts: true,
@@ -51,7 +51,7 @@ export function getDemoUnifiDevices(): UnifiDevice[] {
 		},
 		{
 			mac: 'f0:9f:c2:dd:44:04',
-			ip: '192.0.2.1',
+			ip: '192.0.2.4',
 			name: 'U6-Lite (Kitchen)',
 			model: 'U6-Lite',
 			model_in_lts: true,

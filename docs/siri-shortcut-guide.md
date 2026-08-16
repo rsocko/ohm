@@ -10,7 +10,7 @@ The Electrical Config app exposes a `/api/ask` endpoint that accepts natural-lan
 
 ## Prerequisites
 
-1. **App running** on a reachable URL (e.g., `http://192.0.2.1:5173` or a deployed instance)
+1. **App running** on a reachable URL (e.g., `http://192.0.2.50:5173` or a deployed instance)
 2. **Open-WebUI configured** in Settings → AI Configuration
 3. **API key** (copy from Settings → Shortcut API Key) — or disable "Require API Key" for trusted-network use
 

@@ -515,7 +515,7 @@ Positions stored as percentages make the layout responsive regardless of display
 
 Siri doesn't understand MCP — it's purely a voice trigger for iOS Shortcuts. MCP is a protocol between AI agents and data sources (Claude, Open-WebUI, etc.), not something iOS can speak natively.
 
-However, Siri + Shortcuts can make HTTP requests to **any local LAN endpoint** — no internet required. The Shortcut itself contains the endpoint URL (e.g., `http://electrical.local/api/ask` or `http://192.168.1.x:3000/api/ask`).
+However, Siri + Shortcuts can make HTTP requests to **any local LAN endpoint** — no internet required. The Shortcut itself contains the endpoint URL (e.g., `http://electrical.local/api/ask` or `http://192.0.2.50:3000/api/ask`).
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

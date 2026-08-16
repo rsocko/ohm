@@ -87,14 +87,15 @@ instance only.
 `main` and every pull request (including from forks), entirely on
 GitHub-hosted runners:
 
-1. `npm ci` — install dependencies strictly from the public npm registry
-2. `npm run verify:registry` — fail the build if `package.json` or
+1. `npm run verify:registry` — fail the build if `package.json` or
    `package-lock.json` reference anything other than
-   `https://registry.npmjs.org/` (no private feeds, no git/file/link
+   `https://registry.npmjs.org/` (no private feeds, no git/file/link/workspace
    dependency sources)
+2. `npm ci` — install dependencies strictly from the public npm registry
 3. `npm run check` — type checking
 4. `npm test` — the deterministic default test suite
 5. `npm run build` — production build
+6. `docker build .` — verify the public container build
 
 The workflow requests only `contents: read` permission, references no
 secrets, and never runs on a self-hosted runner — a pull request from a fork
@@ -118,10 +119,6 @@ and what to check before opening a PR. Please review our
 [Code of Conduct](CODE_OF_CONDUCT.md). Security issues should be reported
 privately — see [SECURITY.md](SECURITY.md).
 
-## License
-
-Licensed under the [Apache License 2.0](LICENSE).
-
 ## Brand
 
 **Name:** Ohm (Ω) — the SI unit of resistance. Also sounds like "home."
@@ -130,7 +127,7 @@ Licensed under the [Apache License 2.0](LICENSE).
 
 **Colors:** Electric Indigo (`#6366F1`) for AI/intelligence, Amber (`#F5A623`) for energy data, Cyan (`#22D3EE`) for solar/live streams.
 
----
+## License
 
 Originally built for personal use; now open for public contributions under
-the terms of the [license](LICENSE) above.
+the terms of the [Apache License 2.0](LICENSE).

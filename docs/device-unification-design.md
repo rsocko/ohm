@@ -190,7 +190,7 @@ A single physical device may appear in multiple systems. The merge layer resolve
 
 ```
 Physical: "Raspberry Pi 4 (Office)"
-  ├── UniFi client: mac=aa:bb:cc:dd:ee:ff, ip=192.0.2.1
+  ├── UniFi client: mac=aa:bb:cc:dd:ee:ff, ip=192.0.2.50
   ├── HA device: id=abc123, via UniFi integration, area=office
   └── NocoDB Load: id=42, Network_Match_Key=aa:bb:cc:dd:ee:ff, Circuit=C-12
 

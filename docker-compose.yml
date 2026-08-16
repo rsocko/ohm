@@ -1,6 +1,4 @@
-# Docker Compose for deploying the Ohm PWA
-# Local dev-parity copy — the homelab-config repo's stacks/server-mini/ohm/compose.yaml
-# is the source of truth for the running deployment (pulls from registry.example.com).
+# Docker Compose for running Ohm locally.
 
 services:
   ohm:
@@ -10,16 +8,10 @@ services:
     env_file: .env
     environment:
       - PORT=3000
+    ports:
+      - "3000:3000"
     volumes:
       - ohm-data:/app/data
-    networks:
-      - traefik
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ohm.rule=Host(`ohm.example.com`)"
-      - "traefik.http.routers.ohm.entrypoints=web"
-      - "traefik.http.services.ohm.loadbalancer.server.port=3000"
-      - "traefik.docker.network=traefik"
 
     healthcheck:
       # Use 127.0.0.1 — Alpine resolves "localhost" to ::1 (IPv6) but
@@ -29,10 +21,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-
-networks:
-  traefik:
-    external: true
 
 volumes:
   ohm-data:

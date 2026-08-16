@@ -20,10 +20,21 @@ describe('verify-lockfile-registry guard', () => {
 		['git protocol dependency', { dependencies: { foo: 'git://github.com/foo/foo.git' } }],
 		['file: local path dependency', { devDependencies: { foo: 'file:../local-foo' } }],
 		['link: local workspace dependency', { dependencies: { foo: 'link:../local-foo' } }],
+		['workspace dependency', { dependencies: { foo: 'workspace:*' } }],
+		['GitHub shorthand dependency', { dependencies: { foo: 'github:foo/foo' } }],
+		['bare repository shorthand dependency', { dependencies: { foo: 'foo/foo#main' } }],
 		['a private feed tarball URL', { dependencies: { foo: 'https://ms-feed-1.pkgs.visualstudio.com/foo/-/foo-1.0.0.tgz' } }],
 	])('flags %s in package.json', (_label, pkgJson) => {
 		const violations = findDisallowedPackageJsonSpecs(pkgJson);
 		expect(violations.length).toBeGreaterThan(0);
+	});
+
+	it('flags nested override and resolution sources', () => {
+		const pkgJson = {
+			overrides: { parent: { child: 'git+https://github.com/foo/child.git' } },
+			resolutions: { other: 'file:../other' },
+		};
+		expect(findDisallowedPackageJsonSpecs(pkgJson)).toHaveLength(2);
 	});
 
 	it('allows lockfile entries resolved from the public npm registry', () => {

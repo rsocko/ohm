@@ -34,11 +34,11 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Install dependencies (public npm registry only)
-        run: npm ci
-
       - name: Verify dependency sources (public npm registry only)
         run: npm run verify:registry
+
+      - name: Install dependencies (public npm registry only)
+        run: npm ci
 
       - name: Type check (svelte-check)
         run: npm run check
@@ -48,3 +48,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Build container
+        run: docker build .
