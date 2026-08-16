@@ -1,5 +1,12 @@
 name: CI
 
+# Public CI trust boundary:
+# - Runs only on GitHub-hosted runners (ubuntu-latest) — never a self-hosted/homelab runner.
+# - `pull_request` (not `pull_request_target`) means fork PRs run with a read-only,
+#   token-scoped GITHUB_TOKEN and no access to repository secrets.
+# - No secrets are referenced anywhere in this workflow.
+# - `npm ci` installs strictly from the public npm registry per package-lock.json,
+#   and the registry guard step fails the build if that ever drifts.
 on:
   push:
     branches:
@@ -10,24 +17,34 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Least privilege: this workflow only reads repo contents. No write scopes are needed.
+permissions:
+  contents: read
+
 jobs:
   check-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
           cache: "npm"
 
-      - name: Install dependencies
+      - name: Install dependencies (public npm registry only)
         run: npm ci
+
+      - name: Verify dependency sources (public npm registry only)
+        run: npm run verify:registry
 
       - name: Type check (svelte-check)
         run: npm run check
+
+      - name: Test (deterministic default suite)
+        run: npm test
 
       - name: Build
         run: npm run build

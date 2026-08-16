@@ -23,30 +23,104 @@ Know your home, circuit by circuit. Ohm gives you instant answers about your ele
 
 ## Quick start
 
+Requires [Node.js](https://nodejs.org/) 22+ and npm.
+
 ```bash
+git clone https://github.com/rsocko/ohm.git
+cd ohm
 npm install
-cp .env.example .env   # Configure your endpoints
+cp .env.example .env   # see "Configuration" below
 npm run dev
 ```
 
-## Deployment (CI/CD)
+Then open the URL printed by Vite (default `http://localhost:5173`).
 
-Pushes to `main` automatically build and push a Docker image to the private
-homelab registry (`registry.example.com/ohm`), tagged `sha-<short-sha>` and
-`latest`. See `.github/workflows/build-and-push.yml`.
+### Demo mode (no external services required)
 
-- **CI validation** (`.github/workflows/ci.yml`): type-checks (`svelte-check`)
-  and builds on every push/PR.
-- **Build + push** (`.github/workflows/build-and-push.yml`): runs on a
-  self-hosted runner in the homelab (registered to this repo, labels
-  `[self-hosted, linux, docker, build, homelab, dockhand]` — see
-  `homelab-config/stacks/server-mini/ohm-github-runner/`). Auto-triggers on
-  push to `main`; can also be run manually (`workflow_dispatch`) to cut a
-  semver release (`v1.2.0`) via `.github/scripts/resolve_registry_version.py`.
-- **Deploy**: manual — pull the new image and recreate the container via
-  Dockhand's UI. The running stack is defined in
-  `homelab-config/stacks/server-mini/ohm/compose.yaml` (not this repo's
-  `docker-compose.yml`, which is a local dev-parity copy).
+Ohm normally talks to a NocoDB instance, Home Assistant, and optionally
+UniFi/an LLM provider. To explore the app without configuring any of that,
+run it in demo mode, which serves synthetic fixture data instead:
+
+```bash
+npm run dev:demo
+```
+
+This is equivalent to setting `DEMO_MODE=true` in your `.env` (see
+`.env.demo`).
+
+### Configuration (optional integrations)
+
+Copy `.env.example` to `.env` and fill in only what you need — every
+integration is optional and the app degrades gracefully (or you can just use
+demo mode). See the comments in `.env.example` for each variable:
+
+- **NocoDB** — the electrical topology data store (panels/circuits/areas/loads)
+- **LLM provider** — `LLM_PROVIDER=ollama|openwebui|openai`, for the AI chat assistant
+- **Home Assistant** — energy/solar sensor data
+- **UniFi Network** — device discovery
+- **Utility rate** — used for cost estimates in the UI
+
+None of these values are required to build, type-check, or run the default
+test suite.
+
+## Development
+
+```bash
+npm run check   # svelte-check (TypeScript + Svelte diagnostics)
+npm test        # vitest — deterministic unit/integration-against-fixtures suite
+npm run build   # production build (adapter-node)
+npm run preview # preview the production build locally
+```
+
+`npm run verify:registry` runs the dependency supply-chain guard (see
+"Continuous integration" below); it's a CI safeguard, not a prerequisite for
+local dev.
+
+A separate `tests/integration/` suite (`npm run test:live`) exercises a real,
+operator-configured NocoDB instance with live credentials. It is **not**
+part of `npm test` or CI — it's for maintainers with access to that
+instance only.
+
+## Continuous integration
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push to
+`main` and every pull request (including from forks), entirely on
+GitHub-hosted runners:
+
+1. `npm ci` — install dependencies strictly from the public npm registry
+2. `npm run verify:registry` — fail the build if `package.json` or
+   `package-lock.json` reference anything other than
+   `https://registry.npmjs.org/` (no private feeds, no git/file/link
+   dependency sources)
+3. `npm run check` — type checking
+4. `npm test` — the deterministic default test suite
+5. `npm run build` — production build
+
+The workflow requests only `contents: read` permission, references no
+secrets, and never runs on a self-hosted runner — a pull request from a fork
+can't reach anything private and doesn't need any maintainer-provided
+configuration to pass.
+
+## Deployment
+
+This repository does not include the maintainer's private build/push/deploy
+pipeline, container registry, or hosting configuration — that lives outside
+this public repo. `package.json` is marked `"private": true` to prevent
+accidental publication to the npm registry. If you want to run your own
+instance, `npm run build` produces a standard SvelteKit `adapter-node`
+build (see `Dockerfile` for one example of containerizing it) that you can
+deploy however you like.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, coding guidelines,
+and what to check before opening a PR. Please review our
+[Code of Conduct](CODE_OF_CONDUCT.md). Security issues should be reported
+privately — see [SECURITY.md](SECURITY.md).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
 
 ## Brand
 
@@ -58,4 +132,5 @@ homelab registry (`registry.example.com/ohm`), tagged `sha-<short-sha>` and
 
 ---
 
-Built for personal use. May open-source later.
+Originally built for personal use; now open for public contributions under
+the terms of the [license](LICENSE) above.

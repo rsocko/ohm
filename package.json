@@ -3,6 +3,7 @@
 	"private": true,
 	"version": "0.1.0",
 	"type": "module",
+	"license": "Apache-2.0",
 	"scripts": {
 		"dev": "vite dev",
 		"dev:demo": "vite dev --mode demo",
@@ -13,7 +14,8 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test": "vitest run --config vitest.config.ts",
 		"test:watch": "vitest --config vitest.config.ts",
-		"test:live": "vitest run --config vitest.live.config.ts"
+		"test:live": "vitest run --config vitest.live.config.ts",
+		"verify:registry": "node scripts/verify-lockfile-registry.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",
