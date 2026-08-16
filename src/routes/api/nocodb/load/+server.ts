@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
 
 const NOCODB_URL = env.NOCODB_URL || 'http://nocodb.example.com';
 const NOCODB_TOKEN = env.NOCODB_API_TOKEN || '';
-const BASE_ID = env.NOCODB_BASE_ID || 'pt7ylnikbprtaqy';
+const BASE_ID = env.NOCODB_BASE_ID || 'your_nocodb_base_id';
 const LOAD_TABLE_ID = 'meo1ciueftgd8rq';
 
 /**

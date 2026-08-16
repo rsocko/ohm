@@ -471,7 +471,7 @@ Tools:
 
 | Scenario | Recommended Provider | Rationale |
 |----------|---------------------|-----------|
-| the project owner's personal homelab | NocoDB | Grid UI for data curation, existing workflow |
+| The owner's personal homelab | NocoDB | Grid UI for data curation, existing workflow |
 | Open-source user, single home | SQLite | Zero external deps, instant setup |
 | Multi-user household | SQLite + app CRUD | Don't require everyone to learn NocoDB |
 | Power user with existing NocoDB | NocoDB | Preserve their tooling investment |

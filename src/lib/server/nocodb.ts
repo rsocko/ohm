@@ -4,7 +4,7 @@ import { getDemoTables, getDemoRecords, getDemoRecordById, getDemoTableMeta } fr
 
 const NOCODB_URL = env.NOCODB_URL || 'http://nocodb.example.com';
 const NOCODB_TOKEN = env.NOCODB_API_TOKEN || '';
-const BASE_ID = env.NOCODB_BASE_ID || 'pt7ylnikbprtaqy';
+const BASE_ID = env.NOCODB_BASE_ID || 'your_nocodb_base_id';
 
 export interface Table {
 	id: string;

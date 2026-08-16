@@ -190,7 +190,7 @@ To avoid enabling the tool manually each chat:
    - **Tools:** Enable `nocodb-electrical`
    - **System Prompt:**
      ```
-     You are an electrical configuration assistant for the project owner's homes. You have 
+     You are an electrical configuration assistant for your homes. You have 
      access to a NocoDB database with electrical data (Areas, Panels, Circuits, 
      Receptacles, Loads).
 

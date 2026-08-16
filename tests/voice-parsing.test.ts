@@ -29,7 +29,7 @@ interface VoiceTestCase {
 const voiceTestCases: VoiceTestCase[] = [
 	{
 		description: 'Simple load creation with quantity',
-		input: "the project owner's office has 4 recessed ceiling lights",
+		input: "Sam's office has 4 recessed ceiling lights",
 		expectedTool: 'propose_batch',
 		expectedOperations: [
 			{
@@ -42,7 +42,7 @@ const voiceTestCases: VoiceTestCase[] = [
 	},
 	{
 		description: 'Load + dimmer + circuit assignment',
-		input: "the project owner's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7",
+		input: "Sam's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7",
 		expectedTool: 'propose_batch',
 		expectedOperations: [
 			{ action: 'create', table: 'Load', labelPattern: /ceiling lights/i, fields: { Fixture_Count: 4 } },

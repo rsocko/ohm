@@ -148,7 +148,7 @@ Configure notification actions to open Ohm directly to relevant views:
 
 ```yaml
 # Example HA automation notification with Ohm deep link
-- service: notify.mobile_app_ryans_iphone
+- service: notify.mobile_app_your_phone
   data:
     title: "⚡ High Load Alert"
     message: "Circuit 14 (Kitchen) at 82% capacity"

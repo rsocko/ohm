@@ -14,7 +14,7 @@ export const createRoom: ToolDefinition = {
 	description: 'Create a new room/area and link it to a home. Use when user says "add a room", "create a bedroom", etc.',
 	category: 'write',
 	parameters: {
-		name: { type: 'string', description: 'Room name (e.g., "Avery\'s Bedroom")', required: true },
+		name: { type: 'string', description: 'Room name (e.g., "Jordan\'s Bedroom")', required: true },
 		floor: { type: 'string', description: 'Floor (e.g., "1st Floor", "2nd Floor", "Basement")' },
 		home_name: { type: 'string', description: 'Which home this room belongs to (defaults to active home)' },
 		description: { type: 'string', description: 'Optional description' }

@@ -26,7 +26,7 @@ blockquote { border-left: 3px solid #3b82f6; padding-left: 16px; color: #8b949e;
 <body>
 <h1>Architecture Decision Record: Electrical Config AI UX</h1>
 <h2>Context</h2>
-<p>the project owner has a NocoDB instance (<code>nocodb.example.com</code>) storing detailed electrical configuration for 2 homes. The data includes areas, panels, circuits, receptacles, and loads. He wants:</p>
+<p>The project owner has a NocoDB instance (<code>nocodb.example.com</code>) storing detailed electrical configuration for 2 homes. The data includes areas, panels, circuits, receptacles, and loads. They want:</p>
 <ol>
 <li><strong>AI chat against the data</strong> — ask questions like "which circuit controls the master bath lights?" or "update outlet type to GFCI for the kitchen island"</li>
 <li><strong>Mobile-friendly custom UX</strong> — browse, search, and update data on a phone (e.g., while at the breaker panel)</li>
@@ -272,7 +272,7 @@ blockquote { border-left: 3px solid #3b82f6; padding-left: 16px; color: #8b949e;
 <hr />
 <h2>AI Integration Detail</h2>
 <h3>System Prompt for the Electrical Assistant</h3>
-<pre><code>You are an electrical configuration assistant for the project owner's homes. You have access 
+<pre><code>You are an electrical configuration assistant for your homes. You have access 
 to NocoDB tables containing: Areas, Panels, Circuits, Receptacles, and Loads.
 
 When answering questions:
