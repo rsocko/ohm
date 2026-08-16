@@ -2,7 +2,7 @@
 
 ## Context
 
-the project owner has a NocoDB instance (`nocodb.example.com`) storing detailed electrical configuration for 2 homes. The data includes areas, panels, circuits, receptacles, and loads. He wants:
+The project owner has a NocoDB instance (`nocodb.example.com`) storing detailed electrical configuration for 2 homes. The data includes areas, panels, circuits, receptacles, and loads. They want:
 
 1. **AI chat against the data** — ask questions like "which circuit controls the master bath lights?" or "update outlet type to GFCI for the kitchen island"
 2. **Mobile-friendly custom UX** — browse, search, and update data on a phone (e.g., while at the breaker panel)

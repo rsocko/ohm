@@ -26,7 +26,7 @@
     - condition: template
       value_template: "{{ trigger.to_state.state | float > 1920 }}"
   action:
-    - service: notify.mobile_app_ryans_iphone
+    - service: notify.mobile_app_your_phone
       data:
         title: "⚡ Circuit Capacity Warning"
         message: >
@@ -54,7 +54,7 @@
       to: "unavailable"
       for: "00:02:00"  # Must be unavailable for 2 minutes (not just a brief blip)
   action:
-    - service: notify.mobile_app_ryans_iphone
+    - service: notify.mobile_app_your_phone
       data:
         title: "🔌 Device Unavailable"
         message: >
@@ -81,7 +81,7 @@
     - platform: time
       at: "21:00:00"
   action:
-    - service: notify.mobile_app_ryans_iphone
+    - service: notify.mobile_app_your_phone
       data:
         title: "💡 Daily Energy Summary"
         message: >
@@ -109,7 +109,7 @@
         {% set motion = 'binary_sensor.' ~ area ~ '_motion' %}
         {{ is_state(motion, 'off') }}
   action:
-    - service: notify.mobile_app_ryans_iphone
+    - service: notify.mobile_app_your_phone
       data:
         title: "💡 Forgotten Light?"
         message: >
