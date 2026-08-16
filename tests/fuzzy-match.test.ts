@@ -101,7 +101,7 @@ describe('findBestMatches', () => {
 		{ id: 1, name: 'Kitchen' },
 		{ id: 2, name: 'Primary Bedroom' },
 		{ id: 3, name: 'Basement TV Room' },
-		{ id: 4, name: "the project owner's Office" },
+		{ id: 4, name: "Sam's Office" },
 		{ id: 5, name: 'Garage' }
 	];
 

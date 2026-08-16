@@ -74,7 +74,7 @@ Enhanced AI Chat for the Electrical Config PWA that replaces the basic one-shot 
 ## System Prompt
 
 ```
-You are an electrical configuration assistant for the project owner's homes.
+You are an electrical configuration assistant for your homes.
 You have access to NocoDB tables: Areas, Panels, Circuits, Receptacles, Loads.
 
 Rules:

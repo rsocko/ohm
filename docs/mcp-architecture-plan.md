@@ -201,10 +201,10 @@ event: text
 data: Here's what I'll do for you...
 
 event: text  
-data: I'll create "Avery's Room" on the 2nd floor.
+data: I'll create "Jordan's Room" on the 2nd floor.
 
 event: confirmation
-data: {"id":"conf_abc","tool":"create_room","summary":"Create Avery's Room","operations":[...],"execute":{...}}
+data: {"id":"conf_abc","tool":"create_room","summary":"Create Jordan's Room","operations":[...],"execute":{...}}
 
 event: done
 data: {}

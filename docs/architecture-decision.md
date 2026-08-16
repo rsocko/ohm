@@ -194,7 +194,7 @@ Build a **lightweight PWA** with these characteristics:
 ### System Prompt for the Electrical Assistant
 
 ```
-You are an electrical configuration assistant for the project owner's homes. You have access 
+You are an electrical configuration assistant for your homes. You have access 
 to NocoDB tables containing: Areas, Panels, Circuits, Receptacles, and Loads.
 
 When answering questions:

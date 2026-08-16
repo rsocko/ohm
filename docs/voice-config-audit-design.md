@@ -257,7 +257,7 @@ See `docs/mockups/voice-config-batch-confirmation.html` for interactive mockup.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  📋 Adding 4 items to the project owner's Office             │
+│  📋 Adding 4 items to Sam's Office             │
 ├─────────────────────────────────────────────────┤
 │  Action  │ Type        │ Name           │ Details│
 │──────────┼─────────────┼────────────────┼────────│
@@ -295,7 +295,7 @@ See `docs/mockups/voice-config-batch-confirmation.html` for interactive mockup.
 
 | Voice Input | Parsed Operations |
 |---|---|
-| "the project owner's office has 4 recessed ceiling lights on a dimmer" | Create Load (Ceiling Lights, Fixture_Count=4), Create Receptacle (Dimmer Switch, controls Ceiling Lights) |
+| "Sam's office has 4 recessed ceiling lights on a dimmer" | Create Load (Ceiling Lights, Fixture_Count=4), Create Receptacle (Dimmer Switch, controls Ceiling Lights) |
 | "Circuit 1 controls all lights and receptacles in the basement TV room" | assign_circuit: circuit 1, area "Basement TV Room", assign_all=true |
 | "There's a 3-gang box on the north wall — dimmer, on/off switch, and a smart switch" | Create 3 Receptacles, Loc.Direction=N, Loc.Rec.Index=same group |
 | "Add a GFCI outlet by the sink on circuit 12" | Create Receptacle (GFCI Outlet), assign to Circuit 12 |
@@ -324,7 +324,7 @@ AI: (searches for "ceiling lights" → finds 3 matches)
 │                                         │
 │  1. Kitchen Ceiling Lights              │
 │  2. Basement TV Room Ceiling Lights     │
-│  3. the project owner's Office Ceiling Lights        │
+│  3. Sam's Office Ceiling Lights        │
 │                                         │
 │  Which one? (or say "all of them")      │
 └─────────────────────────────────────────┘
@@ -333,12 +333,12 @@ AI: (searches for "ceiling lights" → finds 3 matches)
 If the user is currently viewing a specific room (context injection), the AI should **prefer** matches in that room and note the assumption:
 
 ```
-User: (viewing the project owner's Office) "The ceiling lights are on circuit 3"
-AI: I'll assign the project owner's Office Ceiling Lights to Circuit 3.
+User: (viewing Sam's Office) "The ceiling lights are on circuit 3"
+AI: I'll assign Sam's Office Ceiling Lights to Circuit 3.
 
 ┌─────────────────────────────────────────┐
 │  🔗 Link  │ Ceiling Lights → Circuit 3  │
-│  (the project owner's Office — based on your         │
+│  (Sam's Office — based on your         │
 │   current view)                         │
 ├─────────────────────────────────────────┤
 │  [✓ Confirm]          [✕ Cancel]         │
@@ -454,9 +454,9 @@ I don't see a garbage disposal in the Kitchen. Want me to add one?
 │                                          │
 │  [AI] What room are you in?              │
 │                                          │
-│  [You] 🎤 "the project owner's office"               │
+│  [You] 🎤 "Sam's office"               │
 │                                          │
-│  [AI] Got it! What's in the project owner's Office?   │
+│  [AI] Got it! What's in Sam's Office?   │
 │                                          │
 │  [You] 🎤 "4 recessed ceiling lights     │
 │         on a dimmer, north wall,         │
@@ -524,17 +524,17 @@ I don't see a garbage disposal in the Kitchen. Want me to add one?
 
 ## Data Flow: End-to-End Example
 
-**User says:** "the project owner's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7"
+**User says:** "Sam's office has 4 recessed ceiling lights on a dimmer on the north wall, circuit 7"
 
 ### Step 1: Voice → Text
 ```
-SpeechRecognition → "the project owner's office has 4 recessed ceiling lights on a dimmer on the north wall circuit 7"
+SpeechRecognition → "Sam's office has 4 recessed ceiling lights on a dimmer on the north wall circuit 7"
 ```
 
 ### Step 2: Text → AI (with context)
 ```json
 {
-  "message": "the project owner's office has 4 recessed ceiling lights on a dimmer on the north wall circuit 7",
+  "message": "Sam's office has 4 recessed ceiling lights on a dimmer on the north wall circuit 7",
   "context": { "currentRoute": "/chat" },
   "history": [...]
 }
@@ -542,7 +542,7 @@ SpeechRecognition → "the project owner's office has 4 recessed ceiling lights 
 
 ### Step 3: AI → Tool Calls
 The LLM identifies:
-- Area: "the project owner's Office" (search existing → found, ID=42)
+- Area: "Sam's Office" (search existing → found, ID=42)
 - Load: "Ceiling Lights", Fixture_Count=4, Device Type="Light"
 - Receptacle: Dimmer Switch, Loc.Direction="N", Loc.Placement="W"
 - Receptacle controls Load
@@ -551,9 +551,9 @@ The LLM identifies:
 AI calls `propose_batch`:
 ```json
 {
-  "summary": "Adding ceiling lights with dimmer to the project owner's Office on Circuit 7",
+  "summary": "Adding ceiling lights with dimmer to Sam's Office on Circuit 7",
   "operations": [
-    { "action": "create", "table": "Load", "label": "the project owner's Office Ceiling Lights",
+    { "action": "create", "table": "Load", "label": "Sam's Office Ceiling Lights",
       "fields": { "Name": "Ceiling Lights", "Device Type": "Light", "Fixture_Count": 4 } },
     { "action": "create", "table": "Receptacle", "label": "N-Wall Dimmer",
       "fields": { "Name": "N-Wall Dimmer", "Receptacle Type": "Dimmer Switch",
@@ -562,9 +562,9 @@ AI calls `propose_batch`:
       "linkTarget": { "table": "Circuit", "recordId": "77" } },
     { "action": "link", "table": "Receptacle", "label": "N-Wall Dimmer → Circuit 7",
       "linkTarget": { "table": "Circuit", "recordId": "77" } },
-    { "action": "link", "table": "Load", "label": "Ceiling Lights → the project owner's Office",
+    { "action": "link", "table": "Load", "label": "Ceiling Lights → Sam's Office",
       "linkTarget": { "table": "Area", "recordId": "42" } },
-    { "action": "link", "table": "Receptacle", "label": "N-Wall Dimmer → the project owner's Office",
+    { "action": "link", "table": "Receptacle", "label": "N-Wall Dimmer → Sam's Office",
       "linkTarget": { "table": "Area", "recordId": "42" } }
   ]
 }
@@ -578,8 +578,8 @@ Rendered as grouped table (see mockup).
 2. Create Receptacle record → get ID
 3. Link Load → Circuit 7 via `replaceLinks()`
 4. Link Receptacle → Circuit 7
-5. Link Load → Area "the project owner's Office"
-6. Link Receptacle → Area "the project owner's Office"
+5. Link Load → Area "Sam's Office"
+6. Link Receptacle → Area "Sam's Office"
 7. Return success message
 
 ---
@@ -612,7 +612,7 @@ Rendered as grouped table (see mockup).
 
 1. **Batch confirmation: table or cards?** — Design mockup provides both; test with real content to pick.
 2. **Max operations per batch** — Suggest cap at 20 to prevent overwhelming confirmation UI.
-3. **Auto-naming convention** — Propose `{Area} {Descriptor}` (e.g., "the project owner's Office Ceiling Lights") — confirm this matches existing naming patterns in the DB.
+3. **Auto-naming convention** — Propose `{Area} {Descriptor}` (e.g., "Sam's Office Ceiling Lights") — confirm this matches existing naming patterns in the DB.
 4. **Loc.Rec.Index assignment** — Auto-increment from max in area, or ask user for explicit group number?
 
 ---
