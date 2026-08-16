@@ -34,6 +34,9 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      - name: Validate workflow policy
+        run: npm run validate:workflows
+
       - name: Verify dependency sources (public npm registry only)
         run: npm run verify:registry
 

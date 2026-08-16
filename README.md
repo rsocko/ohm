@@ -87,15 +87,21 @@ instance only.
 `main` and every pull request (including from forks), entirely on
 GitHub-hosted runners:
 
-1. `npm run verify:registry` — fail the build if `package.json` or
+1. `npm run validate:workflows` — a dependency-free structural check that
+   every workflow in `.github/workflows/` declares explicit least-privilege
+   permissions, pins actions to a full commit SHA, never targets
+   `pull_request_target`/`workflow_call`, and (for the container-publishing
+   workflow) enforces the trusted-commit and immutable-tag invariants
+   described below
+2. `npm run verify:registry` — fail the build if `package.json` or
    `package-lock.json` reference anything other than
    `https://registry.npmjs.org/` (no private feeds, no git/file/link/workspace
    dependency sources)
-2. `npm ci` — install dependencies strictly from the public npm registry
-3. `npm run check` — type checking
-4. `npm test` — the deterministic default test suite
-5. `npm run build` — production build
-6. `docker build .` — verify the public container build
+3. `npm ci` — install dependencies strictly from the public npm registry
+4. `npm run check` — type checking
+5. `npm test` — the deterministic default test suite
+6. `npm run build` — production build
+7. `docker build .` — verify the public container build
 
 The workflow requests only `contents: read` permission, references no
 secrets, and never runs on a self-hosted runner — a pull request from a fork
@@ -104,13 +110,23 @@ configuration to pass.
 
 ## Deployment
 
-This repository does not include the maintainer's private build/push/deploy
-pipeline, container registry, or hosting configuration — that lives outside
-this public repo. `package.json` is marked `"private": true` to prevent
-accidental publication to the npm registry. If you want to run your own
-instance, `npm run build` produces a standard SvelteKit `adapter-node`
-build (see `Dockerfile` for one example of containerizing it) that you can
-deploy however you like.
+Trusted `main` builds are published as a public container image to
+[`ghcr.io/rsocko/ohm`](https://github.com/rsocko/ohm/pkgs/container/ohm) by
+[`.github/workflows/publish-container.yml`](.github/workflows/publish-container.yml).
+`package.json` stays `"private": true` to prevent accidental publication to
+the npm registry — only the container image is published. See
+[`docs/container-publishing.md`](docs/container-publishing.md) for the full
+tag policy, verifying attestations, and rollback guidance. In short:
+
+```sh
+docker pull ghcr.io/rsocko/ohm:latest   # active development
+docker pull ghcr.io/rsocko/ohm:0.1.0    # pin to an immutable release
+```
+
+No sign-in is required to pull; the package is public. If you'd rather build
+and run it yourself, `npm run build` produces a standard SvelteKit
+`adapter-node` build (see `Dockerfile`) that you can containerize and deploy
+however you like.
 
 ## Contributing
 

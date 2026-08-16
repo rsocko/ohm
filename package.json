@@ -15,7 +15,8 @@
 		"test": "vitest run --config vitest.config.ts",
 		"test:watch": "vitest --config vitest.config.ts",
 		"test:live": "vitest run --config vitest.live.config.ts",
-		"verify:registry": "node scripts/verify-lockfile-registry.mjs"
+		"verify:registry": "node scripts/verify-lockfile-registry.mjs",
+		"validate:workflows": "node scripts/validate-workflows.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",
