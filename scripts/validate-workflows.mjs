@@ -416,7 +416,7 @@ for (const file of workflowFiles) {
 		assert.equal(attestationSteps.length, 1, `${file} publish job must have exactly one attestation`);
 		assert.equal(
 			attestationSteps[0].uses,
-			'actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d',
+			'actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6',
 			`${file} attestation must pin a default-provenance-capable actions/attest release`,
 		);
 		assert.deepEqual(
