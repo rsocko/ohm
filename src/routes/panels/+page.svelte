@@ -1553,6 +1553,7 @@
 										{@const isActive = expandedCircuit === slot.circuit.id}
 										{@const highlighted = searchQuery.trim() && isHighlighted(slot.circuit)}
 										<button
+											data-circuit-id={slot.circuit.id}
 											onclick={(e) => { e.stopPropagation(); expandedCircuit = isActive ? null : slot.circuit.id; }}
 											class="absolute rounded-sm border group {isActive ? 'bg-indigo-500/30 border-indigo-400/80 z-10' : highlighted ? 'bg-indigo-400/20 border-indigo-400/50' : 'border-slate-400/20 hover:bg-indigo-500/20 hover:border-indigo-400/60'}"
 											style="left: {slot.left}%; top: {slot.top}%; width: {slot.width}%; height: {slot.height}%"
