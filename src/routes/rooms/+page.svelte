@@ -387,6 +387,14 @@
 		return recName || '';
 	}
 
+	function getDeviceCircuits(item: { type: 'load' | 'receptacle'; record: V3Record }): V3Record[] {
+		if (item.type === 'load') return getCircuitsForLoad(item.record);
+		const circuitId = getReceptacleCircuitId(item.record);
+		if (circuitId === null) return [];
+		const circuit = allCircuits.find((candidate) => candidate.id === circuitId);
+		return circuit ? [circuit] : [];
+	}
+
 	function getLinkedRecords(value: unknown): V3Record[] {
 		if (Array.isArray(value)) return value.filter((entry): entry is V3Record => !!entry && typeof entry === 'object' && 'id' in entry);
 		if (value && typeof value === 'object' && 'id' in value) return [value as V3Record];
@@ -4383,6 +4391,7 @@
 												{#each visibleDevices as item}
 													{@const badge = getDeviceBadge(item)}
 													{@const info = getCircuitInfo(item)}
+													{@const itemCircuits = getDeviceCircuits(item)}
 													{@const isExpanded = expandedDevice === `${area.id}-${item.type}-${item.record.id}`}
 													<div class="border-t border-slate-700/30 first:border-t-0 group/row">
 														<button
@@ -4438,10 +4447,21 @@
 															</div>
 															<Icon icon="mdi:chevron-{isExpanded ? 'up' : 'down'}" width={14} class="text-slate-600 shrink-0" />
 														</button>
-														{#if isExpanded && info}
-															<div transition:slide={{ duration: 150, easing: cubicOut }} class="px-3 pb-2.5 flex items-center gap-1.5 text-[11px] text-slate-400">
-																<Icon icon="lucide:plug-zap" width={12} class="text-emerald-500/70" />
-																<span>{info}</span>
+														{#if isExpanded && (info || itemCircuits.length > 0)}
+															<div transition:slide={{ duration: 150, easing: cubicOut }} class="px-3 pb-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+																{#if info}
+																	<Icon icon="lucide:plug-zap" width={12} class="text-emerald-500/70" />
+																	<span>{info}</span>
+																{/if}
+																{#each itemCircuits as circuit}
+																	<a
+																		href={getCircuitPanelHref(circuit)}
+																		class="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-1 font-medium text-cyan-300 hover:bg-cyan-500/20"
+																	>
+																		<Icon icon="mdi:electric-switch" width={12} />
+																		View circuit {getCircuitNumber(circuit)}
+																	</a>
+																{/each}
 															</div>
 														{/if}
 														<!-- Inline edit form -->

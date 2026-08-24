@@ -74,6 +74,11 @@
 		return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 	}
 
+	function getCircuitPanelHref(device: UnifiedDevice): string | null {
+		if (!device.circuitId) return null;
+		return `/panels?circuit=${encodeURIComponent(device.circuitId)}`;
+	}
+
 	let categoryCounts = $derived(() => {
 		const counts: Record<string, number> = { all: devices.length };
 		for (const d of devices) {
@@ -195,6 +200,7 @@
 				{@const cm = categoryMeta[device.deviceCategory] || categoryMeta.other}
 				{@const isOnline = device.network?.isOnline}
 				{@const isExpanded = selectedDevice?.id === device.id}
+				{@const circuitPanelHref = getCircuitPanelHref(device)}
 				<div class="rounded-md transition-colors {isExpanded ? 'bg-surface-active ring-1 ring-accent/30' : ''}">
 					<button
 						onclick={() => { selectedDevice = isExpanded ? null : device; }}
@@ -348,6 +354,11 @@
 
 								<!-- Actions -->
 								<div class="flex gap-2 pt-1">
+									{#if circuitPanelHref}
+										<a href={circuitPanelHref} class="flex-1 text-[11px] font-medium text-center bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25 rounded-lg py-2 transition-colors">
+											<Icon icon="mdi:electric-switch" width={12} class="inline -mt-0.5 mr-1" />View Circuit
+										</a>
+									{/if}
 									{#if device.areaId}
 											<a href="/rooms?view=floorplan&area={device.areaId}&device={device.id}" class="flex-1 text-[11px] font-medium text-center bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 rounded-lg py-2 transition-colors">
 											<Icon icon="mdi:map-marker" width={12} class="inline -mt-0.5 mr-1" />View on Plan
