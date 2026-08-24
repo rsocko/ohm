@@ -40,6 +40,7 @@
 	const isLocked = $derived(homeContext.isLocked);
 	let selectedPanelId: number | null = $state(null);
 	let expandedCircuit: number | null = $state(null);
+	let highlightedCircuitId: number | null = $state(null);
 	let searchQuery = $state('');
 	let slideDirection: 'left' | 'right' = $state('right');
 	let viewMode: 'schematic' | 'photo' = $state('schematic');
@@ -453,12 +454,20 @@
 		const panelParam = urlParams.get('panel');
 		const circuitParam = urlParams.get('circuit');
 		const filterParam = urlParams.get('filter');
-		if (panelParam) {
-			const pid = parseInt(panelParam);
-			if (panels.some(p => p.id === pid)) selectedPanelId = pid;
+
+		const circuitId = circuitParam ? Number.parseInt(circuitParam, 10) : null;
+		const linkedCircuit = circuitId !== null && Number.isFinite(circuitId)
+			? circuits.find((circuit) => circuit.id === circuitId)
+			: undefined;
+		const linkedPanelId = (linkedCircuit?.fields.Panel as { id?: number } | undefined)?.id;
+		const requestedPanelId = panelParam ? Number.parseInt(panelParam, 10) : linkedPanelId;
+		if (requestedPanelId && panels.some((panel) => panel.id === requestedPanelId)) {
+			selectedPanelId = requestedPanelId;
 		}
+
+		highlightedCircuitId = linkedCircuit?.id ?? null;
 		if (circuitParam) {
-			expandedCircuit = parseInt(circuitParam);
+			expandedCircuit = null;
 			await tick();
 			await tick();
 			setTimeout(() => {
@@ -1194,7 +1203,7 @@
 						const oldIdx = panels.findIndex(p => p.id === selectedPanelId);
 						const newIdx = panels.findIndex(p => p.id === panel.id);
 						slideDirection = newIdx > oldIdx ? 'right' : 'left';
-						selectedPanelId = panel.id; expandedCircuit = null; searchQuery = ''; viewMode = 'schematic'; calibrating = false;
+						selectedPanelId = panel.id; expandedCircuit = null; highlightedCircuitId = null; searchQuery = ''; viewMode = 'schematic'; calibrating = false;
 					}}
 					class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-background-color active:scale-[0.96] {active ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20' : 'bg-slate-700/80 text-slate-300 hover:bg-slate-600'}"
 				>
@@ -1551,14 +1560,16 @@
 									<!-- Breaker slot overlays on deskewed image -->
 									{#each getSlotPositions(panelCircuits, (selectedPanel.fields.Capacity as number) || 42) as slot}
 										{@const isActive = expandedCircuit === slot.circuit.id}
+										{@const isDeepLinked = highlightedCircuitId === slot.circuit.id}
 										{@const highlighted = searchQuery.trim() && isHighlighted(slot.circuit)}
 										<button
+											data-circuit-id={slot.circuit.id}
 											onclick={(e) => { e.stopPropagation(); expandedCircuit = isActive ? null : slot.circuit.id; }}
-											class="absolute rounded-sm border group {isActive ? 'bg-indigo-500/30 border-indigo-400/80 z-10' : highlighted ? 'bg-indigo-400/20 border-indigo-400/50' : 'border-slate-400/20 hover:bg-indigo-500/20 hover:border-indigo-400/60'}"
+											class="absolute rounded-sm border group {isActive ? 'bg-indigo-500/30 border-indigo-400/80 z-10' : isDeepLinked ? 'bg-cyan-400/25 border-cyan-300 ring-2 ring-cyan-300/70 z-10' : highlighted ? 'bg-indigo-400/20 border-indigo-400/50' : 'border-slate-400/20 hover:bg-indigo-500/20 hover:border-indigo-400/60'}"
 											style="left: {slot.left}%; top: {slot.top}%; width: {slot.width}%; height: {slot.height}%"
 											title="#{slot.circuit.fields.Number} - {slot.circuit.fields.Name || 'Unnamed'} ({slot.circuit.fields.Amps}A)"
 										>
-											{#if showOverlayLabels || isActive}
+											{#if showOverlayLabels || isActive || isDeepLinked}
 												<span class="absolute inset-0 flex flex-col {slot.side === 'Right' ? 'items-end text-right' : 'items-start text-left'} justify-center px-2 py-0.5 overflow-hidden" style="font-variant-numeric: tabular-nums; background: linear-gradient({slot.side === 'Right' ? 'to left' : 'to right'}, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 60%, transparent 100%)">
 													<span class="text-xs font-bold text-white leading-tight">{parseTandemSlot(slot.circuit) ? slot.circuit.fields['Panel Slot'] : slot.circuit.fields.Number}</span>
 													<span class="text-[11px] font-medium text-white/90 leading-tight truncate max-w-full">{slot.circuit.fields.Name || ''}</span>
@@ -1821,18 +1832,20 @@
 								{#if row.type === 'tandem'}
 									<!-- Tandem pair: two half-height circuits in one card -->
 									{@const tandemExpanded = row.circuits.some(c => expandedCircuit === c.id)}
-									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-indigo-500/60' : 'border-amber-600/30'}">
+									{@const tandemHighlighted = row.circuits.some(c => highlightedCircuitId === c.id)}
+									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-indigo-500/60' : tandemHighlighted ? 'border-cyan-400 ring-2 ring-cyan-400/60' : 'border-amber-600/30'}">
 										{#each row.circuits as circuit, ci}
 											{@const f = circuit.fields}
 											{@const amps = f.Amps as number | undefined}
 											{@const isExpanded = expandedCircuit === circuit.id}
+											{@const isDeepLinked = highlightedCircuitId === circuit.id}
 											{@const displayNum = f['Panel Slot'] || f.Number}
 											{@const liveWatts = getCircuitLiveWatts(circuit.id)}
 											{@const showLiveBadge = isEnergyMonitored(circuit) || getCircuitMapping(circuit.id)?.powerEntityId}
 											<button
 												data-circuit-id={circuit.id}
 												onclick={() => expandedCircuit = isExpanded ? null : circuit.id}
-												class="w-full text-left px-2.5 py-1.5 active:scale-[0.98] {ci > 0 ? 'border-t border-dashed border-slate-700/50' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
+												class="w-full text-left px-2.5 py-1.5 active:scale-[0.98] {ci > 0 ? 'border-t border-dashed border-slate-700/50' : ''} {isDeepLinked ? 'bg-cyan-500/15' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
 											>
 												<div class="flex items-center justify-between gap-1">
 													<div class="min-w-0 flex-1 flex items-center gap-1.5">
@@ -1877,12 +1890,13 @@
 									{@const highlighted = searchQuery.trim() && isHighlighted(circuit)}
 									{@const counts = getCircuitCounts(circuit)}
 									{@const isExpanded = expandedCircuit === circuit.id}
+									{@const isDeepLinked = highlightedCircuitId === circuit.id}
 									{@const isEmpty = highlightEmptyCircuits && counts.loads === 0 && counts.recs === 0}
 									{@const liveWatts = getCircuitLiveWatts(circuit.id)}
 									{@const showLiveBadge = isEnergyMonitored(circuit) || getCircuitMapping(circuit.id)?.powerEntityId}
 									<div
 										data-circuit-id={circuit.id}
-										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-indigo-500/60' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-indigo-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
+										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-indigo-500/60' : isDeepLinked ? 'border-cyan-400 ring-2 ring-cyan-400/60 bg-cyan-950/20' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-indigo-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
 									>
 										<button
 											onclick={() => expandedCircuit = isExpanded ? null : circuit.id}
@@ -2037,18 +2051,20 @@
 								{#if row.type === 'tandem'}
 									<!-- Tandem pair -->
 									{@const tandemExpanded = row.circuits.some(c => expandedCircuit === c.id)}
-									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-indigo-500/60' : 'border-amber-600/30'}">
+									{@const tandemHighlighted = row.circuits.some(c => highlightedCircuitId === c.id)}
+									<div class="rounded-lg bg-slate-800/80 border overflow-hidden {tandemExpanded ? 'border-indigo-500/60' : tandemHighlighted ? 'border-cyan-400 ring-2 ring-cyan-400/60' : 'border-amber-600/30'}">
 										{#each row.circuits as circuit, ci}
 											{@const f = circuit.fields}
 											{@const amps = f.Amps as number | undefined}
 											{@const isExpanded = expandedCircuit === circuit.id}
+											{@const isDeepLinked = highlightedCircuitId === circuit.id}
 											{@const displayNum = f['Panel Slot'] || f.Number}
 											{@const liveWatts = getCircuitLiveWatts(circuit.id)}
 											{@const showLiveBadge = isEnergyMonitored(circuit) || getCircuitMapping(circuit.id)?.powerEntityId}
 											<button
 												data-circuit-id={circuit.id}
 												onclick={() => expandedCircuit = isExpanded ? null : circuit.id}
-												class="w-full text-left px-2.5 py-1.5 active:scale-[0.98] {ci > 0 ? 'border-t border-dashed border-slate-700/50' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
+												class="w-full text-left px-2.5 py-1.5 active:scale-[0.98] {ci > 0 ? 'border-t border-dashed border-slate-700/50' : ''} {isDeepLinked ? 'bg-cyan-500/15' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
 											>
 												<div class="flex items-center justify-between gap-1">
 													<div class="min-w-0 flex-1 flex items-center gap-1.5">
@@ -2093,12 +2109,13 @@
 									{@const highlighted = searchQuery.trim() && isHighlighted(circuit)}
 									{@const counts = getCircuitCounts(circuit)}
 									{@const isExpanded = expandedCircuit === circuit.id}
+									{@const isDeepLinked = highlightedCircuitId === circuit.id}
 									{@const isEmpty = highlightEmptyCircuits && counts.loads === 0 && counts.recs === 0}
 									{@const liveWatts = getCircuitLiveWatts(circuit.id)}
 									{@const showLiveBadge = isEnergyMonitored(circuit) || getCircuitMapping(circuit.id)?.powerEntityId}
 									<div
 										data-circuit-id={circuit.id}
-										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-indigo-500/60' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-indigo-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
+										class="rounded-lg bg-slate-800/80 border transition-border-color {isExpanded ? 'border-indigo-500/60' : isDeepLinked ? 'border-cyan-400 ring-2 ring-cyan-400/60 bg-cyan-950/20' : row.type === 'double' ? 'border-amber-600/40' : 'border-slate-700/50 hover:border-slate-600'} {highlighted ? 'ring-1 ring-indigo-400' : ''} {isEmpty ? 'ring-1 ring-amber-400/60 bg-amber-950/10' : ''} {showLiveBadge ? getCircuitLoadTileClass(liveWatts) : ''}"
 									>
 										<button
 											onclick={() => expandedCircuit = isExpanded ? null : circuit.id}
