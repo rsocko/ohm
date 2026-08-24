@@ -387,10 +387,61 @@
 		return recName || '';
 	}
 
+	function getDeviceCircuits(item: { type: 'load' | 'receptacle'; record: V3Record }): V3Record[] {
+		if (item.type === 'load') return getCircuitsForLoad(item.record);
+		const circuitId = getReceptacleCircuitId(item.record);
+		if (circuitId === null) return [];
+		const circuit = allCircuits.find((candidate) => candidate.id === circuitId);
+		return circuit ? [circuit] : [];
+	}
+
 	function getLinkedRecords(value: unknown): V3Record[] {
 		if (Array.isArray(value)) return value.filter((entry): entry is V3Record => !!entry && typeof entry === 'object' && 'id' in entry);
 		if (value && typeof value === 'object' && 'id' in value) return [value as V3Record];
 		return [];
+	}
+
+	function getReceptacleCircuitId(receptacle: V3Record): number | null {
+		const circuit = receptacle.fields.Circuit as { id?: number } | undefined;
+		return circuit?.id ?? (receptacle.fields.Circuit_id as number | undefined) ?? null;
+	}
+
+	function getCircuitsForReceptacles(receptacles: V3Record[]): V3Record[] {
+		const circuitIds = new Set(receptacles.map(getReceptacleCircuitId).filter((id): id is number => id !== null));
+		return allCircuits.filter((circuit) => circuitIds.has(circuit.id));
+	}
+
+	function getCircuitsForLoad(load: V3Record): V3Record[] {
+		const directCircuitId = getReceptacleCircuitId(load);
+		const loadName = load.fields.Name as string | undefined;
+		const connectedReceptacles = loadName
+			? allReceptacles.filter((receptacle) => {
+					const linkedNames = receptacle.fields['Load Name(s)'];
+					const names = typeof linkedNames === 'string'
+						? linkedNames.split(',').map((name) => name.trim()).filter(Boolean)
+						: Array.isArray(linkedNames) ? linkedNames.filter((name): name is string => typeof name === 'string') : [];
+					return names.includes(loadName);
+				})
+			: [];
+		const circuitIds = new Set(connectedReceptacles.map(getReceptacleCircuitId).filter((id): id is number => id !== null));
+		if (directCircuitId !== null) circuitIds.add(directCircuitId);
+		return allCircuits.filter((circuit) => circuitIds.has(circuit.id));
+	}
+
+	function getCircuitPanel(circuit: V3Record): V3Record | null {
+		const panelLink = circuit.fields.Panel as { id?: number } | undefined;
+		return panelLink?.id ? allPanels.find((panel) => panel.id === panelLink.id) || null : null;
+	}
+
+	function getCircuitNumber(circuit: V3Record): string {
+		return String(circuit.fields.Number ?? circuit.fields['Circuit #'] ?? circuit.id);
+	}
+
+	function getCircuitPanelHref(circuit: V3Record): string {
+		const panel = getCircuitPanel(circuit);
+		const params = new URLSearchParams({ circuit: String(circuit.id) });
+		if (panel) params.set('panel', String(panel.id));
+		return `/panels?${params.toString()}`;
 	}
 
 	function getLoadById(id: number | null | undefined): V3Record | null {
@@ -1641,11 +1692,6 @@
 		const relevantRecIds = new Set<number>();
 
 		// Helper: get a receptacle's circuit ID
-		function getRecCircuitId(rec: V3Record): number | null {
-			const circuitLink = rec.fields.Circuit as { id: number } | undefined;
-			return circuitLink?.id ?? (rec.fields.Circuit_id as number | undefined) ?? null;
-		}
-
 		// Helper: get receptacle position (uses group position if in a gang)
 		function getRecPos(rec: V3Record): { x: number; y: number; key: string } | null {
 			if (rec.fields.Floorplan_X == null || rec.fields.Floorplan_Id !== selectedFloorId) return null;
@@ -1699,7 +1745,7 @@
 			}
 
 			const floorRecs = allReceptacles.filter(r => {
-				const cid = getRecCircuitId(r);
+				const cid = getReceptacleCircuitId(r);
 				return cid != null && circuitIds.has(cid) && r.fields.Floorplan_X != null && r.fields.Floorplan_Id === selectedFloorId;
 			});
 
@@ -1800,7 +1846,7 @@
 				// Find all loads on this floor that belong to any receptacle in these circuits
 				for (const circuit of allCircuits) {
 					if (!circuitIds.has(circuit.id)) continue;
-					const circRecs = allReceptacles.filter(r => getRecCircuitId(r) === circuit.id);
+					const circRecs = allReceptacles.filter(r => getReceptacleCircuitId(r) === circuit.id);
 					for (const rec of circRecs) {
 						const loadNameField = rec.fields['Load Name(s)'];
 						const loadNames: string[] = typeof loadNameField === 'string'
@@ -1858,7 +1904,7 @@
 					relevantRecIds.add(rec.id);
 					lines.push({ x1: pos.x, y1: pos.y, x2: loadX, y2: loadY, hop: 'load' });
 					// Also show panel → receptacle
-					const cid = getRecCircuitId(rec);
+					const cid = getReceptacleCircuitId(rec);
 					if (cid && !drawnGroupKeys.has(pos.key)) {
 						drawnGroupKeys.add(pos.key);
 						const panelPos = findPanelPos(new Set([cid]));
@@ -1876,7 +1922,7 @@
 				}
 				// Fallback: if no receptacles visible on this floor, find circuit and draw ghost line
 				if (!hasVisibleRec && connectedRecs.length > 0) {
-					const cid = getRecCircuitId(connectedRecs[0]);
+					const cid = getReceptacleCircuitId(connectedRecs[0]);
 					if (cid) {
 						findPanelPos(new Set([cid]));
 						if (ghostPanel) {
@@ -1889,7 +1935,7 @@
 					if (recName) {
 						const rec = allReceptacles.find(r => (r.fields.Name as string) === recName);
 						if (rec) {
-							const cid = getRecCircuitId(rec);
+							const cid = getReceptacleCircuitId(rec);
 							if (cid) {
 								findPanelPos(new Set([cid]));
 								if (ghostPanel) {
@@ -1913,7 +1959,7 @@
 					const pos = getRecPos(rec);
 					if (!pos) continue;
 					// Upstream: panel → rec
-					const cid = getRecCircuitId(rec);
+					const cid = getReceptacleCircuitId(rec);
 					if (cid && !drawnGroupKeys.has(`up-${rec.id}`)) {
 						drawnGroupKeys.add(`up-${rec.id}`);
 						const panelPos = findPanelPos(new Set([cid]));
@@ -3546,14 +3592,36 @@
 											{#if true}
 											{@const loadRecName = popLoad.fields.Name as string}
 											{@const allSwitchesForLoad = loadRecName ? allReceptacles.filter(r => { const lnf = r.fields['Load Name(s)']; const names: string[] = typeof lnf === 'string' ? lnf.split(',').map((s: string) => s.trim()) : Array.isArray(lnf) ? lnf : []; return names.includes(loadRecName); }) : []}
+											{@const loadCircuits = getCircuitsForLoad(popLoad)}
+											<div class="border-t border-slate-700/50 pt-1.5 space-y-1">
+												<p class="text-[9px] uppercase tracking-wide text-slate-500">Circuit</p>
+												{#if loadCircuits.length > 0}
+													{#each loadCircuits as circuit}
+														{@const panel = getCircuitPanel(circuit)}
+														<a
+															href={getCircuitPanelHref(circuit)}
+															onclick={(e) => e.stopPropagation()}
+															class="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-colors"
+														>
+															<Icon icon="mdi:electric-switch" width={13} class="text-amber-400 shrink-0" />
+															<span class="min-w-0 flex-1">
+																<span class="block text-[10px] font-medium text-slate-200 truncate">{panel?.fields.Name || 'Panel'} · Circuit {getCircuitNumber(circuit)}</span>
+																<span class="block text-[9px] text-slate-500 truncate">{circuit.fields.Name || 'Unnamed'}{circuit.fields.Amps ? ` · ${circuit.fields.Amps}A` : ''}</span>
+															</span>
+															<Icon icon="mdi:arrow-right" width={12} class="text-amber-400/70 shrink-0" />
+														</a>
+													{/each}
+												{:else}
+													<p class="text-[10px] text-slate-500">Not assigned</p>
+												{/if}
+											</div>
 											{#if allSwitchesForLoad.length > 1}
 												<div class="text-[9px] text-cyan-400/80 flex items-center gap-1 pt-0.5">
 													<Icon icon="mdi:swap-horizontal" width={10} />
 													<span>{allSwitchesForLoad.length}-way switch ({allSwitchesForLoad.map(r => getDisplayName(r, 'Receptacle')).join(' · ')})</span>
 												</div>
 											{/if}
-											{@const loadRec = loadRecName ? allReceptacles.find(r => { const lnf = r.fields['Load Name(s)']; const names: string[] = typeof lnf === 'string' ? lnf.split(',').map((s: string) => s.trim()) : Array.isArray(lnf) ? lnf : []; return names.includes(loadRecName); }) : null}
-											{@const loadCircuitId = loadRec ? ((loadRec.fields.Circuit as { id: number } | undefined)?.id ?? (loadRec.fields.Circuit_id as number | undefined) ?? null) : null}
+											{@const loadCircuitId = loadCircuits[0]?.id ?? null}
 											<div class="border-t border-slate-700/50 pt-1 flex items-center gap-2 flex-wrap">
 												{#if viewLayer === 'power' && loadCircuitId}
 													<button
@@ -3597,6 +3665,7 @@
 									{@const popGroupFlip = popGroup.y > 0.6}
 										{@const popGroupXAlign = popGroup.x < 0.2 ? 'left' : popGroup.x > 0.8 ? 'right' : 'center'}
 										{@const popoverOffset = 40}
+										{@const groupCircuits = getCircuitsForReceptacles(popGroup.members)}
 										{#if !popoverMinimized}
 										<div
 											class="absolute z-20 pointer-events-auto {popGroupFlip ? '-translate-y-full' : ''} {popGroupXAlign === 'center' ? '-translate-x-1/2' : popGroupXAlign === 'right' ? '-translate-x-full' : ''}"
@@ -3618,7 +3687,7 @@
 											<!-- Member details -->
 											{#each popGroup.members as member, mIdx}
 												{@const m = getDeviceMarker(member, 'receptacle')}
-												{@const circuit = allCircuits.find(c => c.id === member.fields.Circuit_id)}
+												{@const circuit = allCircuits.find(c => c.id === getReceptacleCircuitId(member))}
 												{@const memberLoadNames = (() => { const lnf = member.fields['Load Name(s)']; return typeof lnf === 'string' ? lnf.split(',').map((s: string) => s.trim()).filter(Boolean) : Array.isArray(lnf) ? lnf.filter(Boolean) : []; })()}
 												{@const siblingSwitches = memberLoadNames.length > 0 ? allReceptacles.filter(r => r.id !== member.id && (() => { const lnf = r.fields['Load Name(s)']; const names: string[] = typeof lnf === 'string' ? lnf.split(',').map((s: string) => s.trim()) : Array.isArray(lnf) ? lnf : []; return memberLoadNames.some(n => names.includes(n)); })()) : []}
 												<div class="flex items-center gap-1.5 text-[10px] py-0.5 {mIdx > 0 ? 'border-t border-slate-800/60' : ''}">
@@ -3674,13 +3743,35 @@
 													</div>
 												{/if}
 											{/if}
+											<div class="pt-1 border-t border-slate-700/50 space-y-1">
+												<p class="text-[9px] uppercase tracking-wide text-slate-500">Circuit</p>
+												{#if groupCircuits.length > 0}
+													{#each groupCircuits as circuit}
+														{@const panel = getCircuitPanel(circuit)}
+														<a
+															href={getCircuitPanelHref(circuit)}
+															onclick={(e) => e.stopPropagation()}
+															class="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-colors"
+														>
+															<Icon icon="mdi:electric-switch" width={13} class="text-amber-400 shrink-0" />
+															<span class="min-w-0 flex-1">
+																<span class="block text-[10px] font-medium text-slate-200 truncate">{panel?.fields.Name || 'Panel'} · Circuit {getCircuitNumber(circuit)}</span>
+																<span class="block text-[9px] text-slate-500 truncate">{circuit.fields.Name || 'Unnamed'}{circuit.fields.Amps ? ` · ${circuit.fields.Amps}A` : ''}</span>
+															</span>
+															<Icon icon="mdi:arrow-right" width={12} class="text-amber-400/70 shrink-0" />
+														</a>
+													{/each}
+												{:else}
+													<p class="text-[10px] text-slate-500">Not assigned</p>
+												{/if}
+											</div>
 											<!-- Footer info -->
 											<div class="text-[9px] text-slate-500 pt-1 border-t border-slate-700/50 flex items-center gap-1">
 												<Icon icon="mdi:compass-outline" width={10} class="text-slate-500" />
 												{popGroup.members[0].fields['Loc.Direction'] || 'Unset'} wall · {popGroup.members[0].fields['Loc.Placement'] || ''}
 											</div>
 											{#if true}
-											{@const recCircuitIds = [...new Set(popGroup.members.map(m => { const cl = m.fields.Circuit as { id: number } | undefined; return cl?.id ?? (m.fields.Circuit_id as number | undefined) ?? null; }).filter(Boolean))] as number[]}
+											{@const recCircuitIds = groupCircuits.map((circuit) => circuit.id)}
 											<div class="flex items-center gap-2 pt-0.5">
 												{#if recCircuitIds.length > 0}
 													<button
@@ -4300,6 +4391,7 @@
 												{#each visibleDevices as item}
 													{@const badge = getDeviceBadge(item)}
 													{@const info = getCircuitInfo(item)}
+													{@const itemCircuits = getDeviceCircuits(item)}
 													{@const isExpanded = expandedDevice === `${area.id}-${item.type}-${item.record.id}`}
 													<div class="border-t border-slate-700/30 first:border-t-0 group/row">
 														<button
@@ -4355,10 +4447,21 @@
 															</div>
 															<Icon icon="mdi:chevron-{isExpanded ? 'up' : 'down'}" width={14} class="text-slate-600 shrink-0" />
 														</button>
-														{#if isExpanded && info}
-															<div transition:slide={{ duration: 150, easing: cubicOut }} class="px-3 pb-2.5 flex items-center gap-1.5 text-[11px] text-slate-400">
-																<Icon icon="lucide:plug-zap" width={12} class="text-emerald-500/70" />
-																<span>{info}</span>
+														{#if isExpanded && (info || itemCircuits.length > 0)}
+															<div transition:slide={{ duration: 150, easing: cubicOut }} class="px-3 pb-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+																{#if info}
+																	<Icon icon="lucide:plug-zap" width={12} class="text-emerald-500/70" />
+																	<span>{info}</span>
+																{/if}
+																{#each itemCircuits as circuit}
+																	<a
+																		href={getCircuitPanelHref(circuit)}
+																		class="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-1 font-medium text-cyan-300 hover:bg-cyan-500/20"
+																	>
+																		<Icon icon="mdi:electric-switch" width={12} />
+																		View circuit {getCircuitNumber(circuit)}
+																	</a>
+																{/each}
 															</div>
 														{/if}
 														<!-- Inline edit form -->
