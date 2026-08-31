@@ -37,7 +37,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/openai": "^4.0.50",
-		"@ai-sdk/svelte": "^5.0.71",
+		"@ai-sdk/svelte": "^5.0.83",
 		"@iconify/svelte": "^5.2.2",
 		"@sveltejs/adapter-node": "^5.5.7",
 		"@types/qrcode": "^1.5.6",
