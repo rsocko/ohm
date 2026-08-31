@@ -36,7 +36,7 @@
 		"vitest": "^4.1.11"
 	},
 	"dependencies": {
-		"@ai-sdk/openai": "^4.0.45",
+		"@ai-sdk/openai": "^4.0.50",
 		"@ai-sdk/svelte": "^5.0.71",
 		"@iconify/svelte": "^5.2.2",
 		"@sveltejs/adapter-node": "^5.5.7",
