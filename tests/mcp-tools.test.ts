@@ -203,6 +203,10 @@ vi.mock('$lib/server/fuzzy-match', () => ({
 	}
 }));
 
+vi.mock('$lib/server/vector-store', () => ({
+	semanticSearch: vi.fn(async () => [])
+}));
+
 // --- Cross-feature mocks (B1–B4) ---
 
 vi.mock('$lib/server/energy-mappings', () => ({
