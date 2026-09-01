@@ -19,6 +19,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		openWebUiModel?: string;
 		openaiApiKey?: string;
 		openaiModel?: string;
+		bifrostUrl?: string;
+		bifrostModel?: string;
 		askApiKey?: string;
 		askAuthRequired?: boolean;
 		regenerateAskApiKey?: boolean;
@@ -34,6 +36,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		openWebUiModel: body.openWebUiModel,
 		openaiApiKey: body.openaiApiKey,
 		openaiModel: body.openaiModel,
+		bifrostUrl: body.bifrostUrl,
+		bifrostModel: body.bifrostModel,
 		askApiKey: body.askApiKey,
 		askAuthRequired: body.askAuthRequired,
 		regenerateAskApiKey: body.regenerateAskApiKey

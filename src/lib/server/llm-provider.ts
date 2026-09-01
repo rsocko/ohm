@@ -10,7 +10,7 @@ export interface LlmProviderConfig {
 
 /**
  * Build an AI SDK provider + model ID from the given config.
- * All three backends speak the OpenAI chat-completions protocol,
+ * All backends speak the OpenAI chat-completions protocol,
  * so we use `createOpenAI` with the appropriate baseURL/apiKey.
  */
 function buildProvider(config: AiConfig): LlmProviderConfig {
@@ -32,6 +32,16 @@ function buildProvider(config: AiConfig): LlmProviderConfig {
 				}),
 				modelId: config.openaiModel,
 				providerName: 'openai'
+			};
+
+		case 'bifrost':
+			return {
+				provider: createOpenAI({
+					baseURL: config.bifrostUrl,
+					apiKey: 'bifrost' // Bifrost manages backend auth; SDK just needs a non-empty string
+				}),
+				modelId: config.bifrostModel,
+				providerName: 'bifrost'
 			};
 
 		case 'openwebui':

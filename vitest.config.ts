@@ -11,7 +11,11 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: {
-			'$lib': path.resolve(__dirname, 'src/lib')
+			'$lib': path.resolve(__dirname, 'src/lib'),
+			// $env/dynamic/private is normally provided by the SvelteKit Vite
+			// plugin; alias it to a thin stub so server modules that read env
+			// vars at import time can be unit tested (see tests/mocks/).
+			'$env/dynamic/private': path.resolve(__dirname, 'tests/mocks/sveltekit-env-dynamic-private.ts')
 		}
 	}
 });

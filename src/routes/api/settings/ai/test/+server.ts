@@ -13,6 +13,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		openWebUiModel?: string;
 		openaiApiKey?: string;
 		openaiModel?: string;
+		bifrostUrl?: string;
+		bifrostModel?: string;
 	};
 
 	try {

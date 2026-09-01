@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 
-export type LlmProvider = 'ollama' | 'openwebui' | 'openai';
+export type LlmProvider = 'ollama' | 'openwebui' | 'openai' | 'bifrost';
 
 export interface AiConfigFile {
 	enabled?: boolean;
@@ -18,6 +18,9 @@ export interface AiConfigFile {
 	// OpenAI settings
 	openaiApiKey?: string;
 	openaiModel?: string;
+	// Bifrost settings (LLM gateway — routing, failover, observability)
+	bifrostUrl?: string;
+	bifrostModel?: string;
 	// Shared settings
 	askApiKey?: string;
 	askAuthRequired?: boolean;
@@ -37,6 +40,9 @@ export interface AiConfig {
 	// OpenAI settings
 	openaiApiKey: string;
 	openaiModel: string;
+	// Bifrost settings (LLM gateway — routing, failover, observability)
+	bifrostUrl: string;
+	bifrostModel: string;
 	// Shared settings
 	askApiKey: string;
 	askAuthRequired: boolean;
@@ -51,6 +57,8 @@ const DEFAULT_OPENWEBUI_API_KEY = env.OPENWEBUI_API_KEY || '';
 const DEFAULT_OPENWEBUI_MODEL = env.OPENWEBUI_MODEL || 'gpt-4o';
 const DEFAULT_OPENAI_API_KEY = env.OPENAI_API_KEY || '';
 const DEFAULT_OPENAI_MODEL = env.OPENAI_MODEL || 'gpt-4o';
+const DEFAULT_BIFROST_URL = env.BIFROST_URL || 'https://bifrost.example.com/v1';
+const DEFAULT_BIFROST_MODEL = env.BIFROST_MODEL || 'gpt-4o-mini';
 const DEFAULT_ASK_API_KEY = env.ASK_API_KEY || '';
 
 const AI_CONFIG_PATH = resolve(process.cwd(), 'data', 'ai-config.json');
@@ -100,6 +108,8 @@ function resolveConfig(fileConfig: AiConfigFile): AiConfig {
 		openWebUiModel: (fileConfig.openWebUiModel || DEFAULT_OPENWEBUI_MODEL).trim(),
 		openaiApiKey: (fileConfig.openaiApiKey ?? DEFAULT_OPENAI_API_KEY).trim(),
 		openaiModel: (fileConfig.openaiModel || DEFAULT_OPENAI_MODEL).trim(),
+		bifrostUrl: normalizeUrl(fileConfig.bifrostUrl || DEFAULT_BIFROST_URL),
+		bifrostModel: (fileConfig.bifrostModel || DEFAULT_BIFROST_MODEL).trim(),
 		askApiKey: (fileConfig.askApiKey || DEFAULT_ASK_API_KEY || generateAskApiKey()).trim(),
 		askAuthRequired: fileConfig.askAuthRequired !== false, // default true
 		updatedAt: fileConfig.updatedAt || null
@@ -119,6 +129,8 @@ export async function getAiConfig(): Promise<AiConfig> {
 		!fileConfig.openWebUiUrl ||
 		typeof fileConfig.openWebUiApiKey === 'undefined' ||
 		!fileConfig.openWebUiModel ||
+		!fileConfig.bifrostUrl ||
+		!fileConfig.bifrostModel ||
 		!fileConfig.askApiKey;
 
 	if (needsBootstrap) {
@@ -152,6 +164,8 @@ export async function saveAiConfig(
 		openWebUiModel: (input.openWebUiModel ?? currentConfig.openWebUiModel).trim(),
 		openaiApiKey: (input.openaiApiKey ?? currentConfig.openaiApiKey).trim(),
 		openaiModel: (input.openaiModel ?? currentConfig.openaiModel).trim(),
+		bifrostUrl: normalizeUrl(input.bifrostUrl ?? currentConfig.bifrostUrl),
+		bifrostModel: (input.bifrostModel ?? currentConfig.bifrostModel).trim(),
 		askApiKey: input.regenerateAskApiKey
 			? generateAskApiKey()
 			: (input.askApiKey ?? currentConfig.askApiKey).trim() || generateAskApiKey(),

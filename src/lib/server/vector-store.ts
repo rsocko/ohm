@@ -63,6 +63,12 @@ const EMBEDDING_MODEL = 'text-embedding-3-small';
 async function getEmbeddingProvider() {
 	const config = await getAiConfig();
 
+	// When Bifrost is the active provider, route embeddings through it too —
+	// avoids requiring a separate OpenAI API key just for embeddings.
+	if (config.llmProvider === 'bifrost') {
+		return createOpenAI({ baseURL: config.bifrostUrl, apiKey: 'bifrost' });
+	}
+
 	// Prefer OpenAI for embeddings if key is configured
 	if (config.openaiApiKey) {
 		return createOpenAI({ apiKey: config.openaiApiKey });
@@ -85,7 +91,8 @@ async function getEmbeddingProvider() {
 
 async function getEmbeddingModelId(): Promise<string> {
 	const config = await getAiConfig();
-	// OpenAI uses text-embedding-3-small; Ollama uses nomic-embed-text or similar
+	// OpenAI/Bifrost use text-embedding-3-small; Ollama uses nomic-embed-text or similar
+	if (config.llmProvider === 'bifrost') return EMBEDDING_MODEL;
 	if (config.openaiApiKey) return EMBEDDING_MODEL;
 	if (config.llmProvider === 'ollama') return 'nomic-embed-text';
 	return EMBEDDING_MODEL;

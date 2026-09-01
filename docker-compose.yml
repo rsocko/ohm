@@ -8,6 +8,11 @@ services:
     env_file: .env
     environment:
       - PORT=3000
+      # If using Bifrost as the LLM gateway (LLM_PROVIDER=bifrost) and it runs
+      # as a sibling container, set BIFROST_URL in .env to the internal Docker
+      # network address (e.g. http://bifrost:8080/v1) rather than an external
+      # hostname — this avoids Traefik/TLS overhead for container-to-container
+      # traffic. Ensure ohm and bifrost share a common Docker network.
     ports:
       - "3000:3000"
     volumes:

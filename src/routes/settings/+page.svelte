@@ -7,7 +7,7 @@
 	import { dataStore, ensureLoaded, invalidate } from '$lib/stores/data.svelte';
 	import { homeContext } from '$lib/stores/home-context.svelte';
 
-	type LlmProvider = 'ollama' | 'openwebui' | 'openai';
+	type LlmProvider = 'ollama' | 'openwebui' | 'openai' | 'bifrost';
 
 	interface AiConfig {
 		enabled: boolean;
@@ -19,6 +19,8 @@
 		openWebUiModel: string;
 		openaiApiKey: string;
 		openaiModel: string;
+		bifrostUrl: string;
+		bifrostModel: string;
 		askApiKey: string;
 		askAuthRequired: boolean;
 		updatedAt: string | null;
@@ -77,6 +79,8 @@
 	let openWebUiModel = $state(untrack(() => data.config.openWebUiModel));
 	let openaiApiKey = $state(untrack(() => data.config.openaiApiKey));
 	let openaiModel = $state(untrack(() => data.config.openaiModel));
+	let bifrostUrl = $state(untrack(() => data.config.bifrostUrl));
+	let bifrostModel = $state(untrack(() => data.config.bifrostModel));
 	let askApiKey = $state(untrack(() => data.config.askApiKey));
 	let askAuthRequired = $state(untrack(() => data.config.askAuthRequired));
 	let enabled = $state(untrack(() => data.config.enabled));
@@ -627,7 +631,9 @@
 			? Boolean(ollamaUrl.trim() && ollamaModel.trim())
 			: llmProvider === 'openai'
 				? Boolean(openaiApiKey.trim() && openaiModel.trim())
-				: Boolean(openWebUiUrl.trim() && openWebUiApiKey.trim() && openWebUiModel.trim())
+				: llmProvider === 'bifrost'
+					? Boolean(bifrostUrl.trim() && bifrostModel.trim())
+					: Boolean(openWebUiUrl.trim() && openWebUiApiKey.trim() && openWebUiModel.trim())
 	);
 
 	async function saveConfig(regenerateAskApiKey = false) {
@@ -646,6 +652,8 @@
 					openWebUiModel,
 					openaiApiKey,
 					openaiModel,
+					bifrostUrl,
+					bifrostModel,
 					askApiKey,
 					askAuthRequired,
 					regenerateAskApiKey
@@ -666,6 +674,8 @@
 			openWebUiModel = savedConfig.openWebUiModel;
 			openaiApiKey = savedConfig.openaiApiKey;
 			openaiModel = savedConfig.openaiModel;
+			bifrostUrl = savedConfig.bifrostUrl;
+			bifrostModel = savedConfig.bifrostModel;
 			askApiKey = savedConfig.askApiKey;
 				askAuthRequired = savedConfig.askAuthRequired;
 				updatedAt = savedConfig.updatedAt;
@@ -691,7 +701,9 @@
 					openWebUiApiKey,
 					openWebUiModel,
 					openaiApiKey,
-					openaiModel
+					openaiModel,
+					bifrostUrl,
+					bifrostModel
 				})
 			});
 
@@ -707,7 +719,7 @@
 				connected: false,
 				message: error instanceof Error ? error.message : 'Connection test failed.',
 				provider: llmProvider,
-				model: llmProvider === 'ollama' ? ollamaModel : llmProvider === 'openai' ? openaiModel : openWebUiModel,
+				model: llmProvider === 'ollama' ? ollamaModel : llmProvider === 'openai' ? openaiModel : llmProvider === 'bifrost' ? bifrostModel : openWebUiModel,
 				model_available: null,
 				available_models: [],
 				nocodb_tool_available: null,
@@ -946,12 +958,15 @@
 				<option value="ollama">Ollama (Direct)</option>
 				<option value="openwebui">Open-WebUI</option>
 				<option value="openai">OpenAI</option>
+				<option value="bifrost">Bifrost</option>
 			</select>
 			<p class="text-xs text-slate-500">
 				{#if llmProvider === 'ollama'}
 					Connects directly to Ollama's OpenAI-compatible API. Best for local models with reliable tool calling.
 				{:else if llmProvider === 'openai'}
 					Connects to the OpenAI API. Requires an API key.
+				{:else if llmProvider === 'bifrost'}
+					Connects to a Bifrost LLM gateway (OpenAI-compatible) for routing, failover, and observability.
 				{:else}
 					Proxies through Open-WebUI. Legacy option — may cause tool-calling inconsistencies.
 				{/if}
@@ -1078,6 +1093,35 @@
 			</div>
 		{/if}
 
+		<!-- Bifrost settings -->
+		{#if llmProvider === 'bifrost'}
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="bifrost-url">
+					Gateway URL
+				</label>
+				<input
+					id="bifrost-url"
+					type="url"
+					bind:value={bifrostUrl}
+					placeholder="https://bifrost.example.com/v1"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+				/>
+			</div>
+
+			<div class="space-y-2">
+				<label class="block text-xs font-semibold uppercase tracking-wider text-slate-400" for="bifrost-model">
+					Model
+				</label>
+				<input
+					id="bifrost-model"
+					type="text"
+					bind:value={bifrostModel}
+					placeholder="gpt-4o-mini"
+					class="w-full rounded-xl border border-slate-700 bg-slate-900/85 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none transition-colors"
+				/>
+			</div>
+		{/if}
+
 		<div class="space-y-2">
 			<div class="flex items-center justify-between gap-3">
 				<div>
@@ -1194,10 +1238,10 @@
 				<div class="rounded-xl border border-slate-700/50 bg-slate-900/60 p-3">
 					<p class="text-[11px] uppercase tracking-wider text-slate-500">Provider</p>
 					<p class="mt-1 text-sm font-medium text-white">
-						{status.provider === 'ollama' ? 'Ollama' : status.provider === 'openai' ? 'OpenAI' : 'Open-WebUI'}
+						{status.provider === 'ollama' ? 'Ollama' : status.provider === 'openai' ? 'OpenAI' : status.provider === 'bifrost' ? 'Bifrost' : 'Open-WebUI'}
 					</p>
 					<p class="mt-1 text-xs text-slate-400">
-						{status.provider === 'ollama' ? 'Direct connection' : status.provider === 'openai' ? 'Cloud API' : 'Proxy'}
+						{status.provider === 'ollama' ? 'Direct connection' : status.provider === 'openai' ? 'Cloud API' : status.provider === 'bifrost' ? 'LLM gateway' : 'Proxy'}
 					</p>
 				</div>
 

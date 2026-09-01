@@ -98,8 +98,8 @@ function extractToolNames(payload: unknown): string[] {
 }
 
 /**
- * Test LLM connection — works with Ollama, OpenAI, or Open-WebUI.
- * For Ollama/OpenAI: tests the chat completions endpoint and models list.
+ * Test LLM connection — works with Ollama, OpenAI, Open-WebUI, or Bifrost.
+ * For Ollama/OpenAI/Bifrost: tests the chat completions endpoint and models list.
  * For Open-WebUI: also checks tools endpoint for nocodb-electrical.
  */
 export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<LlmConnectionStatus> {
@@ -122,6 +122,11 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 			baseURL = 'https://api.openai.com';
 			apiKey = mergedConfig.openaiApiKey;
 			model = mergedConfig.openaiModel;
+			break;
+		case 'bifrost':
+			baseURL = mergedConfig.bifrostUrl;
+			apiKey = 'bifrost';
+			model = mergedConfig.bifrostModel;
 			break;
 		case 'openwebui':
 		default:
@@ -169,7 +174,9 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 			? `${baseURL}/v1/models`
 			: providerName === 'openai'
 				? 'https://api.openai.com/v1/models'
-				: `${baseURL}/api/models`;
+				: providerName === 'bifrost'
+					? `${baseURL}/models`
+					: `${baseURL}/api/models`;
 
 		const modelsResponse = await fetch(modelsUrl, {
 			method: 'GET',
@@ -221,7 +228,8 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 
 	const providerLabel = providerName === 'ollama' ? 'Ollama'
 		: providerName === 'openai' ? 'OpenAI'
-			: 'Open-WebUI';
+			: providerName === 'bifrost' ? 'Bifrost'
+				: 'Open-WebUI';
 
 	let statusMessage: string;
 	if (!connected) {
