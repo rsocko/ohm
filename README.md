@@ -55,7 +55,7 @@ integration is optional and the app degrades gracefully (or you can just use
 demo mode). See the comments in `.env.example` for each variable:
 
 - **NocoDB** — the electrical topology data store (panels/circuits/areas/loads)
-- **LLM provider** — `LLM_PROVIDER=ollama|openwebui|openai`, for the AI chat assistant
+- **LLM provider** — `LLM_PROVIDER=ollama|openai-compatible` (the latter covers Bifrost, OpenAI, Open-WebUI, LiteLLM, OpenRouter, etc.), for the AI chat assistant
 - **Home Assistant** — energy/solar sensor data
 - **UniFi Network** — device discovery
 - **Utility rate** — used for cost estimates in the UI

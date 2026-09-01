@@ -16,10 +16,6 @@ export interface LlmConnectionStatus {
 	model_available: boolean | null;
 	available_models: string[];
 	chat_completions_available: boolean;
-	// Open-WebUI specific (null for other providers)
-	nocodb_tool_available: boolean | null;
-	matched_tools: string[];
-	tools_endpoint_available: boolean;
 	models_endpoint_available: boolean;
 }
 
@@ -73,34 +69,10 @@ function extractModelIds(payload: unknown): string[] {
 	);
 }
 
-interface ToolEntry {
-	id?: string;
-	name?: string;
-	title?: string;
-}
-
-function extractToolNames(payload: unknown): string[] {
-	if (!payload || typeof payload !== 'object') return [];
-
-	const record = payload as Record<string, unknown>;
-	const rawTools = record.data ?? record.tools ?? payload;
-	if (!Array.isArray(rawTools)) return [];
-
-	return dedupe(
-		rawTools.flatMap((tool) => {
-			const typedTool = tool as ToolEntry | string;
-			if (typeof typedTool === 'string') return typedTool;
-			return [typedTool.name, typedTool.title, typedTool.id].filter(
-				(value): value is string => Boolean(value)
-			);
-		})
-	);
-}
-
 /**
- * Test LLM connection — works with Ollama, OpenAI, Open-WebUI, or Bifrost.
- * For Ollama/OpenAI/Bifrost: tests the chat completions endpoint and models list.
- * For Open-WebUI: also checks tools endpoint for nocodb-electrical.
+ * Test LLM connection — works with Ollama or the generic OpenAI-compatible
+ * provider (Bifrost, OpenAI, Open-WebUI, LiteLLM, OpenRouter, etc.). Tests
+ * the chat completions endpoint and, best-effort, the models list.
  */
 export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<LlmConnectionStatus> {
 	const config = await getAiConfig();
@@ -118,34 +90,16 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 			apiKey = '';
 			model = mergedConfig.ollamaModel;
 			break;
-		case 'openai':
-			baseURL = 'https://api.openai.com';
-			apiKey = mergedConfig.openaiApiKey;
-			model = mergedConfig.openaiModel;
-			break;
-		case 'bifrost':
-			baseURL = mergedConfig.bifrostUrl;
-			apiKey = 'bifrost';
-			model = mergedConfig.bifrostModel;
-			break;
-		case 'openwebui':
+		case 'openai-compatible':
 		default:
-			baseURL = mergedConfig.openWebUiUrl;
-			apiKey = mergedConfig.openWebUiApiKey;
-			model = mergedConfig.openWebUiModel;
+			baseURL = mergedConfig.compatibleUrl;
+			apiKey = mergedConfig.compatibleApiKey;
+			model = mergedConfig.compatibleModel;
 			break;
 	}
 
 	if (!baseURL) {
 		return emptyStatus(providerName, model, `Missing ${providerName} URL.`);
-	}
-
-	if (providerName === 'openai' && !apiKey) {
-		return emptyStatus(providerName, model, 'Missing OpenAI API key.');
-	}
-
-	if (providerName === 'openwebui' && !apiKey) {
-		return emptyStatus(providerName, model, 'Missing Open-WebUI API key.');
 	}
 
 	// Test chat completions via the AI SDK
@@ -170,13 +124,8 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 	let modelAvailable: boolean | null = null;
 
 	try {
-		const modelsUrl = providerName === 'ollama'
-			? `${baseURL}/v1/models`
-			: providerName === 'openai'
-				? 'https://api.openai.com/v1/models'
-				: providerName === 'bifrost'
-					? `${baseURL}/models`
-					: `${baseURL}/api/models`;
+		const modelsUrl =
+			providerName === 'ollama' ? `${baseURL}/v1/models` : `${baseURL}/models`;
 
 		const modelsResponse = await fetch(modelsUrl, {
 			method: 'GET',
@@ -193,49 +142,13 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 		// Models endpoint is optional
 	}
 
-	// Open-WebUI specific: check tools endpoint
-	let toolsEndpointAvailable = false;
-	let nocodbToolAvailable: boolean | null = null;
-	let matchedTools: string[] = [];
-
-	if (providerName === 'openwebui') {
-		try {
-			const toolsResponse = await fetch(`${baseURL}/api/v1/tools/`, {
-				method: 'GET',
-				headers: buildHeaders(apiKey)
-			});
-			toolsEndpointAvailable = toolsResponse.ok;
-
-			if (toolsResponse.ok) {
-				const toolsPayload = await toolsResponse.json();
-				const toolNames = extractToolNames(toolsPayload);
-				matchedTools = toolNames.filter((toolName) =>
-					toolName.toLowerCase().includes('nocodb-electrical') ||
-					toolName.toLowerCase().includes('nocodb')
-				);
-				nocodbToolAvailable = matchedTools.some(
-					(toolName) =>
-						toolName.toLowerCase() === 'nocodb-electrical' ||
-						toolName.toLowerCase().includes('nocodb-electrical')
-				);
-			}
-		} catch {
-			// Tools endpoint is optional
-		}
-	}
-
 	const connected = chatCompletionsAvailable;
 
-	const providerLabel = providerName === 'ollama' ? 'Ollama'
-		: providerName === 'openai' ? 'OpenAI'
-			: providerName === 'bifrost' ? 'Bifrost'
-				: 'Open-WebUI';
+	const providerLabel = providerName === 'ollama' ? 'Ollama' : 'OpenAI-compatible endpoint';
 
 	let statusMessage: string;
 	if (!connected) {
 		statusMessage = `${providerLabel} chat completions failed${chatMessage ? ` — ${chatMessage}` : ''}. AI chat will not work.`;
-	} else if (providerName === 'openwebui' && nocodbToolAvailable === true) {
-		statusMessage = `Connected to ${providerLabel} — chat completions working and nocodb-electrical tool detected.`;
 	} else if (modelAvailable === false) {
 		statusMessage = `${providerLabel} chat working, but model "${model}" was not found in models list.`;
 	} else {
@@ -250,9 +163,6 @@ export async function testLlmConnection(overrides?: Partial<AiConfig>): Promise<
 		model_available: modelAvailable,
 		available_models: availableModels,
 		chat_completions_available: chatCompletionsAvailable,
-		nocodb_tool_available: nocodbToolAvailable,
-		matched_tools: matchedTools,
-		tools_endpoint_available: toolsEndpointAvailable,
 		models_endpoint_available: modelsEndpointAvailable
 	};
 }
@@ -266,9 +176,6 @@ function emptyStatus(provider: string, model: string, message: string): LlmConne
 		model_available: null,
 		available_models: [],
 		chat_completions_available: false,
-		nocodb_tool_available: null,
-		matched_tools: [],
-		tools_endpoint_available: false,
 		models_endpoint_available: false
 	};
 }

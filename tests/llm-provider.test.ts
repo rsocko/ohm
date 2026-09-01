@@ -1,5 +1,7 @@
 /**
- * Unit tests for provider construction (GitHub issue #129).
+ * Unit tests for provider construction (GitHub issue #129, revised per
+ * issue #178 to collapse 'openwebui'/'openai'/'bifrost' into a single
+ * generic 'openai-compatible' provider).
  *
  * `createOpenAI` is mocked so we can assert exactly which baseURL/apiKey
  * each provider case is built with, without making real network calls.
@@ -19,13 +21,9 @@ function baseConfig(overrides: Partial<AiConfig> = {}): AiConfig {
 		llmProvider: 'ollama',
 		ollamaUrl: 'http://localhost:11434',
 		ollamaModel: 'qwen3:8b',
-		openWebUiUrl: 'http://open-webui.example.com',
-		openWebUiApiKey: 'owui-key',
-		openWebUiModel: 'gpt-4o',
-		openaiApiKey: 'sk-test',
-		openaiModel: 'gpt-4o',
-		bifrostUrl: 'https://bifrost.example.com/v1',
-		bifrostModel: 'gpt-4o-mini',
+		compatibleUrl: 'http://bifrost:8080/v1',
+		compatibleApiKey: '',
+		compatibleModel: 'gpt-4o-mini',
 		askApiKey: 'eca_test',
 		askAuthRequired: true,
 		updatedAt: null,
@@ -50,54 +48,63 @@ describe('getLlmProviderFromConfig', () => {
 		});
 	});
 
-	it('builds an openai provider against the default OpenAI endpoint', async () => {
+	it('builds a generic openai-compatible provider against the configured gateway URL with a dummy key when none is set', async () => {
 		const { getLlmProviderFromConfig } = await import('$lib/server/llm-provider');
-		const result = getLlmProviderFromConfig(baseConfig({ llmProvider: 'openai' }));
+		const result = getLlmProviderFromConfig(
+			baseConfig({
+				llmProvider: 'openai-compatible',
+				compatibleUrl: 'http://bifrost:8080/v1',
+				compatibleApiKey: '',
+				compatibleModel: 'gpt-4o-mini'
+			})
+		);
 
-		expect(result.providerName).toBe('openai');
-		expect(result.modelId).toBe('gpt-4o');
-		expect(createOpenAIMock).toHaveBeenCalledWith({ apiKey: 'sk-test' });
+		expect(result.providerName).toBe('openai-compatible');
+		expect(result.modelId).toBe('gpt-4o-mini');
+		// Resolves design doc open question #2 (API key passthrough): when the
+		// user leaves the key blank (e.g. Bifrost manages backend auth
+		// itself), the SDK still gets a non-empty placeholder.
+		expect(createOpenAIMock).toHaveBeenCalledWith({
+			baseURL: 'http://bifrost:8080/v1',
+			apiKey: 'openai-compatible'
+		});
 	});
 
-	it('builds an openwebui provider against its /api path', async () => {
+	it('passes through a user-configured API key for the openai-compatible provider', async () => {
 		const { getLlmProviderFromConfig } = await import('$lib/server/llm-provider');
-		const result = getLlmProviderFromConfig(baseConfig({ llmProvider: 'openwebui' }));
+		const result = getLlmProviderFromConfig(
+			baseConfig({
+				llmProvider: 'openai-compatible',
+				compatibleUrl: 'https://api.openai.com/v1',
+				compatibleApiKey: 'sk-test',
+				compatibleModel: 'gpt-4o'
+			})
+		);
 
-		expect(result.providerName).toBe('openwebui');
+		expect(result.providerName).toBe('openai-compatible');
 		expect(result.modelId).toBe('gpt-4o');
+		expect(createOpenAIMock).toHaveBeenCalledWith({
+			baseURL: 'https://api.openai.com/v1',
+			apiKey: 'sk-test'
+		});
+	});
+
+	it('supports any OpenAI-wire-compatible URL shape (e.g. an Open-WebUI /api path)', async () => {
+		const { getLlmProviderFromConfig } = await import('$lib/server/llm-provider');
+		const result = getLlmProviderFromConfig(
+			baseConfig({
+				llmProvider: 'openai-compatible',
+				compatibleUrl: 'http://open-webui.example.com/api',
+				compatibleApiKey: 'owui-key',
+				compatibleModel: 'gpt-4o'
+			})
+		);
+
+		expect(result.providerName).toBe('openai-compatible');
 		expect(createOpenAIMock).toHaveBeenCalledWith({
 			baseURL: 'http://open-webui.example.com/api',
 			apiKey: 'owui-key'
 		});
 	});
-
-	it('builds a bifrost provider against the gateway URL with a dummy API key', async () => {
-		const { getLlmProviderFromConfig } = await import('$lib/server/llm-provider');
-		const result = getLlmProviderFromConfig(
-			baseConfig({ llmProvider: 'bifrost', bifrostUrl: 'http://bifrost:8080/v1', bifrostModel: 'gpt-4o-mini' })
-		);
-
-		expect(result.providerName).toBe('bifrost');
-		expect(result.modelId).toBe('gpt-4o-mini');
-		// Bifrost manages backend auth itself (no client-side key needed), so
-		// the SDK just gets a non-empty placeholder — resolves design doc
-		// open question #2 (API key passthrough).
-		expect(createOpenAIMock).toHaveBeenCalledWith({
-			baseURL: 'http://bifrost:8080/v1',
-			apiKey: 'bifrost'
-		});
-	});
-
-	it('supports the external bifrost URL form too', async () => {
-		const { getLlmProviderFromConfig } = await import('$lib/server/llm-provider');
-		const result = getLlmProviderFromConfig(
-			baseConfig({ llmProvider: 'bifrost', bifrostUrl: 'https://bifrost.example.com/v1' })
-		);
-
-		expect(result.providerName).toBe('bifrost');
-		expect(createOpenAIMock).toHaveBeenCalledWith({
-			baseURL: 'https://bifrost.example.com/v1',
-			apiKey: 'bifrost'
-		});
-	});
 });
+

@@ -25,34 +25,21 @@ function buildProvider(config: AiConfig): LlmProviderConfig {
 				providerName: 'ollama'
 			};
 
-		case 'openai':
-			return {
-				provider: createOpenAI({
-					apiKey: config.openaiApiKey
-				}),
-				modelId: config.openaiModel,
-				providerName: 'openai'
-			};
-
-		case 'bifrost':
-			return {
-				provider: createOpenAI({
-					baseURL: config.bifrostUrl,
-					apiKey: 'bifrost' // Bifrost manages backend auth; SDK just needs a non-empty string
-				}),
-				modelId: config.bifrostModel,
-				providerName: 'bifrost'
-			};
-
-		case 'openwebui':
+		case 'openai-compatible':
 		default:
+			// Covers Bifrost, real OpenAI, Open-WebUI, LiteLLM, OpenRouter, or any
+			// other endpoint that speaks the OpenAI chat-completions wire
+			// protocol — the URL/key are whatever the user configured, with no
+			// gateway-specific branching. Client-side there's no functional
+			// difference between these backends; routing/failover/observability
+			// (e.g. via Bifrost) all happen server-side, invisible to OHM.
 			return {
 				provider: createOpenAI({
-					baseURL: `${config.openWebUiUrl}/api`,
-					apiKey: config.openWebUiApiKey
+					baseURL: config.compatibleUrl || undefined,
+					apiKey: config.compatibleApiKey || 'openai-compatible' // SDK needs a non-empty string even if the backend doesn't require auth
 				}),
-				modelId: config.openWebUiModel,
-				providerName: 'openwebui'
+				modelId: config.compatibleModel,
+				providerName: 'openai-compatible'
 			};
 	}
 }

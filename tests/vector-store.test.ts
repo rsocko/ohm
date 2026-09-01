@@ -1,10 +1,12 @@
 /**
- * Unit tests for embedding routing through Bifrost (GitHub issue #130).
+ * Unit tests for embedding routing through the generic OpenAI-compatible
+ * provider (GitHub issue #130, revised per issue #178 to collapse
+ * 'openwebui'/'openai'/'bifrost' into a single generic provider).
  *
  * `db`, `ai` (embedMany/embed), and `@ai-sdk/openai` (createOpenAI) are all
  * mocked so the test can assert exactly which base URL / model the vector
- * store uses for embeddings once Bifrost is the active provider, without a
- * live gateway or database.
+ * store uses for embeddings once the compatible provider (e.g. Bifrost) is
+ * active, without a live gateway or database.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AiConfig } from '$lib/server/ai-config';
@@ -49,13 +51,9 @@ function baseConfig(overrides: Partial<AiConfig> = {}): AiConfig {
 		llmProvider: 'ollama',
 		ollamaUrl: 'http://localhost:11434',
 		ollamaModel: 'qwen3:8b',
-		openWebUiUrl: 'http://open-webui.example.com',
-		openWebUiApiKey: 'owui-key',
-		openWebUiModel: 'gpt-4o',
-		openaiApiKey: '',
-		openaiModel: 'gpt-4o',
-		bifrostUrl: 'http://bifrost:8080/v1',
-		bifrostModel: 'gpt-4o-mini',
+		compatibleUrl: 'http://bifrost:8080/v1',
+		compatibleApiKey: '',
+		compatibleModel: 'gpt-4o-mini',
 		askApiKey: 'eca_test',
 		askAuthRequired: true,
 		updatedAt: null,
@@ -70,30 +68,40 @@ beforeEach(() => {
 	embedManyMock.mockClear();
 });
 
-describe('vector-store embeddings via Bifrost', () => {
-	it('routes embeddings through the Bifrost gateway when it is the active provider', async () => {
-		mockConfig = baseConfig({ llmProvider: 'bifrost' });
+describe('vector-store embeddings via the OpenAI-compatible provider', () => {
+	it('routes embeddings through the gateway (e.g. Bifrost) when it is the active provider', async () => {
+		mockConfig = baseConfig({ llmProvider: 'openai-compatible', compatibleApiKey: '' });
 
 		const { reindex } = await import('$lib/server/vector-store');
 		const result = await reindex();
 
 		expect(result.documentCount).toBe(1);
-		expect(createOpenAIMock).toHaveBeenCalledWith({ baseURL: 'http://bifrost:8080/v1', apiKey: 'bifrost' });
+		expect(createOpenAIMock).toHaveBeenCalledWith({
+			baseURL: 'http://bifrost:8080/v1',
+			apiKey: 'openai-compatible'
+		});
 		expect(embeddingMock).toHaveBeenCalledWith('text-embedding-3-small');
 		expect(embedManyMock).toHaveBeenCalled();
 	});
 
-	it('still prefers OpenAI when an API key is configured and provider is not bifrost', async () => {
-		mockConfig = baseConfig({ llmProvider: 'ollama', openaiApiKey: 'sk-test' });
+	it('passes through a user-configured API key when set on the compatible provider', async () => {
+		mockConfig = baseConfig({
+			llmProvider: 'openai-compatible',
+			compatibleUrl: 'https://api.openai.com/v1',
+			compatibleApiKey: 'sk-test'
+		});
 
 		const { reindex } = await import('$lib/server/vector-store');
 		await reindex();
 
-		expect(createOpenAIMock).toHaveBeenCalledWith({ apiKey: 'sk-test' });
+		expect(createOpenAIMock).toHaveBeenCalledWith({
+			baseURL: 'https://api.openai.com/v1',
+			apiKey: 'sk-test'
+		});
 	});
 
-	it('falls back to Ollama for embeddings when no OpenAI key and provider is ollama', async () => {
-		mockConfig = baseConfig({ llmProvider: 'ollama', openaiApiKey: '' });
+	it('falls back to Ollama for embeddings when the active provider is ollama', async () => {
+		mockConfig = baseConfig({ llmProvider: 'ollama' });
 
 		const { reindex } = await import('$lib/server/vector-store');
 		await reindex();
@@ -103,11 +111,12 @@ describe('vector-store embeddings via Bifrost', () => {
 	});
 
 	it('surfaces (does not swallow) errors when the embedding call fails', async () => {
-		mockConfig = baseConfig({ llmProvider: 'bifrost' });
-		embedManyMock.mockRejectedValueOnce(new Error('Bifrost embeddings endpoint unavailable'));
+		mockConfig = baseConfig({ llmProvider: 'openai-compatible' });
+		embedManyMock.mockRejectedValueOnce(new Error('Gateway embeddings endpoint unavailable'));
 
 		const { reindex } = await import('$lib/server/vector-store');
 
-		await expect(reindex()).rejects.toThrow('Bifrost embeddings endpoint unavailable');
+		await expect(reindex()).rejects.toThrow('Gateway embeddings endpoint unavailable');
 	});
 });
+

@@ -8,13 +8,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		llmProvider?: LlmProvider;
 		ollamaUrl?: string;
 		ollamaModel?: string;
-		openWebUiUrl?: string;
-		openWebUiApiKey?: string;
-		openWebUiModel?: string;
-		openaiApiKey?: string;
-		openaiModel?: string;
-		bifrostUrl?: string;
-		bifrostModel?: string;
+		compatibleUrl?: string;
+		compatibleApiKey?: string;
+		compatibleModel?: string;
 	};
 
 	try {
@@ -30,9 +26,6 @@ export const POST: RequestHandler = async ({ request }) => {
 				model_available: null,
 				available_models: [],
 				chat_completions_available: false,
-				nocodb_tool_available: null,
-				matched_tools: [],
-				tools_endpoint_available: false,
 				models_endpoint_available: false
 			},
 			{ status: 500 }
