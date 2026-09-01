@@ -14,11 +14,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		llmProvider?: LlmProvider;
 		ollamaUrl?: string;
 		ollamaModel?: string;
-		openWebUiUrl?: string;
-		openWebUiApiKey?: string;
-		openWebUiModel?: string;
-		openaiApiKey?: string;
-		openaiModel?: string;
+		compatibleUrl?: string;
+		compatibleApiKey?: string;
+		compatibleModel?: string;
 		askApiKey?: string;
 		askAuthRequired?: boolean;
 		regenerateAskApiKey?: boolean;
@@ -29,11 +27,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		llmProvider: body.llmProvider,
 		ollamaUrl: body.ollamaUrl,
 		ollamaModel: body.ollamaModel,
-		openWebUiUrl: body.openWebUiUrl,
-		openWebUiApiKey: body.openWebUiApiKey,
-		openWebUiModel: body.openWebUiModel,
-		openaiApiKey: body.openaiApiKey,
-		openaiModel: body.openaiModel,
+		compatibleUrl: body.compatibleUrl,
+		compatibleApiKey: body.compatibleApiKey,
+		compatibleModel: body.compatibleModel,
 		askApiKey: body.askApiKey,
 		askAuthRequired: body.askAuthRequired,
 		regenerateAskApiKey: body.regenerateAskApiKey

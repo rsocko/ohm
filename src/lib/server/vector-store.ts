@@ -63,32 +63,29 @@ const EMBEDDING_MODEL = 'text-embedding-3-small';
 async function getEmbeddingProvider() {
 	const config = await getAiConfig();
 
-	// Prefer OpenAI for embeddings if key is configured
-	if (config.openaiApiKey) {
-		return createOpenAI({ apiKey: config.openaiApiKey });
-	}
-
-	// Fall back to Ollama (supports /v1/embeddings for compatible models)
-	if (config.llmProvider === 'ollama') {
+	// The generic OpenAI-compatible provider (Bifrost, OpenAI, Open-WebUI,
+	// LiteLLM, OpenRouter, etc.) also handles embeddings — avoids requiring a
+	// separate key/endpoint just for embeddings.
+	if (config.llmProvider === 'openai-compatible') {
 		return createOpenAI({
-			baseURL: `${config.ollamaUrl}/v1`,
-			apiKey: 'ollama'
+			baseURL: config.compatibleUrl || undefined,
+			apiKey: config.compatibleApiKey || 'openai-compatible'
 		});
 	}
 
-	// Open-WebUI as last resort
+	// Fall back to Ollama (supports /v1/embeddings for compatible models)
 	return createOpenAI({
-		baseURL: `${config.openWebUiUrl}/api`,
-		apiKey: config.openWebUiApiKey
+		baseURL: `${config.ollamaUrl}/v1`,
+		apiKey: 'ollama'
 	});
 }
 
 async function getEmbeddingModelId(): Promise<string> {
 	const config = await getAiConfig();
-	// OpenAI uses text-embedding-3-small; Ollama uses nomic-embed-text or similar
-	if (config.openaiApiKey) return EMBEDDING_MODEL;
-	if (config.llmProvider === 'ollama') return 'nomic-embed-text';
-	return EMBEDDING_MODEL;
+	// The OpenAI-compatible provider uses text-embedding-3-small; Ollama uses
+	// nomic-embed-text or similar.
+	if (config.llmProvider === 'openai-compatible') return EMBEDDING_MODEL;
+	return 'nomic-embed-text';
 }
 
 // ─── Store ───────────────────────────────────────────────────────────────────
