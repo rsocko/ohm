@@ -231,8 +231,11 @@
 						: null;
 					updatedFields.Circuit_id = editCircuitId;
 				}
-				onSaved?.(updatedFields);
-				onclose();
+				try {
+					onSaved?.(updatedFields);
+				} finally {
+					onclose();
+				}
 			} else {
 				const data = await resp.json().catch(() => null);
 				error = data?.error || 'Could not save this device. Try again.';
