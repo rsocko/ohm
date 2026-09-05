@@ -4471,7 +4471,7 @@
 																deviceType={editingDevice.type}
 																record={editingDevice.record}
 																allLoads={allLoads}
-																onClose={() => { editingDevice = null; }}
+																onclose={() => { editingDevice = null; }}
 																onSaved={handleDeviceSaved}
 															/>
 														{/if}
