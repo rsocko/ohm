@@ -406,6 +406,15 @@
 		return circuit?.id ?? (receptacle.fields.Circuit_id as number | undefined) ?? null;
 	}
 
+	function getDeviceAreaId(record: V3Record): number | null {
+		const area = record.fields.Area as { id?: number } | { id?: number }[] | undefined;
+		const linkedAreaId = Array.isArray(area) ? area[0]?.id : area?.id;
+		return linkedAreaId
+			?? (record.fields.Area_id as number | undefined)
+			?? (record.fields.AreaId as number | undefined)
+			?? null;
+	}
+
 	function getCircuitsForReceptacles(receptacles: V3Record[]): V3Record[] {
 		const circuitIds = new Set(receptacles.map(getReceptacleCircuitId).filter((id): id is number => id !== null));
 		return allCircuits.filter((circuit) => circuitIds.has(circuit.id));
@@ -552,7 +561,8 @@
 		}
 
 		// ?edit=true — open placement/edit mode
-		if (urlParams.get('edit') === 'true') {
+		const editParam = urlParams.get('edit');
+		if (editParam === 'true') {
 			viewMode = 'floorplan';
 			editingMarkers = true;
 		}
@@ -565,7 +575,7 @@
 				const targetArea = areas.find(a => a.id === areaId);
 				if (targetArea) {
 					// Only open area panel if no device-specific deep link
-					if (!deviceParam) {
+					if (!deviceParam && editParam !== 'room') {
 						activePanel = { areaId, mode: 'devices' };
 					}
 
@@ -580,7 +590,27 @@
 						collapsedFloors = { ...collapsedFloors, [floorName]: false };
 					}
 
-					if (!deviceParam) {
+					if (editParam === 'room') {
+						viewMode = 'list';
+						editingArea = targetArea;
+						editName = targetArea.fields.Name as string;
+						editDirty = false;
+						activePanel = { areaId, mode: 'edit' };
+					}
+					if (deviceParam && (editParam === 'load' || editParam === 'receptacle')) {
+						const deviceId = parseInt(deviceParam);
+						const record = editParam === 'load'
+							? allLoads.find((load) => load.id === deviceId)
+							: allReceptacles.find((receptacle) => receptacle.id === deviceId);
+						if (record) {
+							viewMode = 'list';
+							activePanel = { areaId, mode: 'devices' };
+							expandedDevice = `${areaId}-${editParam}-${deviceId}`;
+							showAllDevices = { ...showAllDevices, [areaId]: true };
+							editingDevice = { type: editParam, record, areaId };
+						}
+					}
+					if (!deviceParam || editParam === 'load' || editParam === 'receptacle') {
 						setTimeout(() => {
 							const el = document.querySelector(`[data-area-id="${areaId}"]`);
 							if (el) {
@@ -3528,6 +3558,7 @@
 									{@const loadPopFlip = (popLoad.fields.Floorplan_Y as number) > 0.6}
 									{@const loadPopX = popLoad.fields.Floorplan_X as number}
 									{@const loadXAlign = loadPopX < 0.2 ? 'left' : loadPopX > 0.8 ? 'right' : 'center'}
+									{@const popLoadAreaId = getDeviceAreaId(popLoad)}
 									{@const networkUpstream = getNetworkUpstreamRecord(popLoad)}
 									{@const downstreamLoads = getDownstreamLoads(popLoad.id)}
 									<div
@@ -3540,6 +3571,17 @@
 													<Icon icon={marker.icon} width={9} class="text-white" />
 												</span>
 												<span class="text-[11px] font-medium text-white truncate">{getDisplayName(popLoad, 'Load')}</span>
+												{#if popLoadAreaId}
+													<a
+														href="/rooms?view=list&area={popLoadAreaId}&device={popLoad.id}&edit=load"
+														onclick={(e) => e.stopPropagation()}
+														class="ml-auto inline-flex min-w-10 min-h-10 items-center justify-center rounded-md text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+														aria-label="Edit {getDisplayName(popLoad, 'Load')}"
+														title="Edit load"
+													>
+														<Icon icon="mdi:pencil-outline" width={15} />
+													</a>
+												{/if}
 											</div>
 											{#if popLoad.fields['Device Type']}
 												<p class="text-[10px] text-slate-400">Type: {popLoad.fields['Device Type']}</p>
@@ -3688,6 +3730,7 @@
 											{#each popGroup.members as member, mIdx}
 												{@const m = getDeviceMarker(member, 'receptacle')}
 												{@const circuit = allCircuits.find(c => c.id === getReceptacleCircuitId(member))}
+												{@const memberAreaId = getDeviceAreaId(member)}
 												{@const memberLoadNames = (() => { const lnf = member.fields['Load Name(s)']; return typeof lnf === 'string' ? lnf.split(',').map((s: string) => s.trim()).filter(Boolean) : Array.isArray(lnf) ? lnf.filter(Boolean) : []; })()}
 												{@const siblingSwitches = memberLoadNames.length > 0 ? allReceptacles.filter(r => r.id !== member.id && (() => { const lnf = r.fields['Load Name(s)']; const names: string[] = typeof lnf === 'string' ? lnf.split(',').map((s: string) => s.trim()) : Array.isArray(lnf) ? lnf : []; return memberLoadNames.some(n => names.includes(n)); })()) : []}
 												<div class="flex items-center gap-1.5 text-[10px] py-0.5 {mIdx > 0 ? 'border-t border-slate-800/60' : ''}">
@@ -3704,6 +3747,17 @@
 															</span>
 														{/if}
 													</div>
+													{#if memberAreaId}
+														<a
+															href="/rooms?view=list&area={memberAreaId}&device={member.id}&edit=receptacle"
+															onclick={(e) => e.stopPropagation()}
+															class="inline-flex min-w-10 min-h-10 items-center justify-center rounded-md text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 shrink-0"
+															aria-label="Edit {getDisplayName(member, 'Receptacle')}"
+															title="Edit receptacle"
+														>
+															<Icon icon="mdi:pencil-outline" width={14} />
+														</a>
+													{/if}
 													{#if popGroup.members.length > 1 && editingMarkers}
 														<button
 															onclick={(e) => { e.stopPropagation(); removeFromGang(member); }}
@@ -3835,7 +3889,18 @@
 														</span>
 														<span class="text-[11px] font-medium text-white">{selectedArea.fields.Name}</span>
 													</div>
-													<button onclick={(e) => { e.stopPropagation(); activePanel = { areaId: 0, mode: null }; }} class="text-slate-500 hover:text-white text-[10px] px-1">✕</button>
+													<div class="flex items-center">
+														<a
+															href="/rooms?view=list&area={selectedArea.id}&edit=room"
+															onclick={(e) => e.stopPropagation()}
+															class="inline-flex min-w-10 min-h-10 items-center justify-center rounded-md text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+															aria-label="Edit {selectedArea.fields.Name}"
+															title="Edit room"
+														>
+															<Icon icon="mdi:pencil-outline" width={14} />
+														</a>
+														<button onclick={(e) => { e.stopPropagation(); activePanel = { areaId: 0, mode: null }; }} class="min-w-10 min-h-10 text-slate-500 hover:text-white text-[10px]" aria-label="Close room details">✕</button>
+													</div>
 												</div>
 												{#if areaLoads.length > 0}
 													{@const showAllLoads = expandedOverflow[`popover-loads-${selectedArea?.id}`]}
@@ -4251,9 +4316,11 @@
 											<button
 												onclick={() => { if (!editActive) startEdit(area); else togglePanel(area.id, 'edit'); }}
 												title="Edit"
-												class="p-1.5 rounded-md transition-all {editActive ? 'text-amber-400 bg-amber-500/15 ring-1 ring-amber-500/40' : 'text-slate-500 opacity-0 group-hover:opacity-100 hover:text-amber-400 hover:bg-amber-500/10'}"
+												aria-label="Edit {f.Name}"
+												class="min-w-10 min-h-10 px-2 flex items-center justify-center gap-1 rounded-md text-xs font-medium transition-all {editActive ? 'text-amber-400 bg-amber-500/15 ring-1 ring-amber-500/40' : 'text-slate-400 hover:text-amber-400 hover:bg-amber-500/10'}"
 											>
 												<Icon icon="mdi:pencil-outline" width={15} />
+												<span class="hidden sm:inline">Edit</span>
 											</button>
 											<button
 												onclick={() => toggleComments(area.id)}
@@ -4416,7 +4483,7 @@
 																</span>
 															{/if}
 															<!-- Action buttons: hover-visible on desktop, always on touch -->
-															<div class="flex items-center gap-0.5 shrink-0 opacity-0 group-hover/row:opacity-100 transition-opacity">
+															<div class="flex items-center gap-0.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover/row:opacity-100 transition-opacity">
 																<span
 																	onclick={(e) => { e.stopPropagation(); startEditDevice(item, area.id); }}
 																	role="button"
@@ -4471,6 +4538,7 @@
 																deviceType={editingDevice.type}
 																record={editingDevice.record}
 																allLoads={allLoads}
+																allCircuits={allCircuits}
 																onclose={() => { editingDevice = null; }}
 																onSaved={handleDeviceSaved}
 															/>
