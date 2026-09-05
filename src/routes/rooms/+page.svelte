@@ -1442,6 +1442,37 @@
 		floorplanTranslate = { x: 0, y: 0 };
 	}
 
+	function setFloorplanZoom(requestedScale: number, focalPoint = { x: 0, y: 0 }): boolean {
+		const newScale = Math.max(1, Math.min(5, requestedScale));
+		if (newScale === floorplanScale) return false;
+
+		if (newScale === 1) {
+			resetZoom();
+			return true;
+		}
+
+		const scaleFactor = newScale / floorplanScale;
+		floorplanTranslate = {
+			x: focalPoint.x * (1 - scaleFactor) + floorplanTranslate.x * scaleFactor,
+			y: focalPoint.y * (1 - scaleFactor) + floorplanTranslate.y * scaleFactor
+		};
+		floorplanScale = newScale;
+		return true;
+	}
+
+	function handleFloorplanWheel(e: WheelEvent) {
+		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		const focalPoint = {
+			x: e.clientX - rect.left - rect.width / 2,
+			y: e.clientY - rect.top - rect.height / 2
+		};
+		const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+
+		if (setFloorplanZoom(floorplanScale * zoomFactor, focalPoint)) {
+			e.preventDefault();
+		}
+	}
+
 	let panStart = { x: 0, y: 0 };
 	let panMoved = false;
 	function handlePanStart(e: PointerEvent) {
@@ -3033,24 +3064,7 @@
 						<div
 							class="relative rounded-xl overflow-hidden border bg-slate-800/30 {editingMarkers ? 'border-amber-500/40 cursor-crosshair' : 'border-slate-700/50'} {isFullscreen ? 'w-fit max-w-full' : ''}"
 						style="touch-action: none"
-						onwheel={(e) => {
-							if (!e.ctrlKey && !e.metaKey) return;
-							e.preventDefault();
-							const delta = e.deltaY > 0 ? 0.9 : 1.1;
-							const newScale = Math.max(1, Math.min(5, floorplanScale * delta));
-							if (newScale === floorplanScale) return;
-							// Zoom toward cursor: keep the point under the cursor fixed
-							const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-							const cursorX = e.clientX - rect.left - rect.width / 2;
-							const cursorY = e.clientY - rect.top - rect.height / 2;
-							const scaleFactor = newScale / floorplanScale;
-							floorplanTranslate = {
-								x: cursorX * (1 - scaleFactor) + floorplanTranslate.x * scaleFactor,
-								y: cursorY * (1 - scaleFactor) + floorplanTranslate.y * scaleFactor
-							};
-							floorplanScale = newScale;
-							if (floorplanScale === 1) floorplanTranslate = { x: 0, y: 0 };
-						}}
+						onwheel={handleFloorplanWheel}
 						ontouchstart={handleTouchStart}
 						ontouchmove={handleTouchMove}
 						ontouchend={handleTouchEnd}
@@ -3060,7 +3074,8 @@
 						onclick={handleFloorplanClick}
 						onmousemove={handlePlacingMouseMove}
 						onmouseleave={() => { previewPos = null; snapGuides = []; mergeTargetKey = null; }}
-						role="img"
+						role="region"
+						aria-label="Interactive floorplan"
 					>
 						<div style="transform: scale({floorplanScale}) translate({floorplanTranslate.x / floorplanScale}px, {floorplanTranslate.y / floorplanScale}px); transform-origin: center; transition: {isPanning || isTouchZooming ? 'none' : 'transform 0.15s ease-out'}">
 							<!-- Grid stacks both transitioning elements in same cell -->
@@ -3505,17 +3520,36 @@
 								</span>
 							</div>
 						{/if}
-						<!-- Floating zoom reset button (maps/figma style) -->
-						{#if floorplanScale > 1}
+						<!-- Persistent zoom controls support mouse, touch, and keyboard users. -->
+						<div class="absolute top-3 right-3 z-30 flex overflow-hidden rounded-lg border border-slate-600/60 bg-slate-900/90">
 							<button
-								onclick={resetZoom}
-								class="absolute top-3 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-600/60 backdrop-blur-sm shadow-lg text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800 transition-colors"
+								onclick={(e) => { e.stopPropagation(); setFloorplanZoom(floorplanScale - 0.25); }}
+								disabled={floorplanScale <= 1}
+								class="flex h-10 w-10 items-center justify-center text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:text-slate-600"
+								title="Zoom out"
+								aria-label="Zoom out"
 							>
-								<Icon icon="mdi:magnify-minus" width={14} />
-								{Math.round(floorplanScale * 100)}%
-								<span class="text-slate-500 ml-0.5">✕</span>
+								<Icon icon="mdi:minus" width={18} />
 							</button>
-						{/if}
+							<button
+								onclick={(e) => { e.stopPropagation(); resetZoom(); }}
+								disabled={floorplanScale === 1}
+								class="h-10 min-w-14 border-x border-slate-700/70 px-2 text-xs font-medium tabular-nums text-slate-300 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 disabled:cursor-default disabled:text-slate-500"
+								title="Reset zoom"
+								aria-label="Reset zoom to 100%"
+							>
+								{Math.round(floorplanScale * 100)}%
+							</button>
+							<button
+								onclick={(e) => { e.stopPropagation(); setFloorplanZoom(floorplanScale + 0.25); }}
+								disabled={floorplanScale >= 5}
+								class="flex h-10 w-10 items-center justify-center text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:text-slate-600"
+								title="Zoom in"
+								aria-label="Zoom in"
+							>
+								<Icon icon="mdi:plus" width={18} />
+							</button>
+						</div>
 						</div>
 						<!-- Popover overlay (outside overflow-hidden so popovers aren't clipped) -->
 						<div class="absolute inset-0 pointer-events-none overflow-visible z-10">
