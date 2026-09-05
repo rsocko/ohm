@@ -31,6 +31,17 @@
 		areas: homeAreas.length
 	}));
 
+	const statsLoaded = $derived.by(() => ({
+		panels: dataStore.loadedTables.panels && dataStore.loadedTables.areas,
+		circuits:
+			dataStore.loadedTables.circuits &&
+			dataStore.loadedTables.panels &&
+			dataStore.loadedTables.areas,
+		receptacles: dataStore.loadedTables.receptacles && dataStore.loadedTables.areas,
+		loads: dataStore.loadedTables.loads && dataStore.loadedTables.areas,
+		areas: dataStore.loadedTables.areas
+	}));
+
 	// Network device count (filtered to home)
 	const networkDeviceCount = $derived(
 		homeLoads.filter(l => (l.fields['Device Type'] as string) === 'Networking').length
@@ -295,7 +306,7 @@
 		</div>
 
 		<!-- Home toggle -->
-		{#if loading}
+		{#if !dataStore.loadedTables.homes}
 			<!-- Skeleton home pills -->
 			<div class="flex items-center gap-2">
 				<div class="h-7 w-24 rounded-full bg-slate-700/60 animate-pulse"></div>
@@ -465,76 +476,86 @@
 	</a>
 
 	<!-- Stats row (fills width, colored icons) -->
-	{#if loading}
-		<div class="grid grid-cols-3 gap-2">
-			{#each Array(6) as _}
-				<div class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5">
-					<div class="w-8 h-8 rounded-lg bg-slate-700/40 animate-pulse shrink-0"></div>
-					<div class="space-y-1">
-						<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse"></div>
-						<div class="h-3 w-10 rounded bg-slate-700/40 animate-pulse"></div>
-					</div>
-				</div>
-			{/each}
-		</div>
-	{:else}
-		<div class="grid grid-cols-3 gap-2">
-			<a href="/panels" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-cyan-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:view-grid-outline" width={16} class="text-cyan-400" />
-				</span>
-				<div>
+	<div class="grid grid-cols-3 gap-2">
+		<a href="/panels" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
+			<span class="w-8 h-8 rounded-lg bg-cyan-500/15 flex items-center justify-center shrink-0">
+				<Icon icon="mdi:view-grid-outline" width={16} class="text-cyan-400" />
+			</span>
+			<div>
+				{#if statsLoaded.panels}
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.panels}</p>
-					<p class="text-[11px] text-slate-400">Panels</p>
-				</div>
-			</a>
-			<a href="/rooms" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="lucide:layout-panel-left" width={16} class="text-violet-400" />
-				</span>
-				<div>
+				{:else}
+					<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse" aria-label="Loading panels"></div>
+				{/if}
+				<p class="text-[11px] text-slate-400">Panels</p>
+			</div>
+		</a>
+		<a href="/rooms" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
+			<span class="w-8 h-8 rounded-lg bg-violet-500/15 flex items-center justify-center shrink-0">
+				<Icon icon="lucide:layout-panel-left" width={16} class="text-violet-400" />
+			</span>
+			<div>
+				{#if statsLoaded.areas}
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.areas}</p>
-					<p class="text-[11px] text-slate-400">Rooms</p>
-				</div>
-			</a>
-			<a href="/search?type=circuit" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="lucide:plug-zap" width={16} class="text-emerald-400" />
-				</span>
-				<div>
+				{:else}
+					<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse" aria-label="Loading rooms"></div>
+				{/if}
+				<p class="text-[11px] text-slate-400">Rooms</p>
+			</div>
+		</a>
+		<a href="/search?type=circuit" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
+			<span class="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center shrink-0">
+				<Icon icon="lucide:plug-zap" width={16} class="text-emerald-400" />
+			</span>
+			<div>
+				{#if statsLoaded.circuits}
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.circuits}</p>
-					<p class="text-[11px] text-slate-400">Circuits</p>
-				</div>
-			</a>
-			<a href="/search?type=receptacle" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:power-socket-us" width={16} class="text-blue-400" />
-				</span>
-				<div>
+				{:else}
+					<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse" aria-label="Loading circuits"></div>
+				{/if}
+				<p class="text-[11px] text-slate-400">Circuits</p>
+			</div>
+		</a>
+		<a href="/search?type=receptacle" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
+			<span class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
+				<Icon icon="mdi:power-socket-us" width={16} class="text-blue-400" />
+			</span>
+			<div>
+				{#if statsLoaded.receptacles}
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.receptacles}</p>
-					<p class="text-[11px] text-slate-400">Receptacles</p>
-				</div>
-			</a>
-			<a href="/search?type=load" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:lightbulb-outline" width={16} class="text-amber-400" />
-				</span>
-				<div>
+				{:else}
+					<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse" aria-label="Loading receptacles"></div>
+				{/if}
+				<p class="text-[11px] text-slate-400">Receptacles</p>
+			</div>
+		</a>
+		<a href="/search?type=load" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
+			<span class="w-8 h-8 rounded-lg bg-amber-500/15 flex items-center justify-center shrink-0">
+				<Icon icon="mdi:lightbulb-outline" width={16} class="text-amber-400" />
+			</span>
+			<div>
+				{#if statsLoaded.loads}
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{stats.loads}</p>
-					<p class="text-[11px] text-slate-400">Loads</p>
-				</div>
-			</a>
-			<a href="/rooms?layer=network" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
-				<span class="w-8 h-8 rounded-lg bg-fuchsia-500/15 flex items-center justify-center shrink-0">
-					<Icon icon="mdi:wifi" width={16} class="text-fuchsia-400" />
-				</span>
-				<div>
+				{:else}
+					<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse" aria-label="Loading loads"></div>
+				{/if}
+				<p class="text-[11px] text-slate-400">Loads</p>
+			</div>
+		</a>
+		<a href="/rooms?layer=network" class="bg-slate-800/40 rounded-lg px-3 py-2.5 flex items-center gap-2.5 hover:bg-slate-800/60 transition-colors active:scale-[0.96]">
+			<span class="w-8 h-8 rounded-lg bg-fuchsia-500/15 flex items-center justify-center shrink-0">
+				<Icon icon="mdi:wifi" width={16} class="text-fuchsia-400" />
+			</span>
+			<div>
+				{#if statsLoaded.loads}
 					<p class="text-base font-bold text-white leading-tight" style="font-variant-numeric: tabular-nums">{networkDeviceCount}</p>
-					<p class="text-[11px] text-slate-400">Network</p>
-				</div>
-			</a>
-		</div>
-	{/if}
+				{:else}
+					<div class="h-5 w-6 rounded bg-slate-700/60 animate-pulse" aria-label="Loading network devices"></div>
+				{/if}
+				<p class="text-[11px] text-slate-400">Network</p>
+			</div>
+		</a>
+	</div>
 
 	<!-- Insights & Actions -->
 	{#if !loading && insights.length > 0}
