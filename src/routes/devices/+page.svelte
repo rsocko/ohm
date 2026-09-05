@@ -377,7 +377,7 @@
 									<LoadEditForm
 										recordId={Number(device.id)}
 										deviceType="load"
-										onclose={() => { editingDeviceId = null; }}
+										onCancel={() => { editingDeviceId = null; }}
 										onSaved={() => { fetchDevices(); }}
 									/>
 								{/if}

@@ -2,6 +2,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { slide, fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
+	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import DynamicIcon from '$lib/components/DynamicIcon.svelte';
 	import IconPicker from '$lib/components/IconPicker.svelte';
@@ -804,6 +805,17 @@
 			savedDevice.record.fields[key] = value;
 		}
 		toast.success('Device updated');
+	}
+
+	function closeDeviceEditor() {
+		editingDevice = null;
+
+		const url = new URL(window.location.href);
+		const editParam = url.searchParams.get('edit');
+		if (editParam !== 'load' && editParam !== 'receptacle') return;
+
+		url.searchParams.delete('edit');
+		replaceState(url, page.state);
 	}
 
 	function startMoveDevice(item: { type: 'load' | 'receptacle'; record: V3Record }, areaId: number) {
@@ -4574,7 +4586,7 @@
 																record={editingDevice.record}
 																allLoads={allLoads}
 																allCircuits={allCircuits}
-																onclose={() => { editingDevice = null; }}
+																onCancel={closeDeviceEditor}
 																onSaved={handleDeviceSaved}
 															/>
 														{/if}
