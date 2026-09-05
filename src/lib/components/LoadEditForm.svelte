@@ -24,7 +24,7 @@
 		record?: V3Record;
 		/** All loads for upstream picker (optional — only shown if provided) */
 		allLoads?: V3Record[];
-		onClose: () => void;
+		onclose: () => void;
 		/** Called after successful save with the changed fields object for optimistic update */
 		onSaved?: (fields: Record<string, unknown>) => void;
 	}
@@ -34,7 +34,7 @@
 		deviceType = 'load',
 		record: recordProp,
 		allLoads = [],
-		onClose,
+		onclose,
 		onSaved
 	}: Props = $props();
 
@@ -113,6 +113,12 @@
 			.sort((a, b) => getDisplayName(a).localeCompare(getDisplayName(b)));
 	}
 
+	function cancel(event?: Event) {
+		event?.preventDefault();
+		event?.stopPropagation();
+		onclose();
+	}
+
 	async function save() {
 		if (!editName.trim()) return;
 		saving = true;
@@ -166,7 +172,7 @@
 						: [];
 				}
 				onSaved?.(updatedFields);
-				onClose();
+				onclose();
 			}
 		} catch {} finally { saving = false; }
 	}
@@ -196,7 +202,7 @@
 				bind:value={editName}
 				placeholder="Display name"
 				class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-border-color"
-				onkeydown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') onClose(); }}
+				onkeydown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(e); }}
 			/>
 		</div>
 
@@ -327,7 +333,7 @@
 			<button onclick={save} disabled={saving || !editName.trim()} class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
 				{saving ? 'Saving…' : 'Save'}
 			</button>
-			<button onclick={onClose} class="px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
+			<button type="button" onclick={cancel} class="px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
 		</div>
 	</div>
 {/if}
