@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { slide, fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 	import { page } from '$app/state';
@@ -542,7 +542,7 @@
 	$effect(() => {
 		const url = page.url;
 		if (!url || typeof window === 'undefined') return;
-		handleDeepLinkParams();
+		untrack(handleDeepLinkParams);
 	});
 
 	function handleDeepLinkParams() {
