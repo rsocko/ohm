@@ -61,6 +61,33 @@
 	let showIconPicker = $state(false);
 	const typeField = deviceType === 'load' ? 'Device Type' : 'Receptacle Type';
 	const typeConfig = deviceType === 'load' ? loadTypeConfig : receptacleTypeConfig;
+	const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+	const circuitGroups = $derived.by(() => {
+		const groups = new Map<string, { panelName: string; circuits: V3Record[] }>();
+
+		for (const circuit of allCircuits) {
+			const panel = circuit.fields.Panel as { id?: number; fields?: { Name?: string } } | undefined;
+			const panelName = panel?.fields?.Name?.trim() || 'Other / Unassigned';
+			const groupKey = panel?.id ? `panel-${panel.id}` : `name-${panelName}`;
+			const group = groups.get(groupKey) || { panelName, circuits: [] };
+			group.circuits.push(circuit);
+			groups.set(groupKey, group);
+		}
+
+		return [...groups.values()]
+			.map((group) => ({
+				...group,
+				circuits: group.circuits.sort((a, b) => {
+					const aNumber = Number(a.fields.Number ?? a.fields['Circuit #']);
+					const bNumber = Number(b.fields.Number ?? b.fields['Circuit #']);
+					const numericDifference = (Number.isFinite(aNumber) ? aNumber : Number.POSITIVE_INFINITY)
+						- (Number.isFinite(bNumber) ? bNumber : Number.POSITIVE_INFINITY);
+					return numericDifference || naturalCollator.compare(getCircuitLabel(a), getCircuitLabel(b));
+				})
+			}))
+			.sort((a, b) => naturalCollator.compare(a.panelName, b.panelName));
+	});
 
 	function getDisplayName(rec: V3Record): string {
 		return (rec.fields['Display Name'] as string) || (rec.fields.Name as string) || `#${rec.id}`;
@@ -288,8 +315,12 @@
 					class="flex-1 min-w-0 bg-slate-800 border border-slate-600/50 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 appearance-none"
 				>
 					<option value={null}>— Not assigned —</option>
-					{#each allCircuits as circuit}
-						<option value={circuit.id}>{getCircuitLabel(circuit)}</option>
+					{#each circuitGroups as group}
+						<optgroup label={group.panelName}>
+							{#each group.circuits as circuit (circuit.id)}
+								<option value={circuit.id}>{getCircuitLabel(circuit)}</option>
+							{/each}
+						</optgroup>
 					{/each}
 				</select>
 			</div>
