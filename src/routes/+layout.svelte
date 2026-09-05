@@ -38,9 +38,10 @@
 		return () => clearInterval(intervalId);
 	});
 
-	// Initialize home context once data loads
+	// Initialize home context as soon as the home list arrives so other
+	// homepage sections can populate independently.
 	$effect(() => {
-		if (dataStore.loaded) initHomeContext();
+		if (dataStore.loadedTables.homes) initHomeContext();
 	});
 
 	// Keep chat context in sync with current page and home selection
