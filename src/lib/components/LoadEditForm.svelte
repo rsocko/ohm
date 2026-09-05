@@ -26,7 +26,7 @@
 		allLoads?: V3Record[];
 		/** Circuits available for electrical assignment */
 		allCircuits?: V3Record[];
-		onclose: () => void;
+		onCancel: () => void;
 		/** Called after successful save with the changed fields object for optimistic update */
 		onSaved?: (fields: Record<string, unknown>) => void;
 	}
@@ -37,7 +37,7 @@
 		record: recordProp,
 		allLoads = [],
 		allCircuits = [],
-		onclose,
+		onCancel,
 		onSaved
 	}: Props = $props();
 
@@ -164,10 +164,12 @@
 	function cancel(event?: Event) {
 		event?.preventDefault();
 		event?.stopPropagation();
-		onclose();
+		onCancel();
 	}
 
-	async function save() {
+	async function save(event?: SubmitEvent) {
+		event?.preventDefault();
+		event?.stopPropagation();
 		if (!editName.trim()) return;
 		saving = true;
 		error = '';
@@ -234,7 +236,7 @@
 				try {
 					onSaved?.(updatedFields);
 				} finally {
-					onclose();
+					onCancel();
 				}
 			} else {
 				const data = await resp.json().catch(() => null);
@@ -261,7 +263,11 @@
 		<span class="text-xs text-slate-400 animate-pulse">Loading…</span>
 	</div>
 {:else}
-	<div class="px-3 pb-3 space-y-2.5 border-t border-slate-700/40 pt-3">
+	<form
+		class="px-3 pb-3 space-y-2.5 border-t border-slate-700/40 pt-3"
+		onsubmit={save}
+		onclick={(event) => event.stopPropagation()}
+	>
 		<!-- Name -->
 		<div class="flex gap-2 items-center">
 			<label class="text-[10px] text-slate-500 w-12 shrink-0">Name</label>
@@ -292,6 +298,7 @@
 		<div class="flex gap-2 items-center">
 			<label class="text-[10px] text-slate-500 w-12 shrink-0">Icon</label>
 			<button
+				type="button"
 				onclick={() => { showIconPicker = true; }}
 				class="flex-1 flex items-center gap-2 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 hover:border-slate-500 transition-border-color"
 			>
@@ -305,7 +312,7 @@
 				<span class="text-[10px] text-slate-500">Change</span>
 			</button>
 			{#if editIcon}
-				<button onclick={() => { editIcon = ''; }} class="text-[10px] text-slate-500 hover:text-red-400 transition-color" title="Clear override">✕</button>
+				<button type="button" onclick={() => { editIcon = ''; }} class="text-[10px] text-slate-500 hover:text-red-400 transition-color" title="Clear override">✕</button>
 			{/if}
 		</div>
 
@@ -343,6 +350,7 @@
 				/>
 				<label class="text-[10px] text-slate-500 ml-2 shrink-0">Show</label>
 				<button
+					type="button"
 					onclick={() => { editDisplayMode = editDisplayMode === 'single' ? 'expanded' : 'single'; }}
 					class="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs transition-all {editDisplayMode === 'expanded' ? 'bg-amber-600/30 text-amber-300 border border-amber-500/50' : 'bg-slate-800 text-slate-400 border border-slate-600/50 hover:border-slate-500'}"
 				>
@@ -421,12 +429,12 @@
 			<p class="text-xs text-red-400" role="alert">{error}</p>
 		{/if}
 		<div class="flex gap-2 items-center pt-1">
-			<button onclick={save} disabled={saving || !editName.trim()} class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
+			<button type="submit" disabled={saving || !editName.trim()} class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
 				{saving ? 'Saving…' : 'Save'}
 			</button>
 			<button type="button" onclick={cancel} class="px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-color">Cancel</button>
 		</div>
-	</div>
+	</form>
 {/if}
 
 {#if showIconPicker}

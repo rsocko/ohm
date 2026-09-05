@@ -66,6 +66,15 @@
 		search(query, lib);
 	}
 
+	function portal(node: HTMLElement) {
+		document.body.appendChild(node);
+		return {
+			destroy() {
+				node.remove();
+			}
+		};
+	}
+
 	// Initial load
 	$effect(() => {
 		results = suggestions;
@@ -74,6 +83,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
+	use:portal
 	class="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
 	role="dialog"
 	aria-modal="true"
@@ -81,6 +91,7 @@
 >
 	<!-- Backdrop -->
 	<button
+		type="button"
 		class="absolute inset-0 bg-black/60 backdrop-blur-sm"
 		onclick={onclose}
 		aria-label="Close"
@@ -93,7 +104,7 @@
 		<div class="p-4 border-b border-slate-700/60 space-y-3">
 			<div class="flex items-center justify-between">
 				<h3 class="text-sm font-semibold text-white">Choose Icon</h3>
-				<button onclick={onclose} class="text-slate-400 hover:text-white p-1 rounded-md">
+				<button type="button" onclick={onclose} class="text-slate-400 hover:text-white p-1 rounded-md">
 					<Icon icon="mdi:close" width={18} />
 				</button>
 			</div>
@@ -114,6 +125,7 @@
 			<div class="flex gap-1.5">
 				{#each libs as lib}
 					<button
+						type="button"
 						onclick={() => switchLib(lib.id)}
 						class="px-2.5 py-1 rounded-md text-xs font-medium transition-background-color,color {activeLib === lib.id ? 'bg-indigo-600 text-white' : 'bg-slate-700/60 text-slate-400 hover:text-white'}"
 					>
@@ -145,6 +157,7 @@
 					{#each results as icon}
 						{@const selected = icon === value}
 						<button
+							type="button"
 							onclick={() => onselect(icon)}
 							title={icon}
 							class="aspect-square flex items-center justify-center rounded-lg transition-background-color,transform hover:bg-slate-700/60 active:scale-[0.92] {selected ? 'bg-indigo-600/20 ring-1 ring-indigo-500' : ''}"
