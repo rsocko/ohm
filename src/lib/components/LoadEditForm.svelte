@@ -24,6 +24,8 @@
 		record?: V3Record;
 		/** All loads for upstream picker (optional — only shown if provided) */
 		allLoads?: V3Record[];
+		/** Circuits available for electrical assignment */
+		allCircuits?: V3Record[];
 		onClose: () => void;
 		/** Called after successful save with the changed fields object for optimistic update */
 		onSaved?: (fields: Record<string, unknown>) => void;
@@ -34,12 +36,14 @@
 		deviceType = 'load',
 		record: recordProp,
 		allLoads = [],
+		allCircuits = [],
 		onClose,
 		onSaved
 	}: Props = $props();
 
 	let loading = $state(!recordProp);
 	let saving = $state(false);
+	let error = $state('');
 	let fields: Record<string, unknown> = $state(recordProp?.fields ? { ...recordProp.fields } : {});
 
 	// Edit state
@@ -53,6 +57,7 @@
 	let editMatchKey = $state('');
 	let editNetworkUpstreamId: number | null = $state(null);
 	let editNetworkSearch = $state('');
+	let editCircuitId: number | null = $state(null);
 	let showIconPicker = $state(false);
 	const typeField = deviceType === 'load' ? 'Device Type' : 'Receptacle Type';
 	const typeConfig = deviceType === 'load' ? loadTypeConfig : receptacleTypeConfig;
@@ -71,6 +76,21 @@
 		return null;
 	}
 
+	function getCircuitId(f: Record<string, unknown>): number | null {
+		const circuit = f.Circuit;
+		if (circuit && typeof circuit === 'object' && 'id' in circuit && typeof circuit.id === 'number') {
+			return circuit.id;
+		}
+		return typeof f.Circuit_id === 'number' ? f.Circuit_id : null;
+	}
+
+	function getCircuitLabel(circuit: V3Record): string {
+		const panel = circuit.fields.Panel as { fields?: { Name?: string } } | undefined;
+		const number = circuit.fields.Number ?? circuit.fields['Circuit #'] ?? circuit.id;
+		const name = circuit.fields.Name as string | undefined;
+		return `${panel?.fields?.Name ? `${panel.fields.Name} · ` : ''}Circuit ${number}${name ? ` — ${name}` : ''}`;
+	}
+
 	function initFromFields(f: Record<string, unknown>) {
 		editName = (f['Display Name'] as string) || (f.Name as string) || '';
 		editType = (f[typeField] as string) || '';
@@ -81,6 +101,7 @@
 		editPowerSource = (f.Power_Source as string) || 'Circuit';
 		editMatchKey = (f.Network_Match_Key as string) || '';
 		editNetworkUpstreamId = getNetworkUpstreamId(f);
+		editCircuitId = getCircuitId(f);
 		if (editNetworkUpstreamId) {
 			const upstream = allLoads.find(l => l.id === editNetworkUpstreamId);
 			editNetworkSearch = upstream ? getDisplayName(upstream) : '';
@@ -116,6 +137,7 @@
 	async function save() {
 		if (!editName.trim()) return;
 		saving = true;
+		error = '';
 		const table = deviceType === 'load' ? 'Load' : 'Receptacle';
 		const changedFields: Record<string, unknown> = {};
 		const linkUpdates: { title: string; ids: number[] }[] = [];
@@ -128,6 +150,11 @@
 
 		const origIcon = (fields.Icon as string) || '';
 		if (editIcon !== origIcon) changedFields['Icon'] = editIcon || null;
+
+		const origCircuitId = getCircuitId(fields);
+		if (editCircuitId !== origCircuitId) {
+			linkUpdates.push({ title: 'Circuit', ids: editCircuitId ? [editCircuitId] : [] });
+		}
 
 		if (deviceType === 'load') {
 			const origCount = (fields.Fixture_Count as number) || 1;
@@ -165,10 +192,21 @@
 						? [allLoads.find(l => l.id === editNetworkUpstreamId)].filter(Boolean)
 						: [];
 				}
+				if (editCircuitId !== origCircuitId) {
+					updatedFields.Circuit = editCircuitId
+						? allCircuits.find((circuit) => circuit.id === editCircuitId)
+						: null;
+					updatedFields.Circuit_id = editCircuitId;
+				}
 				onSaved?.(updatedFields);
 				onClose();
+			} else {
+				const data = await resp.json().catch(() => null);
+				error = data?.error || 'Could not save this device. Try again.';
 			}
-		} catch {} finally { saving = false; }
+		} catch (err) {
+			error = err instanceof Error ? err.message : 'Could not save this device. Try again.';
+		} finally { saving = false; }
 	}
 
 	// Initialize from provided record or fetch
@@ -234,6 +272,22 @@
 				<button onclick={() => { editIcon = ''; }} class="text-[10px] text-slate-500 hover:text-red-400 transition-color" title="Clear override">✕</button>
 			{/if}
 		</div>
+
+		{#if allCircuits.length > 0}
+			<div class="flex gap-2 items-center">
+				<label for="circuit-{recordId}" class="text-[10px] text-slate-500 w-12 shrink-0">Circuit</label>
+				<select
+					id="circuit-{recordId}"
+					bind:value={editCircuitId}
+					class="flex-1 min-w-0 bg-slate-800 border border-slate-600/50 rounded-md px-2 py-1.5 text-xs text-white focus:outline-none focus:border-amber-500 appearance-none"
+				>
+					<option value={null}>— Not assigned —</option>
+					{#each allCircuits as circuit}
+						<option value={circuit.id}>{getCircuitLabel(circuit)}</option>
+					{/each}
+				</select>
+			</div>
+		{/if}
 
 		<!-- Load-only fields -->
 		{#if deviceType === 'load'}
@@ -323,6 +377,9 @@
 		{/if}
 
 		<!-- Actions -->
+		{#if error}
+			<p class="text-xs text-red-400" role="alert">{error}</p>
+		{/if}
 		<div class="flex gap-2 items-center pt-1">
 			<button onclick={save} disabled={saving || !editName.trim()} class="px-3 py-1.5 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-500 transition-background-color active:scale-[0.96] disabled:opacity-50">
 				{saving ? 'Saving…' : 'Save'}
