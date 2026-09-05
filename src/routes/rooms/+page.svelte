@@ -796,13 +796,14 @@
 	}
 
 	function handleDeviceSaved(updatedFields: Record<string, unknown>) {
-		if (!editingDevice) return;
+		const savedDevice = editingDevice;
+		editingDevice = null;
+		if (!savedDevice) return;
 		// Optimistic UI update: apply changed fields to the in-memory record
 		for (const [key, value] of Object.entries(updatedFields)) {
-			editingDevice.record.fields[key] = value;
+			savedDevice.record.fields[key] = value;
 		}
 		toast.success('Device updated');
-		editingDevice = null;
 	}
 
 	function startMoveDevice(item: { type: 'load' | 'receptacle'; record: V3Record }, areaId: number) {
