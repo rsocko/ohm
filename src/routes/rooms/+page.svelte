@@ -4539,7 +4539,7 @@
 																record={editingDevice.record}
 																allLoads={allLoads}
 																allCircuits={allCircuits}
-																onClose={() => { editingDevice = null; }}
+																onclose={() => { editingDevice = null; }}
 																onSaved={handleDeviceSaved}
 															/>
 														{/if}
