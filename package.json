@@ -16,9 +16,11 @@
 		"test:watch": "vitest --config vitest.config.ts",
 		"test:live": "vitest run --config vitest.live.config.ts",
 		"verify:registry": "node scripts/verify-lockfile-registry.mjs",
-		"validate:workflows": "node scripts/validate-workflows.mjs"
+		"validate:workflows": "node scripts/validate-workflows.mjs",
+		"test:e2e": "playwright test"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.55.0",
 		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/kit": "^2.70.3",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
