@@ -266,7 +266,6 @@
 	<form
 		class="px-3 pb-3 space-y-2.5 border-t border-slate-700/40 pt-3"
 		onsubmit={save}
-		onclick={(event) => event.stopPropagation()}
 	>
 		<!-- Name -->
 		<div class="flex gap-2 items-center">
@@ -276,7 +275,7 @@
 				bind:value={editName}
 				placeholder="Display name"
 				class="flex-1 bg-slate-800 border border-slate-600/50 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-border-color"
-				onkeydown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') cancel(e); }}
+				onkeydown={(e) => { if (e.key === 'Escape') cancel(e); }}
 			/>
 		</div>
 
