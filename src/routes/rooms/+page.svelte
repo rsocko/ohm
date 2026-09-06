@@ -527,8 +527,6 @@
 			for (const area of areas) { fetchCommentCount(area.id); }
 			loading = false;
 
-			// Handle URL params
-			handleDeepLinkParams();
 		})();
 
 		return () => {
@@ -542,12 +540,12 @@
 	// React to URL param changes for deep links (fires on client-side navigation too)
 	$effect(() => {
 		const url = page.url;
-		if (!url || typeof window === 'undefined') return;
-		untrack(handleDeepLinkParams);
+		if (!url || typeof window === 'undefined' || loading) return;
+		untrack(() => handleDeepLinkParams(url));
 	});
 
-	function handleDeepLinkParams() {
-		const urlParams = new URLSearchParams(window.location.search);
+	function handleDeepLinkParams(url: URL) {
+		const urlParams = url.searchParams;
 
 		// ?view=floorplan
 		if (urlParams.get('view') === 'floorplan') {
@@ -609,6 +607,9 @@
 							expandedDevice = `${areaId}-${editParam}-${deviceId}`;
 							showAllDevices = { ...showAllDevices, [areaId]: true };
 							editingDevice = { type: editParam, record, areaId };
+							// The edit query is an action, not durable editor state. Consume it after opening
+							// so later URL updates cannot reopen an editor the user already closed.
+							clearDeviceEditDeepLink();
 						}
 					}
 					if (!deviceParam || editParam === 'load' || editParam === 'receptacle') {
@@ -792,24 +793,27 @@
 
 	// Device actions
 	function startEditDevice(item: { type: 'load' | 'receptacle'; record: V3Record }, areaId: number) {
+		clearDeviceEditDeepLink();
 		editingDevice = { ...item, areaId };
 		movingDevice = null;
+		expandedDevice = getDeviceKey(areaId, item);
 	}
 
 	function handleDeviceSaved(updatedFields: Record<string, unknown>) {
-		const savedDevice = editingDevice;
-		editingDevice = null;
-		if (!savedDevice) return;
+		if (!editingDevice) return;
 		// Optimistic UI update: apply changed fields to the in-memory record
 		for (const [key, value] of Object.entries(updatedFields)) {
-			savedDevice.record.fields[key] = value;
+			editingDevice.record.fields[key] = value;
 		}
 		toast.success('Device updated');
 	}
 
 	function closeDeviceEditor() {
 		editingDevice = null;
+		clearDeviceEditDeepLink();
+	}
 
+	function clearDeviceEditDeepLink() {
 		const url = new URL(window.location.href);
 		const editParam = url.searchParams.get('edit');
 		if (editParam !== 'load' && editParam !== 'receptacle') return;
@@ -818,10 +822,39 @@
 		replaceState(url, page.state);
 	}
 
+	function getDeviceKey(
+		areaId: number,
+		item: { type: 'load' | 'receptacle'; record: V3Record }
+	): string {
+		return `${areaId}-${item.type}-${item.record.id}`;
+	}
+
+	function toggleDevice(item: { type: 'load' | 'receptacle'; record: V3Record }, areaId: number) {
+		const key = getDeviceKey(areaId, item);
+		if (expandedDevice === key) {
+			expandedDevice = null;
+			if (
+				editingDevice?.areaId === areaId
+				&& editingDevice.type === item.type
+				&& editingDevice.record.id === item.record.id
+			) {
+				closeDeviceEditor();
+			}
+			return;
+		}
+
+		if (editingDevice && getDeviceKey(editingDevice.areaId, editingDevice) !== key) {
+			closeDeviceEditor();
+		}
+		expandedDevice = key;
+	}
+
 	function startMoveDevice(item: { type: 'load' | 'receptacle'; record: V3Record }, areaId: number) {
+		clearDeviceEditDeepLink();
 		movingDevice = { ...item, areaId };
 		moveTargetAreaId = null;
 		editingDevice = null;
+		expandedDevice = getDeviceKey(areaId, item);
 	}
 
 	async function confirmMoveDevice() {
@@ -4506,61 +4539,66 @@
 													{@const badge = getDeviceBadge(item)}
 													{@const info = getCircuitInfo(item)}
 													{@const itemCircuits = getDeviceCircuits(item)}
-													{@const isExpanded = expandedDevice === `${area.id}-${item.type}-${item.record.id}`}
+													{@const isExpanded = expandedDevice === getDeviceKey(area.id, item)}
 													<div class="border-t border-slate-700/30 first:border-t-0 group/row">
-														<button
-															onclick={() => { expandedDevice = isExpanded ? null : `${area.id}-${item.type}-${item.record.id}`; }}
-															class="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-800/40 transition-background-color text-left"
-														>
-															{#if badge}
-																<Icon icon={badge.icon} width={16} class="{badge.color.split(' ')[1] || 'text-slate-400'}" />
-															{/if}
-															<div class="flex-1 min-w-0">
-																<p class="text-sm text-white truncate">{getDisplayName(item.record)}</p>
-															</div>
-															{#if item.type === 'load' && ((item.record.fields.Fixture_Count as number) || 1) > 1}
-																<span class="px-1.5 py-0.5 rounded text-[9px] font-medium shrink-0 bg-amber-600/20 text-amber-400 border border-amber-500/30">
-																	×{item.record.fields.Fixture_Count}
-																</span>
-															{/if}
-															{#if badge}
-																<span class="px-2 py-0.5 rounded text-[10px] font-medium shrink-0 flex items-center gap-1 {badge.color}">
-																	<Icon icon={badge.icon} width={11} />
-																	{badge.label}
-																</span>
-															{/if}
+														<div class="flex items-center hover:bg-slate-800/40 transition-background-color">
+															<button
+																type="button"
+																onclick={() => toggleDevice(item, area.id)}
+																aria-expanded={isExpanded}
+																aria-label="{isExpanded ? 'Collapse' : 'Expand'} {getDisplayName(item.record)}"
+																class="flex min-w-0 flex-1 items-center gap-2 px-3 py-2.5 text-left"
+															>
+																{#if badge}
+																	<Icon icon={badge.icon} width={16} class="{badge.color.split(' ')[1] || 'text-slate-400'}" />
+																{/if}
+																<div class="flex-1 min-w-0">
+																	<p class="text-sm text-white truncate">{getDisplayName(item.record)}</p>
+																</div>
+																{#if item.type === 'load' && ((item.record.fields.Fixture_Count as number) || 1) > 1}
+																	<span class="px-1.5 py-0.5 rounded text-[9px] font-medium shrink-0 bg-amber-600/20 text-amber-400 border border-amber-500/30">
+																		×{item.record.fields.Fixture_Count}
+																	</span>
+																{/if}
+																{#if badge}
+																	<span class="px-2 py-0.5 rounded text-[10px] font-medium shrink-0 flex items-center gap-1 {badge.color}">
+																		<Icon icon={badge.icon} width={11} />
+																		{badge.label}
+																	</span>
+																{/if}
+																<Icon icon="mdi:chevron-{isExpanded ? 'up' : 'down'}" width={14} class="text-slate-600 shrink-0" />
+															</button>
 															<!-- Action buttons: hover-visible on desktop, always on touch -->
 															<div class="flex items-center gap-0.5 shrink-0 opacity-100 sm:opacity-0 sm:group-hover/row:opacity-100 transition-opacity">
-																<span
-																	onclick={(e) => { e.stopPropagation(); startEditDevice(item, area.id); }}
-																	role="button"
-																	tabindex="0"
+																<button
+																	type="button"
+																	onclick={() => startEditDevice(item, area.id)}
 																	title="Edit"
+																	aria-label="Edit {getDisplayName(item.record)}"
 																	class="p-1.5 rounded-md hover:bg-slate-700/60 text-slate-500 hover:text-amber-400 transition-color,background-color"
 																>
 																	<Icon icon="mdi:pencil-outline" width={15} />
-																</span>
-																<span
-																	onclick={(e) => { e.stopPropagation(); startMoveDevice(item, area.id); }}
-																	role="button"
-																	tabindex="0"
+																</button>
+																<button
+																	type="button"
+																	onclick={() => startMoveDevice(item, area.id)}
 																	title="Move"
+																	aria-label="Move {getDisplayName(item.record)}"
 																	class="p-1.5 rounded-md hover:bg-slate-700/60 text-slate-500 hover:text-indigo-400 transition-color,background-color"
 																>
 																	<Icon icon="mdi:swap-horizontal" width={15} />
-																</span>
-																<span
-																	onclick={(e) => { e.stopPropagation(); deleteDevice(item); }}
-																	role="button"
-																	tabindex="0"
+																</button>
+																<button
+																	type="button"
+																	onclick={() => deleteDevice(item)}
 																	title="Delete"
+																	aria-label="Delete {getDisplayName(item.record)}"
 																	class="p-1.5 rounded-md hover:bg-slate-700/60 text-slate-500 hover:text-red-400 transition-color,background-color"
 																>
 																	<Icon icon="mdi:trash-can-outline" width={15} />
-																</span>
+																</button>
 															</div>
-															<Icon icon="mdi:chevron-{isExpanded ? 'up' : 'down'}" width={14} class="text-slate-600 shrink-0" />
-														</button>
+														</div>
 														{#if isExpanded && (info || itemCircuits.length > 0)}
 															<div transition:slide={{ duration: 150, easing: cubicOut }} class="px-3 pb-2.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
 																{#if info}
@@ -4579,7 +4617,7 @@
 															</div>
 														{/if}
 														<!-- Inline edit form -->
-														{#if editingDevice?.record.id === item.record.id && editingDevice?.type === item.type}
+														{#if isExpanded && editingDevice?.record.id === item.record.id && editingDevice?.type === item.type}
 															<LoadEditForm
 																recordId={editingDevice.record.id}
 																deviceType={editingDevice.type}
