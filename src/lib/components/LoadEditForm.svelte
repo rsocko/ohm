@@ -127,10 +127,11 @@
 		editRole = (f.Network_Role as string) || '';
 		editPowerSource = (f.Power_Source as string) || 'Circuit';
 		editMatchKey = (f.Network_Match_Key as string) || '';
-		editNetworkUpstreamId = getNetworkUpstreamId(f);
+		const networkUpstreamId = getNetworkUpstreamId(f);
+		editNetworkUpstreamId = networkUpstreamId;
 		editCircuitId = getCircuitId(f);
-		if (editNetworkUpstreamId) {
-			const upstream = allLoads.find(l => l.id === editNetworkUpstreamId);
+		if (networkUpstreamId) {
+			const upstream = allLoads.find(l => l.id === networkUpstreamId);
 			editNetworkSearch = upstream ? getDisplayName(upstream) : '';
 		}
 	}
@@ -250,8 +251,9 @@
 	// Initialize from provided record or fetch
 	$effect(() => {
 		if (recordProp) {
-			fields = { ...recordProp.fields };
-			initFromFields(fields);
+			const initialFields = { ...recordProp.fields };
+			fields = initialFields;
+			initFromFields(initialFields);
 		} else {
 			fetchRecord();
 		}
