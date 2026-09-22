@@ -38,12 +38,12 @@
 		"vitest": "^5.0.0"
 	},
 	"dependencies": {
-		"@ai-sdk/openai": "^4.0.66",
-		"@ai-sdk/svelte": "^5.0.99",
+		"@ai-sdk/openai": "^4.0.69",
+		"@ai-sdk/svelte": "^5.0.105",
 		"@iconify/svelte": "^5.2.2",
 		"@sveltejs/adapter-node": "^5.5.7",
 		"@types/qrcode": "^1.5.6",
-		"ai": "^7.0.99",
+		"ai": "^7.0.105",
 		"marked": "^18.0.12",
 		"motion": "^13.4.0",
 		"qrcode": "^1.5.4",
