@@ -361,6 +361,11 @@ for (const file of workflowFiles) {
 			'${{ needs.prepare.outputs.source_sha }}',
 			`${file} publish job must consume the verified source SHA`,
 		);
+		assert.equal(
+			publish.if,
+			"needs.prepare.outputs.should_publish == 'true'",
+			`${file} publish job must require an eligible publication source`,
+		);
 
 		for (const [jobName, job] of Object.entries({ prepare, publish })) {
 			const checkouts = (job.steps ?? []).filter((step) => step.uses?.startsWith('actions/checkout@'));
@@ -375,7 +380,9 @@ for (const file of workflowFiles) {
 			);
 		}
 
-		const prepareCondition = prepare.if ?? '';
+		const eligibilityStep = prepare.steps?.find((step) => step.id === 'eligibility');
+		assert.ok(eligibilityStep, `${file} prepare job must determine publication eligibility`);
+		const eligibilityCondition = eligibilityStep.env?.SHOULD_PUBLISH ?? '';
 		for (const invariant of [
 			"github.event.workflow_run.conclusion == 'success'",
 			"github.event.workflow_run.event == 'push'",
@@ -383,7 +390,10 @@ for (const file of workflowFiles) {
 			'github.event.workflow_run.head_repository.id == github.event.repository.id',
 			"github.ref == 'refs/heads/main'",
 		]) {
-			assert.ok(prepareCondition.includes(invariant), `${file} prepare condition must enforce ${invariant}`);
+			assert.ok(
+				eligibilityCondition.includes(invariant),
+				`${file} eligibility gate must enforce ${invariant}`,
+			);
 		}
 
 		for (const invariant of [
