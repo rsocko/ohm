@@ -6,7 +6,7 @@ import { getPrinterConfig } from '$lib/server/printer-config';
 export const load: PageServerLoad = async () => {
 	const [config, printerConfig] = await Promise.all([
 		getAiConfig().catch(() => ({ enabled: false, llmProvider: 'ollama' as const, ollamaUrl: '', ollamaModel: '', compatibleUrl: '', compatibleApiKey: '', compatibleModel: '', askApiKey: '', askAuthRequired: false, updatedAt: null })),
-		getPrinterConfig().catch(() => ({ tapeWidthMm: 15, labelLengthMm: null, defaultCircuitFormat: 'compact' as const, density: 'normal', dpi: 203, serviceUuid: '', writeCharUuid: '', chunkSize: 100, chunkDelayMs: 20, updatedAt: null }))
+		getPrinterConfig().catch(() => ({ tapeWidthMm: 15, labelLengthMm: null, defaultCircuitFormat: 'compact' as const, density: 4, dpi: 203, serviceUuid: '', writeCharUuid: '', chunkSize: 100, chunkDelayMs: 20, updatedAt: null }))
 	]);
 	return { config, printerConfig };
 };
