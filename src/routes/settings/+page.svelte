@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import { onMount, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import type { PageProps } from './$types';
 	import type { PrinterConfig as LabelPrinterConfig } from '$lib/services/label-printing/types';
 	import EntityPicker from '$lib/components/energy/EntityPicker.svelte';
 	import { dataStore, ensureLoaded, invalidate } from '$lib/stores/data.svelte';
@@ -56,7 +57,7 @@
 		updatedAt: string | null;
 	}
 
-	let { data } = $props<{ data: { config: AiConfig; printerConfig: PrinterSettingsConfig } }>();
+	let { data }: PageProps = $props();
 
 	// Per-home integration config: track which home's config is loaded
 	const currentHomeId = $derived(homeContext.selectedHomeId);

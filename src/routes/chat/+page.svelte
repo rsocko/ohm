@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from '@iconify/svelte';
+	import type { PageProps } from './$types';
 	import { chatState, initChat, sendMessage, clearMessages, setContext } from '$lib/stores/chat.svelte';
 	import { homeContext } from '$lib/stores/home-context.svelte';
 	import MessageBubble from '$lib/components/chat/MessageBubble.svelte';
@@ -10,7 +11,7 @@
 	import AskOhmIcon from '$lib/components/icons/AskOhmIcon.svelte';
 	import OhmLoader from '$lib/components/ui/OhmLoader.svelte';
 
-	let { data } = $props<{ data: { aiEnabled: boolean } }>();
+	let { data }: PageProps = $props();
 	let input = $state('');
 	let chatContainer: HTMLElement | undefined = $state(undefined);
 	let voiceListening = $state(false);
